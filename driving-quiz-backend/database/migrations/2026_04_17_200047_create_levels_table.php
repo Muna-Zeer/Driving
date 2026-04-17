@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('levels', function (Blueprint $table) {
             $table->id();
+            $table->foreignId("category_id")->constrained()->onDelete();
+            $table->string('title');
+            $table->integer('order')->default(1);
             $table->timestamps();
         });
     }
