@@ -1,0 +1,28 @@
+# --- IDE and System Files ---
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# --- Laravel Backend (driving-quiz-backend) ---
+driving-quiz-backend/.env
+driving-quiz-backend/vendor/
+driving-quiz-backend/node_modules/
+driving-quiz-backend/public/storage
+driving-quiz-backend/storage/*.log
+driving-quiz-backend/bootstrap/cache/*
+driving-quiz-backend/public/hot
+driving-quiz-backend/public/storage
+
+# --- Flutter App (driving_quiz_app) ---
+driving_quiz_app/.dart_tool/
+driving_quiz_app/.flutter-plugins
+driving_quiz_app/.flutter-plugins-dependencies
+driving_quiz_app/.pub-cache/
+driving_quiz_app/.pub/
+driving_quiz_app/build/
+driving_quiz_app/ios/Flutter/.last_build_id
+driving_quiz_app/android/app/debug
+driving_quiz_app/android/app/profile
+driving_quiz_app/android/app/release
