@@ -2,7 +2,11 @@
     <application
         android:label="driving_quiz_app"
         android:name="${applicationName}"
+<<<<<<< HEAD
         android:icon="@mipmap/launcher_icon">
+=======
+        android:icon="@mipmap/ic_launcher">
+>>>>>>> b650c70 (Generate new folders and set up flutter app well)
         <activity
             android:name=".MainActivity"
             android:exported="true"

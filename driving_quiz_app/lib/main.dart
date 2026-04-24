@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import 'package:driving_quiz_app/views/CategoriesScreen.dart';
+=======
+>>>>>>> b650c70 (Generate new folders and set up flutter app well)
 import 'package:flutter/material.dart';
 
 void main() {
@@ -10,14 +13,21 @@ class DrivingQuizApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CategoriesScreen(),
+=======
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: MainCategoryScreen(),
+>>>>>>> b650c70 (Generate new folders and set up flutter app well)
     );
   }
 }
 
+<<<<<<< HEAD
 class MainCategoryScreen extends StatefulWidget {
   const MainCategoryScreen({super.key});
 
@@ -87,8 +97,30 @@ class _MainCategoryScreenState extends State<MainCategoryScreen> {
                 ),
               ),
           ],
+=======
+class MainCategoryScreen extends StatelessWidget {
+  const MainCategoryScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      // The body starts here
+      body: Center(
+        child: Text(
+          'Driving Quiz App',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+>>>>>>> b650c70 (Generate new folders and set up flutter app well)
         ),
       ),
     );
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b650c70 (Generate new folders and set up flutter app well)
