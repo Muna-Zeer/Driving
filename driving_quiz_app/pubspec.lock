@@ -37,6 +37,9 @@ packages:
     source: hosted
     version: "2.1.2"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   cached_network_image:
     dependency: "direct main"
     description:
@@ -61,8 +64,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.1"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   characters:
     dependency: transitive
     description:
@@ -107,6 +113,9 @@ packages:
     source: hosted
     version: "1.19.1"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   crypto:
     dependency: transitive
     description:
@@ -115,8 +124,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.7"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   cupertino_icons:
     dependency: "direct main"
     description:
@@ -134,6 +146,9 @@ packages:
     source: hosted
     version: "1.3.3"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   ffi:
     dependency: transitive
     description:
@@ -158,14 +173,20 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   flutter:
     dependency: "direct main"
     description: flutter
     source: sdk
     version: "0.0.0"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   flutter_cache_manager:
     dependency: transitive
     description:
@@ -174,6 +195,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.1"
+<<<<<<< HEAD
   flutter_launcher_icons:
     dependency: "direct dev"
     description:
@@ -184,10 +206,13 @@ packages:
     version: "0.13.1"
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   flutter_lints:
     dependency: "direct dev"
     description:
       name: flutter_lints
+<<<<<<< HEAD
 <<<<<<< HEAD
       sha256: "9e8c3858111da373efc5aa341de011d9bd23e2c5c5e0c62bccf32438e192d7b1"
       url: "https://pub.dev"
@@ -199,12 +224,21 @@ packages:
     source: hosted
     version: "5.0.0"
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+      sha256: "9e8c3858111da373efc5aa341de011d9bd23e2c5c5e0c62bccf32438e192d7b1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.2"
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   flutter_test:
     dependency: "direct dev"
     description: flutter
     source: sdk
     version: "0.0.0"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   flutter_web_plugins:
     dependency: transitive
     description: flutter
@@ -234,6 +268,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
+<<<<<<< HEAD
   image:
     dependency: transitive
     description:
@@ -252,6 +287,8 @@ packages:
     version: "4.9.0"
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   leak_tracker:
     dependency: transitive
     description:
@@ -281,6 +318,7 @@ packages:
     description:
       name: lints
 <<<<<<< HEAD
+<<<<<<< HEAD
       sha256: cbf8d4b858bb0134ef3ef87841abdf8d63bfc255c266b7bf6b39daa1085c4290
       url: "https://pub.dev"
     source: hosted
@@ -291,6 +329,12 @@ packages:
     source: hosted
     version: "5.1.1"
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+      sha256: cbf8d4b858bb0134ef3ef87841abdf8d63bfc255c266b7bf6b39daa1085c4290
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   matcher:
     dependency: transitive
     description:
@@ -316,6 +360,9 @@ packages:
     source: hosted
     version: "1.16.0"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   nested:
     dependency: transitive
     description:
@@ -332,8 +379,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   path:
     dependency: transitive
     description:
@@ -343,6 +393,9 @@ packages:
     source: hosted
     version: "1.9.1"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   path_provider:
     dependency: transitive
     description:
@@ -391,6 +444,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
+<<<<<<< HEAD
   petitparser:
     dependency: transitive
     description:
@@ -399,6 +453,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.2"
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   platform:
     dependency: transitive
     description:
@@ -415,6 +471,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+<<<<<<< HEAD
   posix:
     dependency: transitive
     description:
@@ -423,6 +480,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.0"
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   provider:
     dependency: "direct main"
     description:
@@ -495,8 +554,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.1"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   sky_engine:
     dependency: transitive
     description: flutter
@@ -511,6 +573,9 @@ packages:
     source: hosted
     version: "1.10.1"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   sqflite:
     dependency: transitive
     description:
@@ -551,8 +616,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   stack_trace:
     dependency: transitive
     description:
@@ -578,6 +646,9 @@ packages:
     source: hosted
     version: "1.4.1"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   synchronized:
     dependency: transitive
     description:
@@ -586,8 +657,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.0"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   term_glyph:
     dependency: transitive
     description:
@@ -605,6 +679,9 @@ packages:
     source: hosted
     version: "0.7.4"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   typed_data:
     dependency: transitive
     description:
@@ -621,8 +698,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.5.3"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   vector_math:
     dependency: transitive
     description:
@@ -640,6 +720,9 @@ packages:
     source: hosted
     version: "15.0.0"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
   web:
     dependency: transitive
     description:
@@ -656,6 +739,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
+<<<<<<< HEAD
   xml:
     dependency: transitive
     description:
@@ -680,3 +764,8 @@ sdks:
   dart: ">=3.8.1 <4.0.0"
   flutter: ">=3.18.0-18.0.pre.54"
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+sdks:
+  dart: ">=3.8.0 <4.0.0"
+  flutter: ">=3.29.0"
+>>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
