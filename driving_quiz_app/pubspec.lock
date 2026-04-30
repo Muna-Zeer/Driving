@@ -2,6 +2,9 @@
 # See https://dart.dev/tools/pub/glossary#lockfile
 packages:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   archive:
     dependency: transitive
     description:
@@ -18,8 +21,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.7.0"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   async:
     dependency: transitive
     description:
@@ -78,6 +84,9 @@ packages:
     source: hosted
     version: "1.4.0"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   checked_yaml:
     dependency: transitive
     description:
@@ -94,8 +103,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.4.2"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   clock:
     dependency: transitive
     description:
@@ -196,6 +208,9 @@ packages:
     source: hosted
     version: "3.4.1"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   flutter_launcher_icons:
     dependency: "direct dev"
     description:
@@ -204,10 +219,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.1"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
 =======
 >>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -269,6 +287,9 @@ packages:
     source: hosted
     version: "4.1.2"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   image:
     dependency: transitive
     description:
@@ -285,10 +306,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.9.0"
+<<<<<<< HEAD
 =======
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
 =======
 >>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   leak_tracker:
     dependency: transitive
     description:
@@ -445,6 +469,9 @@ packages:
     source: hosted
     version: "2.3.0"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   petitparser:
     dependency: transitive
     description:
@@ -453,8 +480,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.2"
+<<<<<<< HEAD
 =======
 >>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   platform:
     dependency: transitive
     description:
@@ -472,6 +502,9 @@ packages:
     source: hosted
     version: "2.1.8"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   posix:
     dependency: transitive
     description:
@@ -480,8 +513,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.0"
+<<<<<<< HEAD
 =======
 >>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   provider:
     dependency: "direct main"
     description:
@@ -740,6 +776,9 @@ packages:
     source: hosted
     version: "1.1.0"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   xml:
     dependency: transitive
     description:
