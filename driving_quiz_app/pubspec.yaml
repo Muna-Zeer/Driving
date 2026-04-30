@@ -35,12 +35,12 @@ flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/icon.png"
-  adaptive_icon_foreground: "assets/logo.png"
+  adaptive_icon_foreground: "assets/icon.png"
   uses-material-design: true
 
   # Add this section to allow the app to see your images
   assets:
-    - assets/logo.png
+    - assets/icon.png
     - assets/images/ # This will include all images you put in this folder
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -36,17 +36,17 @@ class _MainCategoryScreenState extends State<MainCategoryScreen> {
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, // This centers everything vertically
+          mainAxisAlignment:
+              MainAxisAlignment.center, // This centers everything vertically
           children: [
-          
             const Icon(Icons.directions_car, size: 80, color: Colors.blue),
             const SizedBox(height: 10),
-            
+
             const Text(
               'Welcome to the Quiz',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            
+
             const SizedBox(height: 30),
 
             // 2. THE INPUT FIELD
