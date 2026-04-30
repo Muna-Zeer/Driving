@@ -57,6 +57,7 @@ class _MainCategoryScreenState extends State<MainCategoryScreen> {
         child: Column(
           mainAxisAlignment:
               MainAxisAlignment.center, // This centers everything vertically
+<<<<<<< HEAD
           children: [
             const Icon(Icons.directions_car, size: 80, color: Colors.blue),
             const SizedBox(height: 10),
@@ -143,16 +144,17 @@ class _MainCategoryScreenState extends State<MainCategoryScreen> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center, // This centers everything vertically
+=======
+>>>>>>> 64d1dbc (Editing the logo of app)
           children: [
-          
             const Icon(Icons.directions_car, size: 80, color: Colors.blue),
             const SizedBox(height: 10),
-            
+
             const Text(
               'Welcome to the Quiz',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            
+
             const SizedBox(height: 30),
 
             // 2. THE INPUT FIELD
@@ -198,7 +200,11 @@ class _MainCategoryScreenState extends State<MainCategoryScreen> {
     );
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
 =======
 }
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+}
+>>>>>>> 64d1dbc (Editing the logo of app)

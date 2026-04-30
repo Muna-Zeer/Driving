@@ -428,10 +428,14 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 <<<<<<< HEAD
+<<<<<<< HEAD
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = AppIcon;
 =======
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = AppIcon;
+>>>>>>> 64d1dbc (Editing the logo of app)
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -489,10 +493,14 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 <<<<<<< HEAD
+<<<<<<< HEAD
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = AppIcon;
 =======
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 >>>>>>> b650c70 (Generate new folders and set up flutter app well)
+=======
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = AppIcon;
+>>>>>>> 64d1dbc (Editing the logo of app)
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";

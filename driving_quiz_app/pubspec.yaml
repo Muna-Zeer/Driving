@@ -77,14 +77,19 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/icon.png"
 <<<<<<< HEAD
+<<<<<<< HEAD
   adaptive_icon_foreground: "assets/icon.png"
 =======
   adaptive_icon_foreground: "assets/logo.png"
 >>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
+=======
+  adaptive_icon_foreground: "assets/icon.png"
+>>>>>>> 64d1dbc (Editing the logo of app)
   uses-material-design: true
 
   # Add this section to allow the app to see your images
   assets:
+<<<<<<< HEAD
 <<<<<<< HEAD
     - assets/icon.png
     - assets/images/ # This will include all images you put in this folder
@@ -103,6 +108,9 @@ flutter:
 >>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
 =======
     - assets/logo.png
+=======
+    - assets/icon.png
+>>>>>>> 64d1dbc (Editing the logo of app)
     - assets/images/ # This will include all images you put in this folder
 >>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
   # To add assets to your application, add an assets section, like this:
