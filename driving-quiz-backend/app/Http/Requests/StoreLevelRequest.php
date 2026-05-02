@@ -22,7 +22,20 @@ class StoreLevelRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'group_key' => ['required', 'string', 'max:100'],
+            'level_number' => [
+                'required',
+                'integer',
+                'min:1',
+                'unique:levels,level_number,NULL,id,group_key,' . $this->group_key
+            ],
+            'questions_count' => ['required', 'integer', 'min:1'],
+            'order' => ['nullable', 'integer'],
+            'is_active' => ['boolean'],
+
+            'translations' => ['required', 'array'],
+            'translations.ar.name' => ['required', 'string'],
+            'translations.*.name' => ['required', 'string'],
         ];
     }
 }
