@@ -7,8 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class LevelTranslation extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
+   protected $fillable = [
         'level_id',
         'locale',
         'name',

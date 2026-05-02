@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\LevelTranslation;
+use App\Models\LevelTranslation as ModelsLevelTranslation;
 
 
 
@@ -15,7 +17,6 @@ class Level extends Model
         'group_key',
         'level_number',
         'questions_count',
-        'category_id',
         'order',
         'is_active'
     ];
