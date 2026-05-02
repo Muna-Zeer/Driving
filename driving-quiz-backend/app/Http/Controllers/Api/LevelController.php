@@ -115,7 +115,7 @@ class LevelController extends Controller
      */
     public function destroy(Level $level): JsonResponse
     {
-        $level->delete(); 
+        $level->delete();
 
         return response()->json([
             'status' => true,

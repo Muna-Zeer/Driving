@@ -15,7 +15,7 @@ class LevelFactory extends Factory
 
         return [
             'group_key' => 'private_driving_theory',
-            'level_number' => $levelNumber++, 
+            'level_number' => $levelNumber++,
             'questions_count' => 30,
             'order' => $levelNumber,
             'is_active' => true,
