@@ -2,22 +2,41 @@
 
 namespace Database\Factories;
 
+use App\Models\LevelTranslation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Model>
- */
 class LevelTranslationFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    protected $model = LevelTranslation::class;
+
     public function definition(): array
     {
         return [
-            //
+            'locale' => 'ar',
+            'name' => 'المستوى ' . $this->faker->numberBetween(1, 500),
+            'description' => 'أسئلة تدريبية لامتحان التوريا في فلسطين',
         ];
+    }
+
+    public function arabic()
+    {
+        return $this->state(function () {
+            return [
+                'locale' => 'ar',
+                'name' => 'المستوى ' . $this->faker->unique()->numberBetween(1, 500),
+                'description' => 'أسئلة تدريبية لامتحان التوريا',
+            ];
+        });
+    }
+
+    public function english()
+    {
+        return $this->state(function () {
+            return [
+                'locale' => 'en',
+                'name' => 'Level ' . $this->faker->unique()->numberBetween(1, 500),
+                'description' => 'Driving theory practice questions',
+            ];
+        });
     }
 }
