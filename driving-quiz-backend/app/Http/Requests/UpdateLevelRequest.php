@@ -21,8 +21,24 @@ class UpdateLevelRequest extends FormRequest
      */
     public function rules(): array
     {
+        $levelId = $this->route('level')->id;
+        $groupKey = $this->group_key ?? $this->route('level')->group_key;
+
         return [
-            //
+            'group_key' => ['sometimes', 'string'],
+            'level_number' => [
+                'sometimes',
+                'integer',
+                'min:1',
+                "unique:levels,level_number,$levelId,id,group_key,$groupKey"
+            ],
+            'questions_count' => ['sometimes', 'integer', 'min:1'],
+            'order' => ['nullable', 'integer'],
+            'is_active' => ['boolean'],
+
+            'translations' => ['sometimes', 'array'],
+            'translations.ar.name' => ['required_with:translations', 'string'],
+            'translations.*.name' => ['required_with:translations', 'string'],
         ];
     }
 }
