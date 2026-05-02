@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('level_translations', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('level_id')->constrained()->cascadeOnDelete();
+            $table->string('locale');
+            $table->string('name');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }
