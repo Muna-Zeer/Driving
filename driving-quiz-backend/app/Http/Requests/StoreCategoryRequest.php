@@ -22,7 +22,13 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'image_url'=>'nullable|string',
+            'type'=>'required|string|max:50',
+            'order'=>'integer',
+            'is_active'=>'boolean',
+            'translations'=>'required|array',
+            'translations.ar.name'=>'required|string|max:50',
+            'translations.en.name'=>'required|string|max:50',
         ];
     }
 }
