@@ -23,6 +23,12 @@ class UpdateCategoryRequest extends FormRequest
     {
         return [
             //
+            'image_url' => 'nullable|string',
+            'type' => 'required|string|max:50',
+            'order' => 'integer',
+            'is_active' => 'boolean',
+            'translations' => 'sometimes|array',
+            'translations.*.name' => 'required|string|max:255',
         ];
     }
 }
