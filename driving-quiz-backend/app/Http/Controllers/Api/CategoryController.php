@@ -13,15 +13,15 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index():JsonResponse
+    public function index(): JsonResponse
     {
-        $categories = Category::with(['translation','levels'])
-        ->where('is_active',true)
-        ->orderBy('order')
-        ->get();
+        $categories = Category::with(['translation', 'levels'])
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
         return response()->json([
-            'status'=>true,
-            'data'=>CategoryResource::collection($categories)
+            'status' => true,
+            'data' => CategoryResource::collection($categories)
         ]);
     }
 
@@ -31,6 +31,8 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         //
+
+
     }
 
     /**
