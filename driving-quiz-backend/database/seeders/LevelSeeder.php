@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
 use App\Models\Level;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -13,9 +14,16 @@ class LevelSeeder extends Seeder
      */
        public function run(): void
     {
-        Level::factory()
+
+    $category=Category::first();
+    if(!$category){
+        $this->command->error("No categories found, please run category seeder");
+    }
+        $levels=Level::factory()
             ->count(500)
-            ->create()
+            ->create(
+                ['category_id' => $category->id]
+            )
             ->each(function ($level) {
 
                 // Arabic
@@ -31,6 +39,7 @@ class LevelSeeder extends Seeder
                     'name' => "Level {$level->level_number}",
                     'description' => "Driving theory practice questions - Level {$level->level_number}",
                 ]);
-            });
+                });
+
     }
 }
