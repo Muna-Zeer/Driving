@@ -23,11 +23,11 @@ public function login(Request $request)
         }
 
         // Generate the token
-        $token = $user->createToken('admin-token')->plainTextToken;
+        $token = $user->createToken('admin_token')->plainTextToken;
 
         return response()->json([
             'status' => true,
-            'token' => $token
+            'admin_token' => $token
         ]);
     }
 }
