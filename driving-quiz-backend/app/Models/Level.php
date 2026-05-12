@@ -14,6 +14,7 @@ class Level extends Model
         'group_key',
         'level_number',
         'questions_count',
+        'category_id',
         'order',
         'is_active'
     ];

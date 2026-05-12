@@ -13,10 +13,11 @@ return new class extends Migration
 {
     Schema::create('levels', function (Blueprint $table) {
         $table->id();
-    
+
         $table->string('group_key');
 
         $table->integer('level_number');
+        $table->foreignId('category_id')->constrained()->onDelete('cascade');
 
         $table->integer('questions_count')->default(30);
 
