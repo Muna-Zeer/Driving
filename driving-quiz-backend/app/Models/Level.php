@@ -14,6 +14,7 @@ class Level extends Model
         'group_key',
         'level_number',
         'questions_count',
+        'category_id',
         'order',
         'is_active'
     ];
@@ -27,4 +28,9 @@ class Level extends Model
     {
         return $this->hasMany(LevelTranslation::class);
     }
+
+    public function category()
+{
+    return $this->belongsTo(Category::class);
+}
 }
