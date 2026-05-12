@@ -29,7 +29,7 @@ class CategoryController extends Controller
      */
     public function index(): JsonResponse
     {
-        $categories = Category::with(['translation', 'levels'])
+        $categories = Category::with(['translations', 'levels'])
             ->where('is_active', true)
             ->orderBy('order')
             ->get();
@@ -85,7 +85,7 @@ class CategoryController extends Controller
 
         if ($request->has('translations')) {
             foreach ($request->translations as $locale => $data) {
-                $category->translation()->updateOrCreate(
+                $category->translations()->updateOrCreate(
                     ['locale' => $locale],
                     ['name' => $data['name']]
                 );
