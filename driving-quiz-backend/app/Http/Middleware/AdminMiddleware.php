@@ -13,8 +13,13 @@ class AdminMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
-    {
+   public function handle(Request $request, Closure $next): Response
+{
+    // Check if user is logged in AND has the admin flag
+    if (auth()->check() && auth()->user()->is_admin) {
         return $next($request);
     }
+
+    return response()->json(['message' => 'Forbidden: Admin access only'], 403);
+}
 }
