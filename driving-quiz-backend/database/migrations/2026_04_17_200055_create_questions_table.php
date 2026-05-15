@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('level_id')->constrained()->onDelete('cascade');
             $table->string('question_text');
             $table->string('image_url')->nullable();
+            $table->integer('order')->default(0);
             $table->timestamps();
         });
     }
