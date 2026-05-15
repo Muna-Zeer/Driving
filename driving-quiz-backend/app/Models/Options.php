@@ -5,7 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class QuesyionTranslation extends Model
+class Options extends Model
 {
     use HasFactory;
+    protected $fillable=['question_id','is_correct','identifier'];
 }
