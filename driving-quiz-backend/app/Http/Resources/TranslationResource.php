@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class QuestionResource extends JsonResource
+class TranslationResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -14,7 +14,10 @@ class QuestionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        
-        return parent::toArray($request);
+
+        return [
+            'locale'=>$this->locale,
+            'text'=>$this->text,
+        ];
     }
 }
