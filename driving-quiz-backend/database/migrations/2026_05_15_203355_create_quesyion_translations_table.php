@@ -6,25 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('question_translations', function (Blueprint $table) {
             $table->id();
-            $table->morphs('translatable');
+            $table->morphs('translatable'); 
             $table->string('locale')->index();
             $table->text('text');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('quesyion_translations');
+        Schema::dropIfExists('question_translations');
     }
 };
