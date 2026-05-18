@@ -6,63 +6,68 @@ use App\Http\Resources\QuestionResource;
 use App\Models\Question;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
+use Vinkla\Hashids\Facades\Hashids;
 
 class QuestionController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Decode Hashids private helper.
+     */
+    private function decodeId($id)
+    {
+        $decoded = Hashids::decode($id);
+        return !empty($decoded) ? $decoded[0] : null;
+    }
+
+    /**
+     * Display a listing of the resource (Admin overview with optional filter).
      */
     public function index(Request $request): JsonResponse
     {
+        $realLevelId = $request->query('level_id') ? $this->decodeId($request->query('level_id')) : null;
 
-        $realLevelId = $request->query('level_id') ?  $this->decodeId($request->query('level_id')) : null;
-        $questions = Question::with(['translations','options.translations'])
+        $questions = Question::with(['translations', 'options.translations'])
             ->when($realLevelId, function ($query) use ($realLevelId) {
                 return $query->where('level_id', $realLevelId);
-            })->orderBy('order', 'asc')
-            ->get();
-
-        return response()->json([
-            'status' => true,
-            'data' => QuestionResource::collection($questions)
-        ]);
-    }
-
-    public function getQuestionByLevel($levelId)
-    {
-        $realLevel_id = $this->decodeId($levelId);
-        $question = Question::with(['translations', 'options.translations'])
-            ->where('level_id', $realLevel_id)
+            })
             ->orderBy('order', 'asc')
             ->get();
+
         return response()->json([
             'status' => true,
-            'data' => QuestionResource::collection($question)
+            'data'   => QuestionResource::collection($questions)
         ]);
     }
+
     /**
-     * Show the form for creating a new resource.
+     * Mobile app dedicated fetch to load a level's complete sequential quiz grid.
      */
-    public function create()
+    public function getQuestionByLevel($levelId): JsonResponse
     {
-        //
+        $realLevelId = $this->decodeId($levelId);
+
+        $questions = Question::with(['translations', 'options.translations'])
+            ->where('level_id', $realLevelId)
+            ->orderBy('order', 'asc')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data'   => QuestionResource::collection($questions)
+        ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created resource in storage (Admin Only).
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         return DB::transaction(function () use ($request) {
-
             $levelId = $this->decodeId($request->level_id);
-
 
             $count = Question::where('level_id', $levelId)->count();
             if ($count >= 30) {
-
                 return response()->json([
                     'status'  => false,
                     'message' => 'This level is already full (30 questions)'
@@ -73,15 +78,15 @@ class QuestionController extends Controller
                 'level_id'  => $levelId,
                 'image_url' => $request->image_url,
                 'order'     => $request->order ?? ($count + 1),
-                'question_text' => $request->question_text
             ]);
 
-            // 4. Handle Question Text Polymorphic Translations
-            foreach ($request->question_text as $locale => $text) {
-                $question->translations()->create([
-                    'locale' => $locale,
-                    'text'   => $text
-                ]);
+            if ($request->has('question_text')) {
+                foreach ($request->question_text as $locale => $text) {
+                    $question->translations()->create([
+                        'locale' => $locale,
+                        'text'   => $text
+                    ]);
+                }
             }
 
             if ($request->has('options')) {
@@ -104,33 +109,26 @@ class QuestionController extends Controller
                 'status'  => true,
                 'message' => 'Question and options created successfully.',
                 'data'    => new QuestionResource($question->load(['translations', 'options.translations']))
-            ], 21);
-        });
+            ], 201);
+            });
     }
+
     /**
-     * Display the specified resource.
+     * Display the specified resource (Loads a single item details form into Admin dashboard).
      */
-    public function show($id)
+    public function show($id): JsonResponse
     {
-        $realId = $this->decoded($id);
+        $realId = $this->decodeId($id);
         $question = Question::with(['translations', 'options.translations'])->findOrFail($realId);
 
         return response()->json([
             'status' => true,
-            'data' => new QuestionResource($question)
+            'data'   => new QuestionResource($question)
         ]);
     }
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
+     * Update the specified resource in storage (Admin Only).
      */
     public function update(Request $request, $id): JsonResponse
     {
@@ -144,26 +142,28 @@ class QuestionController extends Controller
             if ($request->has('order')) {
                 $question->order = $request->order;
             }
-
             $question->save();
+
             if ($request->has('question_text')) {
                 foreach ($request->question_text as $locale => $text) {
                     $question->translations()->updateOrCreate(
-                        ['locale', $locale],
-                        ['text', $text]
+                        ['locale' => $locale],
+                        ['text' => $text]
                     );
                 }
             }
-            // Update the 4 options and their nested translations maps
+
+            // Fixed: Cleaned up option lookup queries and variable loops
             if ($request->has('options')) {
-                foreach ($request->options  as $optionData) {
-                    $option = $question->options->where('identifier', $optionData['identifier'])->first();
+                foreach ($request->options as $optionData) {
+                    $option = $question->options()->where('identifier', $optionData['identifier'])->first();
 
                     if ($option) {
                         $option->update([
                             'is_correct' => (bool)$optionData['is_correct']
                         ]);
-                        foreach ($optionData['translations'] as $locale->$text) {
+
+                        foreach ($optionData['translations'] as $locale => $text) {
                             $option->translations()->updateOrCreate(
                                 ['locale' => $locale],
                                 ['text' => $text]
@@ -172,6 +172,7 @@ class QuestionController extends Controller
                     }
                 }
             }
+
             return response()->json([
                 'status'  => true,
                 'message' => 'Question structural modifications updated successfully.',
@@ -181,12 +182,16 @@ class QuestionController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified resource from storage (Admin Only).
      */
     public function destroy($id): JsonResponse
     {
         $question = Question::findOrFail($this->decodeId($id));
         $question->delete();
-        return response()->json(['status' => true, 'message' => 'Deleted']);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Question deleted successfully'
+        ]);
     }
 }
