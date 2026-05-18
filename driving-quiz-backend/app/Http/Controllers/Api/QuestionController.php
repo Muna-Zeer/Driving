@@ -18,7 +18,7 @@ class QuestionController extends Controller
     {
 
         $realLevelId = $request->query('level_id') ?  $this->decodeId($request->query('level_id')) : null;
-        $questions = Question::with(['translations,options.translations'])
+        $questions = Question::with(['translations','options.translations'])
             ->when($realLevelId, function ($query) use ($realLevelId) {
                 return $query->where('level_id', $realLevelId);
             })->orderBy('order', 'asc')
