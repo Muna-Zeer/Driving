@@ -12,8 +12,14 @@ class QuestionResource extends JsonResource
     {
         $currentLocale = app()->getLocale();
 
-        $localizedQuestion = $this->translations->where('locale', $currentLocale)->first()?->text
-            ?? $this->translations->first()?->text;
+        // Extract translations cleanly
+        $translationsCollection = collect($this->relations['translations'] ?? $this->translations);
+        $localizedItem = $translationsCollection->firstWhere('locale', $currentLocale)
+            ?? $translationsCollection->first();
+        $localizedQuestion = $localizedItem ? $localizedItem->text : '';
+
+        // Safely extract options array directly
+        $optionsCollection = collect($this->relations['options'] ?? $this->options);
 
         return [
             'id'         => Hashids::encode($this->id),
@@ -22,8 +28,15 @@ class QuestionResource extends JsonResource
             'order'      => (int) $this->order,
             'question'   => $localizedQuestion,
 
-            'options'     => OptionResource::collection($this->whenLoaded('options')),
-            'all_question_translations' => TranslationResource::collection($this->whenLoaded('translations')),
+            // Directly process the collection to eliminate relationship lookup glitches
+            'options'    => OptionResource::collection($optionsCollection),
+
+            'all_question_translations' => $translationsCollection->map(function ($t) {
+                return [
+                    'locale' => $t->locale,
+                    'text'   => $t->text
+                ];
+            })->all(),
         ];
     }
 }

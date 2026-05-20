@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
 
 use App\Http\Resources\QuestionResource;
 use App\Models\Question;
@@ -23,16 +25,21 @@ class QuestionController extends Controller
     /**
      * Display a listing of the resource (Admin overview with optional filter).
      */
+    /**
+     * Display a listing of the resource (Admin overview with optional filter).
+     */
     public function index(Request $request): JsonResponse
     {
         $realLevelId = $request->query('level_id') ? $this->decodeId($request->query('level_id')) : null;
 
-        $questions = Question::with(['translations', 'options.translations'])
+        // CRITICAL: Force load options cleanly and safely
+        $questions = Question::with(['translations', 'options', 'options.translations'])
             ->when($realLevelId, function ($query) use ($realLevelId) {
                 return $query->where('level_id', $realLevelId);
             })
+            ->orderBy('level_id', 'asc')
             ->orderBy('order', 'asc')
-            ->get();
+            ->paginate(15);
 
         return response()->json([
             'status' => true,
@@ -47,7 +54,12 @@ class QuestionController extends Controller
     {
         $realLevelId = $this->decodeId($levelId);
 
-        $questions = Question::with(['translations', 'options.translations'])
+        if (!$realLevelId) {
+            return response()->json(['status' => false, 'message' => 'Invalid Level ID'], 400);
+        }
+
+        // CRITICAL: Force load options cleanly and safely
+        $questions = Question::with(['translations', 'options', 'options.translations'])
             ->where('level_id', $realLevelId)
             ->orderBy('order', 'asc')
             ->get();
@@ -57,22 +69,29 @@ class QuestionController extends Controller
             'data'   => QuestionResource::collection($questions)
         ]);
     }
-
     /**
      * Store a newly created resource in storage (Admin Only).
      */
     public function store(Request $request): JsonResponse
     {
-        return DB::transaction(function () use ($request) {
-            $levelId = $this->decodeId($request->level_id);
+        $levelId = $this->decodeId($request->level_id);
 
-            $count = Question::where('level_id', $levelId)->count();
-            if ($count >= 30) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'This level is already full (30 questions)'
-                ], 422);
-            }
+        if (!$levelId) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'The provided level_id is invalid or could not be decoded.'
+            ], 422);
+        }
+
+        $count = Question::where('level_id', $levelId)->count();
+        if ($count >= 60) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'This level is already full (30 questions)'
+            ], 422);
+        }
+
+        return DB::transaction(function () use ($request, $levelId, $count) {
 
             $question = Question::create([
                 'level_id'  => $levelId,
@@ -110,9 +129,8 @@ class QuestionController extends Controller
                 'message' => 'Question and options created successfully.',
                 'data'    => new QuestionResource($question->load(['translations', 'options.translations']))
             ], 201);
-            });
+        });
     }
-
     /**
      * Display the specified resource (Loads a single item details form into Admin dashboard).
      */

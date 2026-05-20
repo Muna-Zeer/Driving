@@ -3,7 +3,7 @@
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\LevelController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\Api\QuestionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +44,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // Public routes (Guests can see categories)
-Route::middleware(['auth:sanctum', 'is_admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('questions', QuestionController::class);
 });
