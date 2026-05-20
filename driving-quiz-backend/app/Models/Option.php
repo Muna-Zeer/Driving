@@ -10,12 +10,13 @@ class Option extends Model
     use HasFactory;
 
     protected $table = 'options';
-
     protected $fillable = ['question_id', 'is_correct', 'identifier'];
 
-    /**
-     * Polymorphic translations relationship for multi-language option choices (A, B, C, D)
-     */
+    public function question()
+    {
+        return $this->belongsTo(Question::class);
+    }
+
     public function translations()
     {
         return $this->morphMany(QuestionTranslation::class, 'translatable');
