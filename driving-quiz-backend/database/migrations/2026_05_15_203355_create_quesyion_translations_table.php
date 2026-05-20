@@ -8,17 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('questions', function (Blueprint $table) {
+        Schema::create('question_translations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('level_id')->constrained()->onDelete('cascade');
-            $table->string('image_url')->nullable();
-            $table->integer('order')->default(0);
+            $table->morphs('translatable'); 
+            $table->string('locale')->index();
+            $table->text('text');
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('questions');
+        Schema::dropIfExists('question_translations');
     }
 };
