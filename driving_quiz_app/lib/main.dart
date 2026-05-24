@@ -1,3 +1,4 @@
+import 'package:driving_quiz_app/views/CategoriesScreen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -12,7 +13,7 @@ class DrivingQuizApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const MainCategoryScreen(),
+      home: const CategoriesScreen(),
     );
   }
 }

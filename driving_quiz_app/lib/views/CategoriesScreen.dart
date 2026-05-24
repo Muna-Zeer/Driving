@@ -86,7 +86,7 @@ Widget _buildMobileDrawer() {
       child: ListView(padding: EdgeInsets.zero, children: [
     const DrawerHeader(
         decoration: BoxDecoration(color: AppColors.primaryGreen),
-        child: const Text('القائمة',
+        child: Text('القائمة',
             style: TextStyle(color: AppColors.surface, fontSize: 24))),
     ListTile(title: const Text('الرئيسية'), onTap: () {}),
     ListTile(title: const Text('أسئلة التووريا'), onTap: () {}),
@@ -96,52 +96,55 @@ Widget _buildMobileDrawer() {
 }
 
 // Your cleanly styled Category Item block
-  Widget _buildCategoryCard(CategoryModel category) {
-    return Card(
-      color: AppColors.surface,
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4.0),
-        side: const BorderSide(color: AppColors.border, width: 1),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          // Add routing here later!
-        },
-        child: Column(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: category.Image_Url.isNotEmpty
-                    ? Image.network(
-                        category.Image_Url,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.image_not_supported, size: 40, color: AppColors.textSecondary),
-                      )
-                    : const Icon(Icons.directions_car, size: 40, color: AppColors.textSecondary),
-              ),
+Widget _buildCategoryCard(CategoryModel category) {
+  return Card(
+    color: AppColors.surface,
+    elevation: 2,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(4.0),
+      side: const BorderSide(color: AppColors.border, width: 1),
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: () {
+        // Add routing here later!
+      },
+      child: Column(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: category.Image_Url.isNotEmpty
+                  ? Image.network(
+                      category.Image_Url,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.image_not_supported,
+                          size: 40,
+                          color: AppColors.textSecondary),
+                    )
+                  : const Icon(Icons.directions_car,
+                      size: 40, color: AppColors.textSecondary),
             ),
-            Container(
-              width: double.infinity,
-              color: AppColors.primaryGreen, 
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                category.name,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.textLight, 
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+          ),
+          Container(
+            width: double.infinity,
+            color: AppColors.primaryGreen,
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              category.name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.textLight,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
