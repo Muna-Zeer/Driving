@@ -1,5 +1,5 @@
 class APIService {
   static String getBaseUrl() {
-    return 'http://10.76.113.197:8000/api';
+    return 'http://127.0.0.1:8000/api';
   }
 }
