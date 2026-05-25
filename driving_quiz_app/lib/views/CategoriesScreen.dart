@@ -1,5 +1,4 @@
 import 'package:driving_quiz_app/models/CategoryModel.dart';
-import 'package:driving_quiz_app/services/APIService.dart';
 import 'package:driving_quiz_app/services/CategoryService.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
@@ -28,7 +27,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         textDirection: TextDirection.rtl,
         child: Scaffold(
           backgroundColor: AppColors.background,
-          appBar: CustomResponsiveNavbar(),
+          appBar:const CustomResponsiveNavbar(),
           endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
               ? _buildMobileDrawer()
               : null,
