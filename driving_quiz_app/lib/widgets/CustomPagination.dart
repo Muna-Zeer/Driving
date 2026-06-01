@@ -20,7 +20,6 @@ class CustomPagination extends StatelessWidget {
 
     final List<Widget> pageButtons = [];
 
-    // Left Arrow / Previous Page (Automatically flips direction in RTL environments)
     pageButtons.add(
       _buildArrowButton(
         icon: Icons.chevron_left,
@@ -29,9 +28,7 @@ class CustomPagination extends StatelessWidget {
       ),
     );
 
-    // Dynamic Page Numbers
     for (int i = 1; i <= totalPages; i++) {
-      // Logic to limit visible pages on small screens (e.g., show around current page)
       if (totalPages > 5 && (i - currentPage).abs() > 2 && i != 1 && i != totalPages) {
         if (pageButtons.last is! Text && (i == 2 || i == totalPages - 1)) {
           pageButtons.add(const Padding(

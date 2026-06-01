@@ -15,6 +15,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   final CategoryAPI _apiService = CategoryAPI();
   late Future<List<CategoryModel>> _categoriesFuture;
 
+  int _currentPage = 1;
+  final int _itemsPerPage = 6;
+  final List<String> _allCateories =
+      List.generate(24, (index) => 'الفئة رقم ${index + 1}');
+
   @override
   void initState() {
     super.initState();
@@ -23,11 +28,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final int totalPages = (_allCateories.length / _itemsPerPage).ceil();
+
+    final int startIndex = (_currentPage - 1) * _itemsPerPage;
+    final int endIndex = startIndex + _itemsPerPage;
+
+    final List<String> visibleCategories = _allCateories.sublist(
+      startIndex,
+      endIndex > _allCateories.length ? _allCateories.length : endIndex,
+    );
+
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
           backgroundColor: AppColors.background,
-          appBar:const CustomResponsiveNavbar(),
+          appBar: const CustomResponsiveNavbar(),
           endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
               ? _buildMobileDrawer()
               : null,
@@ -69,7 +84,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                         crossAxisSpacing: 16.0,
                                         mainAxisSpacing: 16.0,
                                         childAspectRatio: 1.2),
-                                itemCount: categories.length,
+                                itemCount: visibleCategories.length,
                                 itemBuilder: (context, index) {
                                   return _buildCategoryCard(categories[index]);
                                 },
@@ -94,7 +109,7 @@ Widget _buildMobileDrawer() {
   ]));
 }
 
-// Your cleanly styled Category Item block
+
 Widget _buildCategoryCard(CategoryModel category) {
   return Card(
     color: AppColors.surface,
@@ -106,7 +121,7 @@ Widget _buildCategoryCard(CategoryModel category) {
     clipBehavior: Clip.antiAlias,
     child: InkWell(
       onTap: () {
-        // Add routing here later!
+      
       },
       child: Column(
         children: [
