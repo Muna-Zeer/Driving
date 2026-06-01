@@ -1,6 +1,7 @@
 import 'package:driving_quiz_app/models/CategoryModel.dart';
 import 'package:driving_quiz_app/services/CategoryService.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
+import 'package:driving_quiz_app/widgets/CustomPagination.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +18,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   int _currentPage = 1;
   final int _itemsPerPage = 6;
-  final List<String> _allCateories =
+  final List<String> _allCategories =
       List.generate(24, (index) => 'الفئة رقم ${index + 1}');
 
   @override
@@ -28,16 +29,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final int totalPages = (_allCateories.length / _itemsPerPage).ceil();
-
-    final int startIndex = (_currentPage - 1) * _itemsPerPage;
-    final int endIndex = startIndex + _itemsPerPage;
-
-    final List<String> visibleCategories = _allCateories.sublist(
-      startIndex,
-      endIndex > _allCateories.length ? _allCateories.length : endIndex,
-    );
-
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
@@ -68,14 +59,29 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     return const Center(
                         child: Text('لا توجد اقسام  متاحةحاليا'));
                   }
-                  final categories = snapshot.data!;
+                  final allCategories = snapshot.data!;
+                  final int totalPages =
+                      (allCategories.length / _itemsPerPage).ceil();
+
+                  final int startIndex = (_currentPage - 1) * _itemsPerPage;
+                  final int endIndex = startIndex + _itemsPerPage;
+
+                  final List<CategoryModel> visibleCategories =
+                      allCategories.sublist(
+                    startIndex,
+                    endIndex > allCategories.length
+                        ? allCategories.length
+                        : endIndex,
+                  );
+
                   return SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16.0, vertical: 24),
                       child: Center(
-                          child: Container(
-                              constraints: const BoxConstraints(maxWidth: 1200),
-                              child: GridView.builder(
+                        child: Container(
+                            constraints: const BoxConstraints(maxWidth: 1200),
+                            child: Column(children: [
+                              GridView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 gridDelegate:
@@ -86,9 +92,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                         childAspectRatio: 1.2),
                                 itemCount: visibleCategories.length,
                                 itemBuilder: (context, index) {
-                                  return _buildCategoryCard(categories[index]);
+                                  return _buildCategoryCard(
+                                      visibleCategories[index]);
                                 },
-                              ))));
+                              ),
+                              const SizedBox(height: 24),
+                              CustomPagination(
+                                  currentPage: _currentPage,
+                                  totalPages: totalPages,
+                                  onPageChanged: (newPage) {
+                                    setState(() {
+                                      _currentPage = newPage;
+                                    });
+                                  }),
+                            ])),
+                      ));
                 });
           }),
         ));
@@ -96,6 +114,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 }
 
 Widget _buildMobileDrawer() {
+  
   return Drawer(
       child: ListView(padding: EdgeInsets.zero, children: [
     const DrawerHeader(
@@ -109,7 +128,6 @@ Widget _buildMobileDrawer() {
   ]));
 }
 
-
 Widget _buildCategoryCard(CategoryModel category) {
   return Card(
     color: AppColors.surface,
@@ -120,9 +138,7 @@ Widget _buildCategoryCard(CategoryModel category) {
     ),
     clipBehavior: Clip.antiAlias,
     child: InkWell(
-      onTap: () {
-      
-      },
+      onTap: () {},
       child: Column(
         children: [
           Expanded(
