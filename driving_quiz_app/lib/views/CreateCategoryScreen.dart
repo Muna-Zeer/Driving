@@ -1,4 +1,5 @@
 import 'package:driving_quiz_app/widgets/AppColors.dart';
+import 'package:driving_quiz_app/widgets/CustomTExtField.dart';
 import 'package:flutter/material.dart';
 
 class CreateCategoryScreen extends StatefulWidget {
@@ -44,35 +45,54 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(textDirection: TextDirection.rtl, child: 
-    Scaffold(appBar: AppBar(
-      title: const Text('اضافة قسم جديد'),
-      backgroundColor: AppColors.surface,
-      foregroundColor: AppColors.deepForest,
-      elevation: 1,
-    ),
-    body:Center(
-      child:Container(
-        constraints: const BoxConstraints(maxHeight: 600),
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-              key: _formKey,
-              child:ListView(
-                children:[
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'اسم القسم*'
-                      ,border:OutlineInputBorder(),
-
-                    ),
-                  )
-
-                ],
-              )
-              )
-      )
-    )
-    ));
+    return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+            appBar: AppBar(
+              title: const Text('اضافة قسم جديد'),
+              backgroundColor: AppColors.surface,
+              foregroundColor: AppColors.deepForest,
+              elevation: 1,
+            ),
+            body: Center(
+                child: Container(
+                    constraints: const BoxConstraints(maxHeight: 600),
+                    padding: const EdgeInsets.all(24.0),
+                    child: Form(
+                        key: _formKey,
+                        child: ListView(
+                          children: [
+                            CustomTextField(
+                              controller: _nameController,
+                             
+                                labelText: 'اسم القسم*',
+                                validator: (value)=>
+                                value==null||value.trim().isEmpty?'يرجى إدخال اسم القسم' : null,
+                            ),
+                            CustomTextField(
+                    controller: _imageURLController,
+                    labelText: 'رابط الصورة (Image URL)',
+                    hintText: 'https://example.com/image.png',
+                  ),
+                  CustomTextField(
+                    controller: _typeController,
+                    labelText: 'نوع القسم (Type)',
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty ? 'يرجى تحديد النوع' : null,
+                  ),
+                  CustomTextField(
+                    controller: _orderController,
+                    labelText: 'الترتيب (Order)',
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'يرجى إدخال الترتيب الرقمي';
+                      if (int.tryParse(value) == null) return 'الترتيب يجب أن يكون رقماً صحيحاً';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  
+                          ],
+                        ))))));
   }
 }
