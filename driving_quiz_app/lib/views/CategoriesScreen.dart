@@ -15,11 +15,10 @@ class CategoriesScreen extends StatefulWidget {
 class _CategoriesScreenState extends State<CategoriesScreen> {
   final CategoryAPI _apiService = CategoryAPI();
   late Future<List<CategoryModel>> _categoriesFuture;
-
+  bool isAdmin = true;
   int _currentPage = 1;
   final int _itemsPerPage = 6;
-  final List<String> _allCategories =
-      List.generate(24, (index) => 'الفئة رقم ${index + 1}');
+ 
 
   @override
   void initState() {
@@ -34,6 +33,20 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         child: Scaffold(
           backgroundColor: AppColors.background,
           appBar: const CustomResponsiveNavbar(),
+          floatingActionButton: isAdmin 
+      floatingActionButton: isAdmin 
+      ? FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CreateCategoryScreen()),
+            );
+          },
+          backgroundColor: AppColors.primaryGreen,
+          icon: const Icon(Icons.add, color: Colors.white),
+          label: const Text('إضافة قسم جديد', style: TextStyle(color: Colors.white)),
+        )
+      : null,
           endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
               ? _buildMobileDrawer()
               : null,
@@ -92,8 +105,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                         childAspectRatio: 1.2),
                                 itemCount: visibleCategories.length,
                                 itemBuilder: (context, index) {
-                                  return _buildCategoryCard(
-                                      visibleCategories[index]);
+                                  return _buildCategoryCard(context,
+                                      visibleCategories[index], isAdmin);
                                 },
                               ),
                               const SizedBox(height: 24),
@@ -114,7 +127,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 }
 
 Widget _buildMobileDrawer() {
-  
   return Drawer(
       child: ListView(padding: EdgeInsets.zero, children: [
     const DrawerHeader(
@@ -128,7 +140,8 @@ Widget _buildMobileDrawer() {
   ]));
 }
 
-Widget _buildCategoryCard(CategoryModel category) {
+Widget _buildCategoryCard(
+    BuildContext context, CategoryModel category, bool isAdmin) {
   return Card(
     color: AppColors.surface,
     elevation: 2,
@@ -139,40 +152,75 @@ Widget _buildCategoryCard(CategoryModel category) {
     clipBehavior: Clip.antiAlias,
     child: InkWell(
       onTap: () {},
-      child: Column(
+      child: Stack(
         children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: category.Image_Url.isNotEmpty
-                  ? Image.network(
-                      category.Image_Url,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.image_not_supported,
-                          size: 40,
-                          color: AppColors.textSecondary),
-                    )
-                  : const Icon(Icons.directions_car,
-                      size: 40, color: AppColors.textSecondary),
-            ),
-          ),
-          Container(
-            width: double.infinity,
-            color: AppColors.primaryGreen,
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(
-              category.name,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textLight,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+          Column(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: category.Image_Url.isNotEmpty
+                      ? Image.network(
+                          category.Image_Url,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.image_not_supported,
+                                  size: 40, color: AppColors.textSecondary),
+                        )
+                      : const Icon(Icons.directions_car,
+                          size: 40, color: AppColors.textSecondary),
+                ),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+              Container(
+                width: double.infinity,
+                color: AppColors.primaryGreen,
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  category.name,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.textLight,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
+          if (isAdmin)
+            Positioned(
+              top: 4,
+              left: 4,
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: AppColors.textLight,
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(Icons.edit,
+                          size: 16,
+                          color: AppColors
+                              .primaryGreen), // Changed icon color so it is visible against a white background
+                      onPressed: () {},
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.white.withAlpha(230),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon:
+                          const Icon(Icons.delete, size: 16, color: Colors.red),
+                      onPressed: () {},
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     ),
