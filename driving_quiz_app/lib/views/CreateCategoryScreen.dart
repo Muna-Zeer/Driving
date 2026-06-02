@@ -18,7 +18,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
       TextEditingController(text: 'standard');
   final TextEditingController _orderController =
       TextEditingController(text: '0');
-  bool isActive = true;
+  bool _isActive = true;
   @override
   void dispose() {
     _nameController.dispose();
@@ -35,7 +35,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
           _imageURLController.text.isEmpty ? null : _imageURLController.text,
       "type": _typeController.text,
       "order": int.tryParse(_orderController.text) ?? 0,
-      "is_active": isActive
+      "is_active": _isActive
     };
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('تمت إضافة الفئة بنجاح')),
@@ -60,39 +60,78 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
                     padding: const EdgeInsets.all(24.0),
                     child: Form(
                         key: _formKey,
-                        child: ListView(
-                          children: [
-                            CustomTextField(
-                              controller: _nameController,
-                             
-                                labelText: 'اسم القسم*',
-                                validator: (value)=>
-                                value==null||value.trim().isEmpty?'يرجى إدخال اسم القسم' : null,
+                        child: ListView(children: [
+                          CustomTextField(
+                            controller: _nameController,
+                            labelText: 'اسم القسم*',
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? 'يرجى إدخال اسم القسم'
+                                    : null,
+                          ),
+                          CustomTextField(
+                            controller: _imageURLController,
+                            labelText: 'رابط الصورة (Image URL)',
+                            hintText: 'https://example.com/image.png',
+                          ),
+                          CustomTextField(
+                            controller: _typeController,
+                            labelText: 'نوع القسم (Type)',
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? 'يرجى تحديد النوع'
+                                    : null,
+                          ),
+                          CustomTextField(
+                            controller: _orderController,
+                            labelText: 'الترتيب (Order)',
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty)
+                                return 'يرجى إدخال الترتيب الرقمي';
+                              if (int.tryParse(value) == null)
+                                return 'الترتيب يجب أن يكون رقماً صحيحاً';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          Card(
+                            color: AppColors.surface,
+                            elevation: 1,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              side: const BorderSide(
+                                  color: AppColors.border, width: 1),
                             ),
-                            CustomTextField(
-                    controller: _imageURLController,
-                    labelText: 'رابط الصورة (Image URL)',
-                    hintText: 'https://example.com/image.png',
-                  ),
-                  CustomTextField(
-                    controller: _typeController,
-                    labelText: 'نوع القسم (Type)',
-                    validator: (value) =>
-                        value == null || value.trim().isEmpty ? 'يرجى تحديد النوع' : null,
-                  ),
-                  CustomTextField(
-                    controller: _orderController,
-                    labelText: 'الترتيب (Order)',
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return 'يرجى إدخال الترتيب الرقمي';
-                      if (int.tryParse(value) == null) return 'الترتيب يجب أن يكون رقماً صحيحاً';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  
-                          ],
-                        ))))));
+                            child: SwitchListTile(
+                                title: const Text('حالة التفعيل (Is Active)'),
+                                subtitle: const Text(
+                                    'تحديد ما إذا كان القسم سيظهر للمستخدمين مباشرة أم لا'),
+                                activeColor: AppColors.primaryGreen,
+                                value: _isActive,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isActive = value;
+                                  });
+                                }),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: _submitData,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGreen,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                            ),
+                            child: const Text(
+                              'حفظ وإدراج القسم',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ]))))));
   }
 }
