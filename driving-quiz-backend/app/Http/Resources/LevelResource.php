@@ -8,7 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class LevelResource extends JsonResource
 {
-<<<<<<< HEAD
+
     public function toArray(Request $request): array
     {
         $currentLocale = app()->getLocale();
