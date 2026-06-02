@@ -1,5 +1,6 @@
 import 'package:driving_quiz_app/models/CategoryModel.dart';
 import 'package:driving_quiz_app/services/CategoryService.dart';
+import 'package:driving_quiz_app/views/CreateCategoryScreen.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomPagination.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
@@ -18,7 +19,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   bool isAdmin = true;
   int _currentPage = 1;
   final int _itemsPerPage = 6;
- 
 
   @override
   void initState() {
@@ -33,20 +33,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         child: Scaffold(
           backgroundColor: AppColors.background,
           appBar: const CustomResponsiveNavbar(),
-          floatingActionButton: isAdmin 
-      floatingActionButton: isAdmin 
-      ? FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CreateCategoryScreen()),
-            );
-          },
-          backgroundColor: AppColors.primaryGreen,
-          icon: const Icon(Icons.add, color: Colors.white),
-          label: const Text('إضافة قسم جديد', style: TextStyle(color: Colors.white)),
-        )
-      : null,
+          floatingActionButton: isAdmin
+              ? FloatingActionButton.extended(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const CreateCategoryScreen()),
+                    );
+                  },
+                  backgroundColor: AppColors.primaryGreen,
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text('إضافة قسم جديد',
+                      style: TextStyle(color: Colors.white)),
+                )
+              : null,
           endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
               ? _buildMobileDrawer()
               : null,
