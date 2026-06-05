@@ -9,68 +9,70 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    // handles both the zero-click anonymous authentication and the conversion process.
 
-    public function login(Request $request)
+    public function guestAuthenticate(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-            'device_id' => 'required'
+            'device_id' => 'required|string'
         ]);
 
 
         $user = User::firstOrCreate(
             ['device_id' => $request->device_id],
-            ['name' => 'زائر مجهول', 'role' => 'guest']
+            [
+                'name' => 'زائر مجهول',
+                'role' => 'guest'
+            ]
         );
 
-        $token = $user->createToken('guest')->plainTextToken;
+        $token = $user->createToken('guest_token')->plainTextToken;
+
         return response()->json([
-            'message' => 'Authenticated successfully as guest',
+            'status' => 'success',
             'token' => $token,
-            'role' => $user->role
+            'role' => $user->role,
+            'name' => $user->name
         ], 200);
     }
 
-    public function UpgradesGuestAccount(Request $request)
+    // 2. ترقية حساب الزائر إلى مستخدم دائم (عند محاولة إضافة قسم أو سؤال)
+    public function upgradeGuestAccount(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user(); // جلب المستخدم الحالي من التوكن
+
         if (!$user || $user->role !== 'guest') {
-            return response()->json(['error' => 'Invalid action context'], 400);
+            return response()->json(['error' => 'إجراء غير صالح أو غير مسموح به'], 400);
         }
 
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|unique|:users,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
-            'name' => 'required|string'
+        ], [
+            'email.unique' => 'البريد الإلكتروني مسجل بالفعل لدينا.',
+            'password.min' => 'كلمة المرور يجب ألا تقل عن 6 أحرف.',
         ]);
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+
+
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'device_id' => null
+            'device_id' => null 
         ]);
-        return response()->json([
 
-            'message' => 'Account successfully upgraded',
-            'user' => $user
+        return response()->json([
+            'status' => 'success',
+            'message' => 'تم ترقية الحساب بنجاح',
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role
+            ]
         ], 200);
     }
-    //     if (!$user || !Hash::check($request->password, $user->password)) {
-    //         return response()->json(['message' => 'Invalid credentials'], 401);
-    //     }
-
-    //     // Generate the token
-    //     $token = $user->createToken('admin_token')->plainTextToken;
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'admin_token' => $token
-    //     ]);
-    // }
-
 }

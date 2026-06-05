@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter  
 
   # The "Big Three" for your Laravel connection
   http: ^1.2.0                 # To talk to your Laravel API
@@ -20,8 +22,7 @@ dependencies:
   shared_preferences: ^2.2.2   # To save progress (e.g., Level 1 completed)
   google_fonts: ^6.2.1         # To make the app look professional
   cupertino_icons: ^1.0.6
-  flutter_localizations:
-    sdk: flutter
+  
 
 dev_dependencies:
   flutter_test:
