@@ -62,7 +62,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'device_id' => null 
+            'device_id' => null
         ]);
 
         return response()->json([
@@ -75,4 +75,24 @@ class AuthController extends Controller
             ]
         ], 200);
     }
+    public function login(Request $request) {
+   
+    if ($request->has('device_id') && !$request->has('email')) {
+        $user = User::firstOrCreate(
+            ['device_id' => $request->device_id],
+            ['role' => 'guest', 'name' => 'زائر']
+        );
+        $token = $user->createToken('auth_token')->plainTextToken;
+        return response()->json(['token' => $token, 'role' => 'guest']);
+    }
+
+
+    $user = User::where('email', $request->email)->first();
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json(['message' => 'بيانات الدخول غير صحيحة'], 401);
+    }
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+    return response()->json(['token' => $token, 'role' => $user->role]);
+}
 }
