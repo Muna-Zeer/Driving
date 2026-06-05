@@ -1,7 +1,10 @@
 import 'package:driving_quiz_app/views/CategoriesScreen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(const DrivingQuizApp());
 }
 
@@ -12,6 +15,17 @@ class DrivingQuizApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: 'منصة تعليم السياقة',
+      locale: const Locale('ar', ''),
+      supportedLocales: const [
+        Locale('ar', ''),
+        Locale('en', ''),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CategoriesScreen(),
     );
