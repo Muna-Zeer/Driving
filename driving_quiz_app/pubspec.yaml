@@ -1,6 +1,5 @@
 name: driving_quiz_app
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 description: A new Flutter project for driving theory practice.
 publish_to: 'none' 
 
@@ -9,39 +8,19 @@ version: 1.0.0+1
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
-=======
-description: "A new Flutter project."
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-=======
-description: A new Flutter project for driving theory practice.
-publish_to: 'none' 
->>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
 
-version: 1.0.0+1
-
-environment:
-  sdk: '>=3.0.0 <4.0.0'
-
-<<<<<<< HEAD
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
 # dependencies can be manually updated by changing the version numbers below to
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
->>>>>>> b650c70 (Generate new folders and set up flutter app well)
-=======
->>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
+
 dependencies:
   flutter:
     sdk: flutter
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
+
   # The "Big Three" for your Laravel connection
   http: ^1.2.0                 # To talk to your Laravel API
   provider: ^6.1.1             # To manage scores and levels
@@ -51,20 +30,11 @@ dependencies:
   shared_preferences: ^2.2.2   # To save progress (e.g., Level 1 completed)
   google_fonts: ^6.2.1         # To make the app look professional
   cupertino_icons: ^1.0.6
-<<<<<<< HEAD
-=======
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
->>>>>>> b650c70 (Generate new folders and set up flutter app well)
-=======
->>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-<<<<<<< HEAD
-<<<<<<< HEAD
   flutter_lints: ^3.0.0
   flutter_launcher_icons: "^0.13.1"
 
@@ -76,43 +46,25 @@ flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/icon.png"
-<<<<<<< HEAD
-<<<<<<< HEAD
+
+
   adaptive_icon_foreground: "assets/icon.png"
-=======
-  adaptive_icon_foreground: "assets/logo.png"
->>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
-=======
-  adaptive_icon_foreground: "assets/icon.png"
->>>>>>> 64d1dbc (Editing the logo of app)
+
   uses-material-design: true
 
   # Add this section to allow the app to see your images
   assets:
-<<<<<<< HEAD
-<<<<<<< HEAD
+
     - assets/icon.png
     - assets/images/ # This will include all images you put in this folder
-=======
-=======
-  flutter_lints: ^3.0.0
->>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
 
-flutter:
-  uses-material-design: true
 
-<<<<<<< HEAD
->>>>>>> b650c70 (Generate new folders and set up flutter app well)
-=======
 
->>>>>>> e882d64 (`Added dependencies for path_provider, shared_preferences, and sqflite`)
-=======
     - assets/logo.png
-=======
+
     - assets/icon.png
->>>>>>> 64d1dbc (Editing the logo of app)
-    - assets/images/ # This will include all images you put in this folder
->>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
+    - assets/images/
+     # This will include all images you put in this folder
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

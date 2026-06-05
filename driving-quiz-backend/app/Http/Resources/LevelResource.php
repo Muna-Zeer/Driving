@@ -8,7 +8,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class LevelResource extends JsonResource
 {
-<<<<<<< HEAD
     public function toArray(Request $request): array
     {
         $currentLocale = app()->getLocale();
@@ -30,15 +29,6 @@ class LevelResource extends JsonResource
 
             'questions'       => QuestionResource::collection($this->whenLoaded('questions')),
         ];
-=======
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(Request $request): array
-    {
-        return parent::toArray($request);
->>>>>>> f76b1ed (build  the main structure of level operation)
-    }
+
+        }
 }
