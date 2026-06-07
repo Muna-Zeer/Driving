@@ -1,3 +1,4 @@
+import 'package:driving_quiz_app/views/SignUp.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,16 @@ class CustomResponsiveNavbar extends StatelessWidget
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildNavbarItem('الرئيسية', isActive: true),
+                    _buildNavbarItem(
+                      'تسجيل الدخول',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const SignUpScreen()),
+                        );
+                      },
+                    ),
                     _buildNavbarItem('أسئلة التورق'),
                     _buildNavbarItem('دراسة التورق'),
                     _buildNavbarItem('الامتحان التجريبي'),
@@ -60,7 +71,8 @@ class CustomResponsiveNavbar extends StatelessWidget
     );
   }
 
-  Widget _buildNavbarItem(String title, {bool isActive = false}) {
+  Widget _buildNavbarItem(String title,
+      {bool isActive = false, VoidCallback? onTap}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: TextButton(
@@ -68,7 +80,7 @@ class CustomResponsiveNavbar extends StatelessWidget
           foregroundColor:
               isActive ? AppColors.primaryGreen : AppColors.textPrimary,
         ),
-        onPressed: () {},
+        onPressed: onTap ?? () {},
         child: Text(
           title,
           style: TextStyle(
