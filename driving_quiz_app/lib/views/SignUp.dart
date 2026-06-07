@@ -78,7 +78,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "مرحباً بك في منصة القيادة 🚗",
+                                "مرحباً بك في منصة القيادة ",
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 28,
@@ -113,7 +113,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      "إنشاء حساب جديد ✨",
+                      "إنشاء حساب جديد ",
                       style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
@@ -133,5 +133,124 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               );
             })));
+  }
+
+  Widget _buildSignUpForm() {
+    return Form(
+      key: _formKey,
+      child: ListView(
+        shrinkWrap: true,
+        physics: const ClampingScrollPhysics(),
+        children: [
+          // حقل الاسم
+          TextFormField(
+            controller: _nameController,
+            decoration: const InputDecoration(
+              labelText: 'الاسم الكامل *',
+              prefixIcon:
+                  Icon(Icons.person_outline, color: AppColors.primaryGreen),
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) => value == null || value.trim().isEmpty
+                ? 'يرجى إدخال اسمك الكامل'
+                : null,
+          ),
+          const SizedBox(height: 20),
+
+          // حقل البريد الإلكتروني
+          TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(
+              labelText: 'البريد الإلكتروني *',
+              prefixIcon:
+                  Icon(Icons.email_outlined, color: AppColors.primaryGreen),
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty)
+                return 'يرجى إدخال البريد الإلكتروني';
+              if (!value.contains('@')) return 'يرجى إدخال بريد إلكتروني صحيح';
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+
+          TextFormField(
+            controller: _passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: 'كلمة المرور *',
+              prefixIcon:
+                  Icon(Icons.lock_outline, color: AppColors.primaryGreen),
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) => value == null || value.length < 6
+                ? 'كلمة المرور يجب أن تكون 6 أحرف أو أكثر'
+                : null,
+          ),
+          const SizedBox(height: 24),
+
+          // نظام اختيار الصلاحيات (Roles Dropdown) بناءً على الـ Enum
+          const Text(
+            "نوع الحساب / الصلاحية",
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(4),
+              color: AppColors.surface,
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<UserRoles>(
+                value: _selectedRole,
+                isExpanded: true,
+                items: const [
+                  DropdownMenuItem(
+                    value: UserRoles.guest,
+                    child: Text("ممارس / زائر عادي (Guest)"),
+                  ),
+                  DropdownMenuItem(
+                    value: UserRoles.admin,
+                    child: Text("مشرف محتوى / مدرب (Admin)"),
+                  ),
+                ],
+                onChanged: (UserRoles? newRole) {
+                  if (newRole != null) {
+                    setState(() {
+                      _selectedRole = newRole;
+                    });
+                  }
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          ElevatedButton(
+            onPressed: _signUpSubmit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text(
+              'إنشاء الحساب',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
