@@ -1,5 +1,6 @@
 import 'package:driving_quiz_app/userRoles.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
+import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:flutter/material.dart';
 
@@ -43,6 +44,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
+            appBar: const CustomResponsiveNavbar(),
             backgroundColor: AppColors.background,
             body: LayoutBuilder(builder: (context, constraints) {
               if (BreakPoint.isDesktop(constraints.maxWidth) ||
@@ -50,7 +52,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 return Center(
                   child: Container(
                     constraints:
-                        const BoxConstraints(maxWidth: 1000, maxHeight: 600),
+                        const BoxConstraints(maxWidth: 600, maxHeight: 600),
                     margin: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                         color: AppColors.surface,
@@ -63,39 +65,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           )
                         ]),
                     child: Row(children: [
-                      Expanded(
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: AppColors.primaryGreen,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(16),
-                              bottomLeft: Radius.circular(16),
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(32),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "مرحباً بك في منصة القيادة ",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                "أنشئ حسابك الآن لتتمكن من حفظ تقدمك، ومشاركة الأسئلة والأقسام مع الممارسين الآخرين.",
-                                style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                    height: 1.5),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      // Expanded(
+                      //   child: Container(
+                      //     decoration: const BoxDecoration(
+                      //       color: AppColors.primaryGreen,
+                      //       borderRadius: BorderRadius.only(
+                      //         topLeft: Radius.circular(16),
+                      //         bottomLeft: Radius.circular(16),
+                      //       ),
+                      //     ),
+                      //     padding: const EdgeInsets.all(32),
+                      //     child: const Column(
+                      //       mainAxisAlignment: MainAxisAlignment.center,
+                      //       crossAxisAlignment: CrossAxisAlignment.start,
+                      //       children: [
+                      //         Text(
+                      //           "مرحباً بك في منصة القيادة ",
+                      //           style: TextStyle(
+                      //               color: Colors.white,
+                      //               fontSize: 28,
+                      //               fontWeight: FontWeight.bold),
+                      //         ),
+                      //         SizedBox(height: 16),
+                      //         Text(
+                      //           "أنشئ حسابك الآن لتتمكن من حفظ تقدمك، ومشاركة الأسئلة والأقسام مع الممارسين الآخرين.",
+                      //           style: TextStyle(
+                      //               color: Colors.white70,
+                      //               fontSize: 16,
+                      //               height: 1.5),
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ),
+                      // ),
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.all(32.0),
@@ -123,8 +125,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 8),
                     const Text(
                       "انضم إلينا وابدأ مسيرتك التعليمية اليوم",
-                      style: TextStyle(
-                          fontSize: 14, color: AppColors.textSecondary),
+                      style:
+                          TextStyle(fontSize: 14, color: AppColors.textPrimary),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 40),
