@@ -10,6 +10,36 @@ use Illuminate\Support\Facades\Validator;
 class AuthController extends Controller
 {
 
+
+       public  function register(Request $request){
+       $validator= Validator::make($request->all(),[
+           'name'=>'required|string|max:255',
+           'email'=>'required|string|email|max:255|unique:users',
+           'password'=>'required|string|min:6',
+           'role'=>'required|string|in:guest,admin'
+
+       ]);
+       if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+           $user=User::create([
+            'name'=>$request->name,
+            'email'=>$request->email,
+            'password'=>Hash::make($request->password),
+            'role'=>$request->role,
+           ]);
+
+           $token=$user->createToken('auth_token')->plainTextToken();
+           return response()->json([
+
+           'status' => 'success',
+            'message' => 'تم إنشاء الحساب بنجاح',
+            'token' => $token,
+            'role' => $user->role
+        ], 201);
+
+       }
     public function guestAuthenticate(Request $request)
     {
         $request->validate([
@@ -35,10 +65,9 @@ class AuthController extends Controller
         ], 200);
     }
 
-    // 2. ترقية حساب الزائر إلى مستخدم دائم (عند محاولة إضافة قسم أو سؤال)
     public function upgradeGuestAccount(Request $request)
     {
-        $user = $request->user(); // جلب المستخدم الحالي من التوكن
+        $user = $request->user();
 
         if (!$user || $user->role !== 'guest') {
             return response()->json(['error' => 'إجراء غير صالح أو غير مسموح به'], 400);
@@ -76,7 +105,7 @@ class AuthController extends Controller
         ], 200);
     }
     public function login(Request $request) {
-   
+
     if ($request->has('device_id') && !$request->has('email')) {
         $user = User::firstOrCreate(
             ['device_id' => $request->device_id],
