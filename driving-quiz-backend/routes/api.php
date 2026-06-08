@@ -18,6 +18,30 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+/*
+|--------------------------------------------------------------------------
+| Public Routes (المسارات العامة - المتاحة للجميع بدون صلاحيات)
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/register', [AuthController::class, 'register']);
+
+Route::post('/login', [AuthController::class, 'login']);
+
+Route::post('/auth/guest-authenticate', [AuthController::class, 'guestAuthenticate']);
+
+
+
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post('/auth/upgrade-account', [AuthController::class, 'upgradeGuestAccount']);
+
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+});
+
 Route::post('login', [AuthController::class, 'login']);
 Route::apiResource('level', LevelController::class);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

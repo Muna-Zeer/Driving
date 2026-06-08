@@ -16,6 +16,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _nameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _emailController = TextEditingController();
+  bool _isLoading = false;
 
   UserRoles _selectedRole = UserRoles.guest;
 
@@ -236,7 +237,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           const SizedBox(height: 32),
 
           ElevatedButton(
-            onPressed: _signUpSubmit,
+            onPressed: _isLoading ?null :_signUpSubmit,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
               padding: const EdgeInsets.symmetric(vertical: 16),
