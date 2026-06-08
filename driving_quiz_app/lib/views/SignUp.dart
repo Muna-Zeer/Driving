@@ -3,6 +3,7 @@ import 'package:driving_quiz_app/userRoles.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
+import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
 import 'package:flutter/material.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -29,17 +30,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  void _signUpSubmit()async {
+  void _signUpSubmit() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
       final payload = await AuthService().registerUser(
-        name: _nameController.text.trim(), email: _emailController.text.trim(), password: _passwordController.text.trim(), role: _selectedRole.name);
-        {
-    
-      };
-      print("تم إرسال البيانات للمخدم: $payload");
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+          role: _selectedRole.name);
+      if (payload['status'] == 'success') {
+        AppAlerts.showAlert(
+          context,
+          "تم إنشاء حسابك بنجاح! مرحباً بك في منصة القيادة ",
+          icon: Icons.person_add_alt_1_outlined,
+        );
+
+        Future.delayed(const Duration(seconds: 2), () {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        });
+      } else {
+        AppAlerts.showAlert(context, "فشل التسجيل: ${payload['message']}",
+            icon: Icons.error_outline);
+      }
     }
   }
 
