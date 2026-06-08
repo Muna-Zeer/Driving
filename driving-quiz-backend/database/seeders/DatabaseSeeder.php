@@ -15,7 +15,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CategorySeeder::class,
             LevelSeeder::class,
-            QuestionSeeder::class
+            QuestionSeeder::class,
+            SuperAdminSeeder::class,
         ]);
     }
 }
