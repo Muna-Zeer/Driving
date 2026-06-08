@@ -1,3 +1,4 @@
+import 'package:driving_quiz_app/services/auth_service.dart';
 import 'package:driving_quiz_app/userRoles.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
@@ -28,13 +29,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  void _signUpSubmit() {
+  void _signUpSubmit()async {
     if (_formKey.currentState!.validate()) {
-      final payload = {
-        "name": _nameController.text.trim(),
-        "email": _emailController.text.trim(),
-        "password": _passwordController.text.trim(),
-        "role": _selectedRole.name
+      setState(() {
+        _isLoading = true;
+      });
+      final payload = await AuthService().registerUser(
+        name: _nameController.text.trim(), email: _emailController.text.trim(), password: _passwordController.text.trim(), role: _selectedRole.name);
+        {
+    
       };
       print("تم إرسال البيانات للمخدم: $payload");
     }
@@ -237,7 +240,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           const SizedBox(height: 32),
 
           ElevatedButton(
-            onPressed: _isLoading ?null :_signUpSubmit,
+            onPressed: _isLoading ? null : _signUpSubmit,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
               padding: const EdgeInsets.symmetric(vertical: 16),
