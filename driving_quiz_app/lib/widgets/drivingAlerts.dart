@@ -1,12 +1,11 @@
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:flutter/material.dart';
-import 'package:driving_quiz_app/widgets/AppColors.dart';
 class AppAlerts {
-  static void showAlert(BuildContext context, String message) {
+  static void showAlert(BuildContext context, String message,{IconData icon =Icons.check_circle_outline }) {
     ScaffoldMessenger.of(context).showSnackBar(
        SnackBar(content: Row(
      children: [
-            const Icon(Icons.check_circle_outline, color: Colors.white, size: 24),
+            Icon(icon, color: Colors.white, size: 24),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
