@@ -33,26 +33,41 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void _signUpSubmit() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
-        _isLoading = true;
+        _isLoading = true; // تفعيل مؤشر التحميل
       });
+
       final payload = await AuthService().registerUser(
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-          role: _selectedRole.name);
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        role: _selectedRole.name,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
       if (payload['status'] == 'success') {
+        // 1. إظهار تنبيه النجاح للمستخدم
         AppAlerts.showAlert(
           context,
           "تم إنشاء حسابك بنجاح! مرحباً بك في منصة القيادة ",
           icon: Icons.person_add_alt_1_outlined,
         );
 
-        Future.delayed(const Duration(seconds: 2), () {
-          Navigator.of(context).popUntil((route) => route.isFirst);
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
         });
       } else {
-        AppAlerts.showAlert(context, "فشل التسجيل: ${payload['message']}",
-            icon: Icons.error_outline);
+        AppAlerts.showAlert(
+          context,
+          "فشل التسجيل: ${payload['message']}",
+          icon: Icons.error_outline,
+        );
       }
     }
   }

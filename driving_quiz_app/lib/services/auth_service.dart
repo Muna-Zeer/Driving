@@ -6,7 +6,11 @@ import 'package:http/http.dart' as http;
 
 class AuthService {
   final baseUrl = APIService.getBaseUrl();
-  final _storage = const FlutterSecureStorage();
+final _storage = const FlutterSecureStorage(
+  aOptions: AndroidOptions(
+    encryptedSharedPreferences: true,
+  ),
+);
   Future<Map<String, dynamic>> registerUser({
     required String name,
     required String email,
@@ -23,7 +27,7 @@ class AuthService {
             'role': role
           }));
       final data = jsonDecode(response.body);
-      if (response.statusCode == 201) {
+      if (response.statusCode == 201 || response.statusCode == 200) {
         await _storage.write(key: 'auth_token', value: data['token']);
         await _storage.write(key: 'user_role', value: data['role']);
         return {'status': 'success', 'role': data['role']};
