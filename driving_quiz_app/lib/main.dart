@@ -20,9 +20,9 @@ class DrivingQuizApp extends StatelessWidget {
       title: 'منصة تعليم السياقة',
       initialRoute: '/',
       routes: {
-        '/':(context)=>const CategoriesScreen(),
-        '/signup':(context)=>const SignUpScreen(),
-        '/login':(context)=>const LoginScreen(),
+        '/': (context) => const CategoriesScreen(),
+        '/signup': (context) => const SignUpScreen(),
+        '/login': (context) => const LoginScreen(),
       },
       locale: const Locale('ar', ''),
       supportedLocales: const [
