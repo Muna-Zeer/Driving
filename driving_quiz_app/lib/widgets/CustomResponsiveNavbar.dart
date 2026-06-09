@@ -31,6 +31,18 @@ class _CustomResponsiveNavbarState extends State<CustomResponsiveNavbar> {
     }
   }
 
+  Future<void> logOut() async {
+    await _storage.delete(key: 'auth_token');
+    await _storage.delete(key: 'user_role');
+    setState(() {
+      _isLoggin = false;
+      _userRole = 'guest';
+    });
+    if (mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
