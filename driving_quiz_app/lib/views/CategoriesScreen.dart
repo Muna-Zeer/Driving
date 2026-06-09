@@ -114,7 +114,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 }
 
 Widget _buildMobileDrawer() {
-  
   return Drawer(
       child: ListView(padding: EdgeInsets.zero, children: [
     const DrawerHeader(
