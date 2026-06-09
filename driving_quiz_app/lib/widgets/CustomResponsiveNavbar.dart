@@ -2,10 +2,34 @@ import 'package:driving_quiz_app/views/SignUp.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class CustomResponsiveNavbar extends StatelessWidget
+class CustomResponsiveNavbar extends StatefulWidget
     implements PreferredSizeWidget {
   const CustomResponsiveNavbar({Key? key}) : super(key: key);
+
+  @override
+  State<CustomResponsiveNavbar> createState() => _CustomResponsiveNavbarState();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(70.0);
+}
+
+class _CustomResponsiveNavbarState extends State<CustomResponsiveNavbar> {
+  final _storage = const FlutterSecureStorage();
+  bool _isLoggin = false;
+  String _userRole = 'guest';
+
+  Future<void> _checkLoginUser() async {
+    String? token = await _storage.read(key: 'auth_token');
+    String? role = await _storage.read(key: 'user_role');
+    if (token != null) {
+      setState(() {
+        _isLoggin = true;
+        _userRole = role ?? 'guest';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
