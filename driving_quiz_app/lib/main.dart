@@ -1,4 +1,6 @@
 import 'package:driving_quiz_app/views/CategoriesScreen.dart';
+import 'package:driving_quiz_app/views/LoginScreen.dart';
+import 'package:driving_quiz_app/views/SignUp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -16,6 +18,12 @@ class DrivingQuizApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'منصة تعليم السياقة',
+      initialRoute: '/',
+      routes: {
+        '/':(context)=>const CategoriesScreen(),
+        '/signup':(context)=>const SignUpScreen(),
+        '/login':(context)=>const LoginScreen(),
+      },
       locale: const Locale('ar', ''),
       supportedLocales: const [
         Locale('ar', ''),

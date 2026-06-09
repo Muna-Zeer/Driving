@@ -1,3 +1,4 @@
+import 'package:driving_quiz_app/views/LoginScreen.dart';
 import 'package:driving_quiz_app/views/SignUp.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
@@ -17,7 +18,7 @@ class CustomResponsiveNavbar extends StatefulWidget
 
 class _CustomResponsiveNavbarState extends State<CustomResponsiveNavbar> {
   final _storage = const FlutterSecureStorage();
-  bool _isLoggin = false;
+  bool _isLoggedIn = false;
   String _userRole = 'guest';
 
   Future<void> _checkLoginUser() async {
@@ -25,7 +26,7 @@ class _CustomResponsiveNavbarState extends State<CustomResponsiveNavbar> {
     String? role = await _storage.read(key: 'user_role');
     if (token != null) {
       setState(() {
-        _isLoggin = true;
+        _isLoggedIn = true;
         _userRole = role ?? 'guest';
       });
     }
@@ -35,7 +36,7 @@ class _CustomResponsiveNavbarState extends State<CustomResponsiveNavbar> {
     await _storage.delete(key: 'auth_token');
     await _storage.delete(key: 'user_role');
     setState(() {
-      _isLoggin = false;
+      _isLoggedIn = false;
       _userRole = 'guest';
     });
     if (mounted) {
@@ -76,21 +77,34 @@ class _CustomResponsiveNavbarState extends State<CustomResponsiveNavbar> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildNavbarItem('الرئيسية', isActive: true),
-                    _buildNavbarItem(
-                      'تسجيل الدخول',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const SignUpScreen()),
-                        );
-                      },
-                    ),
-                    _buildNavbarItem('أسئلة التورق'),
-                    _buildNavbarItem('دراسة التورق'),
-                    _buildNavbarItem('الامتحان التجريبي'),
-                    _buildNavbarItem('اتصل بنا'),
+                    _buildNavbarItem('الرئيسية', isActive: true, onTap: () {
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    }),
+                    if (!_isLoggedIn) ...[
+                      _buildNavbarItem(
+                        'تسجيل الدخول',
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const LoginScreen())),
+                      ),
+                      _buildNavbarItem(
+                        'إنشاء حساب',
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const LoginScreen())),
+                      ),
+                    ] else ...[
+                      if (_userRole == 'super_admin' || _userRole == 'admin')
+                        _buildNavbarItem('لوحة التحكم (المدير)', onTap: () {}),
+                      _buildNavbarItem('الامتحان التجريبي'),
+                      _buildNavbarItem('اتصل بنا'),
+                      _buildNavbarItem(
+                        'تسجيل الخروج',
+                        onTap: logOut,
+                      ),
+                    ],
                   ],
                 ),
               ),
