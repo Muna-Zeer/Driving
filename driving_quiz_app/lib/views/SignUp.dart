@@ -33,7 +33,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void _signUpSubmit() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
-        _isLoading = true; // تفعيل مؤشر التحميل
+        _isLoading = true; 
       });
 
       final payload = await AuthService().registerUser(
@@ -50,7 +50,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       });
 
       if (payload['status'] == 'success') {
-        // 1. إظهار تنبيه النجاح للمستخدم
         AppAlerts.showAlert(
           context,
           "تم إنشاء حسابك بنجاح! مرحباً بك في منصة القيادة ",
