@@ -41,4 +41,56 @@ final _storage = const FlutterSecureStorage(
       };
     }
   }
+  Future<Map<String, dynamic>> loginUser({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        await _storage.write(key: 'auth_token', value: data['token']);
+        await _storage.write(key: 'user_role', value: data['role']);
+        return {'status': 'success', 'role': data['role']};
+      } else {
+        return {'status': 'fail', 'message': data['message'] ?? 'بيانات الدخول غير صحيحة'};
+      }
+    } catch (e) {
+      return {'status': 'error', 'message': 'تعذر الاتصال بالخادم، تحقق من الشبكة.'};
+    }
+  }
+
+  Future<Map<String, dynamic>> loginAsGuest(String deviceId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'device_id': deviceId,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        await _storage.write(key: 'auth_token', value: data['token']);
+        await _storage.write(key: 'user_role', value: data['role']);
+        return {'status': 'success', 'role': data['role']};
+      } else {
+        return {'status': 'fail', 'message': 'فشل الدخول كزائر'};
+      }
+    } catch (e) {
+      return {'status': 'error', 'message': 'تعذر الاتصال بالخادم.'};
+    }
+  }
+
 }
