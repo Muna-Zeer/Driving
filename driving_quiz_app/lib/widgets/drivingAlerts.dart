@@ -1,0 +1,69 @@
+import 'package:driving_quiz_app/widgets/AppColors.dart';
+import 'package:flutter/material.dart';
+class AppAlerts {
+  static void showAlert(BuildContext context, String message,{IconData icon =Icons.check_circle_outline }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(content: Row(
+     children: [
+            Icon(icon, color: Colors.white, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontFamily: 'Tajawal',
+                ),
+              ),
+              
+            ),
+            
+            
+          ],
+          
+      ),
+      backgroundColor: AppColors.primaryGreen,
+      behavior: SnackBarBehavior.floating,
+      shape:RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      duration:const Duration(seconds: 3),
+      )
+   );
+  }
+  static void showError(
+    BuildContext context, 
+    String message, {
+    IconData icon = Icons.error_outline, 
+  }) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontFamily: 'Tajawal',
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.error, 
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+}
