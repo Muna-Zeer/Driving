@@ -4,6 +4,7 @@ import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:driving_quiz_app/widgets/drivingAlerts.dart'; // تأكد من مطابقة مسار التنبيهات لديك
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -16,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
+final _storage = const FlutterSecureStorage();
   bool _isLoading = false;
 
   void _loginSubmit() async {

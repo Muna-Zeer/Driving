@@ -21,7 +21,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   int _currentPage = 1;
   final int _itemsPerPage = 6;
   String _userRole = '';
-   bool isAdmin = true;
+  bool get isAdmin => _userRole == 'admin' || _userRole == 'super_admin';
   @override
   void initState() {
     super.initState();
@@ -118,8 +118,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                         childAspectRatio: 1.2),
                                 itemCount: visibleCategories.length,
                                 itemBuilder: (context, index) {
-                                  return _buildCategoryCard(
-                                      context, visibleCategories[index], _userRole);
+                                  return _buildCategoryCard(context,
+                                      visibleCategories[index], isAdmin);
                                 },
                               ),
                               const SizedBox(height: 24),
@@ -154,8 +154,7 @@ Widget _buildMobileDrawer() {
 }
 
 Widget _buildCategoryCard(
-    BuildContext context, CategoryModel category, String userRole) {
-  final bool isAdmin = userRole == 'admin' || userRole == 'super_admin';
+    BuildContext context, CategoryModel category, bool showAdmin) {
   return Card(
     color: AppColors.surface,
     elevation: 2,
@@ -203,7 +202,7 @@ Widget _buildCategoryCard(
               ),
             ],
           ),
-          if (isAdmin)
+          if (showAdmin)
             Positioned(
               top: 4,
               left: 4,
