@@ -19,6 +19,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: 0.20.2
 
 
   # The "Big Three" for your Laravel connection
@@ -30,6 +33,7 @@ dependencies:
   shared_preferences: ^2.2.2   # To save progress (e.g., Level 1 completed)
   google_fonts: ^6.2.1         # To make the app look professional
   cupertino_icons: ^1.0.6
+  flutter_secure_storage: ^10.3.1
 
 
 dev_dependencies:

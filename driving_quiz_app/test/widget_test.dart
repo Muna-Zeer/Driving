@@ -13,15 +13,10 @@ import 'package:driving_quiz_app/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-<<<<<<< HEAD
-<<<<<<< HEAD
+
     await tester.pumpWidget(const DrivingQuizApp());
-=======
-    await tester.pumpWidget(const MyApp());
->>>>>>> b650c70 (Generate new folders and set up flutter app well)
-=======
+
     await tester.pumpWidget(const DrivingQuizApp());
->>>>>>> d7c9210 (Resolving the problem of ndk and gradle)
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

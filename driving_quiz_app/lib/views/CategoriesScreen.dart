@@ -6,6 +6,7 @@ import 'package:driving_quiz_app/widgets/CustomPagination.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({Key? key}) : super(key: key);
@@ -16,14 +17,25 @@ class CategoriesScreen extends StatefulWidget {
 class _CategoriesScreenState extends State<CategoriesScreen> {
   final CategoryAPI _apiService = CategoryAPI();
   late Future<List<CategoryModel>> _categoriesFuture;
-  bool isAdmin = true;
+  final _storage = const FlutterSecureStorage();
   int _currentPage = 1;
   final int _itemsPerPage = 6;
-
+  String _userRole = '';
+   bool isAdmin = true;
   @override
   void initState() {
     super.initState();
     _categoriesFuture = _apiService.fetchCategories();
+    loadUserRole();
+  }
+
+  Future<void> loadUserRole() async {
+    String? role = await _storage.read(key: 'user_role');
+    if (role != null) {
+      setState(() {
+        _userRole = role;
+      });
+    }
   }
 
   @override
@@ -106,8 +118,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                         childAspectRatio: 1.2),
                                 itemCount: visibleCategories.length,
                                 itemBuilder: (context, index) {
-                                  return _buildCategoryCard(context,
-                                      visibleCategories[index], isAdmin);
+                                  return _buildCategoryCard(
+                                      context, visibleCategories[index], _userRole);
                                 },
                               ),
                               const SizedBox(height: 24),
@@ -142,7 +154,8 @@ Widget _buildMobileDrawer() {
 }
 
 Widget _buildCategoryCard(
-    BuildContext context, CategoryModel category, bool isAdmin) {
+    BuildContext context, CategoryModel category, String userRole) {
+  final bool isAdmin = userRole == 'admin' || userRole == 'super_admin';
   return Card(
     color: AppColors.surface,
     elevation: 2,
