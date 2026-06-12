@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:driving_quiz_app/services/auth_service.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
@@ -17,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-final _storage = const FlutterSecureStorage();
   bool _isLoading = false;
 
   void _loginSubmit() async {
@@ -30,6 +30,8 @@ final _storage = const FlutterSecureStorage();
           email: _emailController.text.trim(),
           password: _passwordController.text.trim());
 
+      // final data = jsonDecode(response.body);
+
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -38,9 +40,10 @@ final _storage = const FlutterSecureStorage();
       if (payload['status'] == 'success') {
         AppAlerts.showAlert(context, "مرحباً بك مجدداً! تم تسجيل الدخول بنجاح ",
             icon: Icons.login_outlined);
-        Future.delayed(const Duration(microseconds: 1500), () {
+        Future.delayed(const Duration(milliseconds: 1500), () {
           if (mounted) {
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.of(context)
+                .pushNamedAndRemoveUntil('/', (route) => false);
           }
         });
       } else {
@@ -50,8 +53,6 @@ final _storage = const FlutterSecureStorage();
           icon: Icons.error_outline,
         );
       }
-
-      Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
 

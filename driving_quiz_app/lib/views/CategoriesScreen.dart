@@ -17,7 +17,11 @@ class CategoriesScreen extends StatefulWidget {
 class _CategoriesScreenState extends State<CategoriesScreen> {
   final CategoryAPI _apiService = CategoryAPI();
   late Future<List<CategoryModel>> _categoriesFuture;
-  final _storage = const FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+  );
   int _currentPage = 1;
   final int _itemsPerPage = 6;
   String _userRole = '';
@@ -33,7 +37,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     String? role = await _storage.read(key: 'user_role');
     if (role != null) {
       setState(() {
-        _userRole = role;
+        _userRole = role.trim();
       });
     }
   }
@@ -118,8 +122,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                         childAspectRatio: 1.2),
                                 itemCount: visibleCategories.length,
                                 itemBuilder: (context, index) {
-                                  return _buildCategoryCard(context,
-                                      visibleCategories[index], isAdmin);
+                                  return _buildCategoryCard(
+                                    context,
+                                    visibleCategories[index],
+                                    isAdmin,
+                                  );
                                 },
                               ),
                               const SizedBox(height: 24),

@@ -6,11 +6,12 @@ import 'package:http/http.dart' as http;
 
 class AuthService {
   final baseUrl = APIService.getBaseUrl();
-final _storage = const FlutterSecureStorage(
-  aOptions: AndroidOptions(
-    encryptedSharedPreferences: true,
-  ),
-);
+  final _storage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+  );
+
   Future<Map<String, dynamic>> registerUser({
     required String name,
     required String email,
@@ -18,18 +19,20 @@ final _storage = const FlutterSecureStorage(
     required String role,
   }) async {
     try {
-      final response = await http.post(Uri.parse('$baseUrl/register'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'name': name,
-            'email': email,
-            'password': password,
-            'role': role
-          }));
+      final response = await http.post(
+        Uri.parse('$baseUrl/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(
+            {'name': name, 'email': email, 'password': password, 'role': role}),
+      );
+
       final data = jsonDecode(response.body);
+
       if (response.statusCode == 201 || response.statusCode == 200) {
-        await _storage.write(key: 'auth_token', value: data['token']);
-        await _storage.write(key: 'user_role', value: data['role']);
+        await _storage.write(
+            key: 'auth_token', value: data['token']?.toString());
+        await _storage.write(key: 'user_role', value: data['role']?.toString());
+
         return {'status': 'success', 'role': data['role']};
       } else {
         return {'status': 'fail', 'message': data['errors'] ?? data['message']};
@@ -41,6 +44,7 @@ final _storage = const FlutterSecureStorage(
       };
     }
   }
+
   Future<Map<String, dynamic>> loginUser({
     required String email,
     required String password,
@@ -58,14 +62,22 @@ final _storage = const FlutterSecureStorage(
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        await _storage.write(key: 'auth_token', value: data['token']);
-        await _storage.write(key: 'user_role', value: data['role']);
+        await _storage.write(
+            key: 'auth_token', value: data['token']?.toString());
+        await _storage.write(key: 'user_role', value: data['role']?.toString());
+
         return {'status': 'success', 'role': data['role']};
       } else {
-        return {'status': 'fail', 'message': data['message'] ?? 'بيانات الدخول غير صحيحة'};
+        return {
+          'status': 'fail',
+          'message': data['message'] ?? 'بيانات الدخول غير صحيحة'
+        };
       }
     } catch (e) {
-      return {'status': 'error', 'message': 'تعذر الاتصال بالخادم، تحقق من الشبكة.'};
+      return {
+        'status': 'error',
+        'message': 'تعذر الاتصال بالخادم، تحقق من الشبكة.'
+      };
     }
   }
 
@@ -92,5 +104,4 @@ final _storage = const FlutterSecureStorage(
       return {'status': 'error', 'message': 'تعذر الاتصال بالخادم.'};
     }
   }
-
 }
