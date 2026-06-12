@@ -12,16 +12,23 @@ class CreateCategoryScreen extends StatefulWidget {
 class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _nameArabicController = TextEditingController();
+  final TextEditingController _nameEnglishController = TextEditingController();
   final TextEditingController _imageURLController = TextEditingController();
   final TextEditingController _typeController =
       TextEditingController(text: 'standard');
   final TextEditingController _orderController =
       TextEditingController(text: '0');
+  final TextEditingController _badgeArabicController = TextEditingController();
+  final TextEditingController _badgeEnglishController = TextEditingController();
+
   bool _isActive = true;
   @override
   void dispose() {
-    _nameController.dispose();
+    _nameArabicController.dispose();
+    _nameEnglishController.dispose();
+    _badgeArabicController.dispose();
+    _badgeEnglishController.dispose();
     _imageURLController.dispose();
     _typeController.dispose();
     _orderController.dispose();
@@ -30,15 +37,28 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
 
   void _submitData() {
     final Map<String, dynamic> newCategoryPayload = {
-      "name": _nameController.text,
+      "name_ar": _nameArabicController.text.trim(),
+      "name_en": _nameEnglishController.text.trim(),
+      "badge_ar": _badgeArabicController.text.trim().isEmpty
+          ? null
+          : _badgeArabicController.text.trim(),
+      "badge_en": _badgeEnglishController.text.trim().isEmpty
+          ? null
+          : _badgeEnglishController.text.trim(),
       "image_url":
           _imageURLController.text.isEmpty ? null : _imageURLController.text,
       "type": _typeController.text,
       "order": int.tryParse(_orderController.text) ?? 0,
       "is_active": _isActive
     };
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('تمت إضافة الفئة بنجاح')),
+      SnackBar(
+        content: Text(isArabic
+            ? 'تمت إضافة الفئة بنجاح'
+            : 'Category created successfully'),
+        backgroundColor: AppColors.primaryGreen,
+      ),
     );
     Navigator.pop(context);
   }
@@ -62,7 +82,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
                         key: _formKey,
                         child: ListView(children: [
                           CustomTextField(
-                            controller: _nameController,
+                            controller: _nameArabicController,
                             labelText: 'اسم القسم*',
                             validator: (value) =>
                                 value == null || value.trim().isEmpty
