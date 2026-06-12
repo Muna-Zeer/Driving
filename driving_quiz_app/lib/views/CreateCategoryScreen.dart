@@ -65,11 +65,12 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
             appBar: AppBar(
-              title: const Text('اضافة قسم جديد'),
+              title: Text(isArabic ? 'اضافة قسم جديد' : 'Create new Category'),
               backgroundColor: AppColors.surface,
               foregroundColor: AppColors.deepForest,
               elevation: 1,
@@ -83,34 +84,89 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
                         child: ListView(children: [
                           CustomTextField(
                             controller: _nameArabicController,
-                            labelText: 'اسم القسم*',
-                            validator: (value) =>
-                                value == null || value.trim().isEmpty
+                            labelText: isArabic
+                                ? '(بالعربية)اسم القسم*'
+                                : 'Name of Category',
+                            validator: (value) => value == null ||
+                                    value.trim().isEmpty
+                                ? (isArabic
                                     ? 'يرجى إدخال اسم القسم'
-                                    : null,
+                                    : 'Please Enter the value of category name')
+                                : null,
                           ),
                           CustomTextField(
+                            controller: _nameEnglishController,
+                            labelText: isArabic
+                                ? 'اسم القسم (بالإنجليزية)*'
+                                : 'Category Name (English)*',
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? (isArabic
+                                        ? 'يرجى إدخال اسم القسم بالإنجليزية'
+                                        : 'Please enter English category name')
+                                    : null,
+                          ),
+                          const Divider(),
+                          Text(
+                            isArabic
+                                ? 'نص الشارة العلوية المتغيرة (اختياري)'
+                                : 'Upper Badge Text (Optional)',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.deepForest),
+                          ),
+                          const Divider(),
+                          CustomTextField(
+                            controller: _badgeArabicController,
+                            labelText: isArabic
+                                ? 'نص الشارة (بالعربية) - مثل: استكمالي'
+                                : 'Badge Text (Arabic) - e.g., Supplementary',
+                          ),
+                          CustomTextField(
+                            controller: _badgeEnglishController,
+                            labelText: isArabic
+                                ? 'نص الشارة (بالإنجليزية)'
+                                : 'Badge Text (English)',
+                          ),
+                          Text(
+                              isArabic
+                                  ? 'الإعدادات العامة للقسم'
+                                  : 'General Sitting',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.deepForest)),
+                          const Divider(),
+                          CustomTextField(
                             controller: _imageURLController,
-                            labelText: 'رابط الصورة (Image URL)',
+                            labelText: isArabic
+                                ? 'رابط الصورة (Image URL)'
+                                : 'Image Url',
                             hintText: 'https://example.com/image.png',
                           ),
                           CustomTextField(
                             controller: _typeController,
-                            labelText: 'نوع القسم (Type)',
+                            labelText:
+                                isArabic ? 'نوع القسم (Type)' : 'Category Type',
                             validator: (value) =>
                                 value == null || value.trim().isEmpty
-                                    ? 'يرجى تحديد النوع'
+                                    ? (isArabic
+                                        ? 'يرجى تحديد النوع'
+                                        : 'Please Enter category type')
                                     : null,
                           ),
                           CustomTextField(
                             controller: _orderController,
-                            labelText: 'الترتيب (Order)',
+                            labelText: isArabic ? 'الترتيب (Order)' : 'Order',
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
-                                return 'يرجى إدخال الترتيب الرقمي';
+                                return (isArabic
+                                    ? 'يرجى إدخال الترتيب الرقمي'
+                                    : 'Please Enter Order number');
                               if (int.tryParse(value) == null)
-                                return 'الترتيب يجب أن يكون رقماً صحيحاً';
+                                return (isArabic
+                                    ? 'الترتيب يجب أن يكون رقماً صحيحاً'
+                                    : 'Must be valid Number');
                               return null;
                             },
                           ),
