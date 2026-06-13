@@ -180,9 +180,11 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
                                   color: AppColors.border, width: 1),
                             ),
                             child: SwitchListTile(
-                                title: const Text('حالة التفعيل (Is Active)'),
-                                subtitle: const Text(
-                                    'تحديد ما إذا كان القسم سيظهر للمستخدمين مباشرة أم لا'),
+                                title: Text(
+                                    isArabic ? 'حالة التفعيل ' : 'Is Active'),
+                                subtitle: Text(isArabic
+                                    ? 'تحديد ما إذا كان القسم سيظهر للمستخدمين مباشرة أم لا'
+                                    : 'Determine whether this category is visible online'),
                                 activeColor: AppColors.primaryGreen,
                                 value: _isActive,
                                 onChanged: (bool value) {
@@ -200,8 +202,8 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8)),
                             ),
-                            child: const Text(
-                              'حفظ وإدراج القسم',
+                            child: Text(
+                              isArabic ? 'حفظ وإدراج القسم' : 'Save and Publish',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
