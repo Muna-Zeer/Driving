@@ -12,13 +12,14 @@ class CategoryAPI {
         final Map<String, dynamic> decodedData = json.decode(response.body);
         if (decodedData['status'] == true && decodedData['data'] != null) {
           List<dynamic> list = decodedData['data'];
+          print(response.body);
           return list.map((item) => CategoryModel.fromJson(item)).toList();
-        }
-       else {
+        } else {
           throw Exception('Failed to parse active data structure');
         }
       } else {
-        throw Exception('Failed to load categories: Server status ${response.statusCode}');
+        throw Exception(
+            'Failed to load categories: Server status ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('API Connection Error: $e');

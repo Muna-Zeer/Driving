@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained()->onDelete('cascade');
             $table->string("locale")->index();
             $table->string("name");
+            $table->string("badge")->nullable();
             $table->unique(['category_id','locale']);
             $table->timestamps();
         });

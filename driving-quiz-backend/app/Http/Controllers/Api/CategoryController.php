@@ -46,10 +46,11 @@ class CategoryController extends Controller
     {
         //
         $category = Category::create($request->only(['image_url', 'type', 'order', 'is_active']));
-        foreach ($request->translations as $locale => $data) {
+        foreach ($request->translations as $translationData) {
             $category->translations()->create([
-                'locale' => $locale,
-                'name' => $data['name']
+                'locale' => $translationData['locale'],
+                'name'   => $translationData['name'],
+                'badge'  => $translationData['badge'] ?? null,
             ]);
         }
         return response()->json([
@@ -101,7 +102,7 @@ class CategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id):JsonResponse
+    public function destroy($id): JsonResponse
     {
         //
         $realId = $this->decodeId($id);
