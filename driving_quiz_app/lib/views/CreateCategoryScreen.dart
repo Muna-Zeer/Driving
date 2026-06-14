@@ -1,4 +1,7 @@
+import 'package:driving_quiz_app/SupportedLanguages.dart';
+import 'package:driving_quiz_app/typeWidget.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
+import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/CustomTExtField.dart';
 import 'package:flutter/material.dart';
 
@@ -9,33 +12,48 @@ class CreateCategoryScreen extends StatefulWidget {
   State<CreateCategoryScreen> createState() => _CreateCategoryScreenState();
 }
 
-class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
+class _CreateCategoryScreenState extends State<CreateCategoryScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  late TabController _tabController;
+  final Map<String, TextEditingController> _nameControllers = {};
+  final Map<String, TextEditingController> _badgeControllers = {};
 
-  final TextEditingController _nameArabicController = TextEditingController();
-  final TextEditingController _nameEnglishController = TextEditingController();
   final TextEditingController _imageURLController = TextEditingController();
   final TextEditingController _typeController =
-      TextEditingController(text: 'standard');
+      TextEditingController(text: 'car');
   final TextEditingController _orderController =
       TextEditingController(text: '0');
-  final TextEditingController _badgeArabicController = TextEditingController();
-  final TextEditingController _badgeEnglishController = TextEditingController();
 
   bool _isActive = true;
   @override
+  void initState() {
+    super.initState();
+    _tabController =
+        TabController(length: supportedLanguages.length, vsync: this);
+
+    for (var lang in supportedLanguages) {
+      _nameControllers[lang['code']!] = TextEditingController();
+      _badgeControllers[lang['code']!] = TextEditingController();
+    }
+  }
+
+  @override
   void dispose() {
-    _nameArabicController.dispose();
-    _nameEnglishController.dispose();
-    _badgeArabicController.dispose();
-    _badgeEnglishController.dispose();
     _imageURLController.dispose();
+    _tabController.dispose();
     _typeController.dispose();
     _orderController.dispose();
+    _nameControllers.forEach((_, c) => c.dispose());
+    _badgeControllers.forEach((_, c) => c.dispose());
     super.dispose();
   }
 
   void _submitData() {
+    if (_formKey.currentState == null || !_formKey.currentState!.validate()) {
+    return; 
+  }
+  
     final Map<String, dynamic> newCategoryPayload = {
       "name_ar": _nameArabicController.text.trim(),
       "name_en": _nameEnglishController.text.trim(),
@@ -70,7 +88,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
         textDirection: TextDirection.rtl,
         child: Scaffold(
             appBar: AppBar(
-              title: Text(isArabic ? 'اضافة قسم جديد' : 'Create new Category'),
+              title: const CustomResponsiveNavbar(),
               backgroundColor: AppColors.surface,
               foregroundColor: AppColors.deepForest,
               elevation: 1,
@@ -143,16 +161,38 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
                                 : 'Image Url',
                             hintText: 'https://example.com/image.png',
                           ),
-                          CustomTextField(
-                            controller: _typeController,
-                            labelText:
-                                isArabic ? 'نوع القسم (Type)' : 'Category Type',
-                            validator: (value) =>
-                                value == null || value.trim().isEmpty
-                                    ? (isArabic
-                                        ? 'يرجى تحديد النوع'
-                                        : 'Please Enter category type')
-                                    : null,
+                          DropdownButtonFormField(
+                            value: _typeController.text.isEmpty
+                                ? 'car'
+                                : _typeController.text,
+                            decoration: InputDecoration(
+                              labelText:
+                                  isArabic ? 'نوع القسم' : 'Category Type',
+                              labelStyle: const TextStyle(
+                                  color: AppColors.primaryGreen),
+                              border: const OutlineInputBorder(),
+                              focusedBorder: const OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: AppColors.primaryGreen, width: 2),
+                              ),
+                            ),
+                            items: typeOptions.map((option) {
+                              return DropdownMenuItem<String>(
+                                value: option['value'],
+                                child: Text(
+                                    isArabic ? option['ar']! : option['en']!),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _typeController.text = newValue ?? 'car';
+                              });
+                            },
+                            validator: (value) => value == null || value.isEmpty
+                                ? (isArabic
+                                    ? 'يرجى تحديد النوع'
+                                    : 'Please Enter category type')
+                                : null,
                           ),
                           CustomTextField(
                             controller: _orderController,
@@ -203,7 +243,9 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
                                   borderRadius: BorderRadius.circular(8)),
                             ),
                             child: Text(
-                              isArabic ? 'حفظ وإدراج القسم' : 'Save and Publish',
+                              isArabic
+                                  ? 'حفظ وإدراج القسم'
+                                  : 'Save and Publish',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
