@@ -51,24 +51,30 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
 
   void _submitData() {
     if (_formKey.currentState == null || !_formKey.currentState!.validate()) {
-    return; 
-  }
-  
+      return;
+    }
+    List<Map<String, dynamic>> translationsPayload = [];
+    for (var lang in supportedLanguages) {
+      final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
+      final String langCode = langMap['code']?.toString() ?? 'en';
+      final String nameText = _nameControllers[langCode]?.text.trim() ?? '';
+      final String badgeText = _badgeControllers[langCode]?.text.trim() ?? '';
+      translationsPayload.add({
+        "locale": langCode,
+        "name": nameText,
+        "badge": badgeText.isEmpty ? null : badgeText,
+      });
+    }
+
     final Map<String, dynamic> newCategoryPayload = {
-      "name_ar": _nameArabicController.text.trim(),
-      "name_en": _nameEnglishController.text.trim(),
-      "badge_ar": _badgeArabicController.text.trim().isEmpty
-          ? null
-          : _badgeArabicController.text.trim(),
-      "badge_en": _badgeEnglishController.text.trim().isEmpty
-          ? null
-          : _badgeEnglishController.text.trim(),
+      "translations": translationsPayload,
       "image_url":
           _imageURLController.text.isEmpty ? null : _imageURLController.text,
       "type": _typeController.text,
       "order": int.tryParse(_orderController.text) ?? 0,
       "is_active": _isActive
     };
+    print("Final Payload sending: $newCategoryPayload");
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
