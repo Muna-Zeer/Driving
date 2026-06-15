@@ -624,3 +624,7 @@
 #37 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('C://Users//a-z//Dr...')
 #38 {main}
 "} 
+[2026-06-15 19:05:04] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","is_admin_raw_value":null} 
+[2026-06-15 19:05:04] local.ERROR: AdminMiddleware: Access denied for user mmm@gmail.com  
+[2026-06-15 19:27:25] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","is_admin_raw_value":null} 
+[2026-06-15 19:27:25] local.ERROR: AdminMiddleware: Access denied for user mmm@gmail.com  

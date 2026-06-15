@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:driving_quiz_app/CategoriesIcons.dart';
 import 'package:driving_quiz_app/SupportedLanguages.dart';
 import 'package:driving_quiz_app/services/CategoryService.dart';
 import 'package:driving_quiz_app/typeWidget.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/CustomTExtField.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 
 class CreateCategoryScreen extends StatefulWidget {
@@ -28,6 +30,8 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
   final TextEditingController _orderController =
       TextEditingController(text: '0');
   CategoryAPI _categoryAPI = CategoryAPI();
+  String? _selectedIcon;
+
   bool _isLoading = false;
   bool _isActive = true;
   @override
@@ -76,8 +80,9 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
 
     final Map<String, dynamic> newCategoryPayload = {
       "translations": translationsPayload,
-      "image_url":
-          _imageURLController.text.isEmpty ? null : _imageURLController.text,
+      "image_url": _selectedIcon,
+      // "image_url":
+      //     _imageURLController.text.isEmpty ? null : _imageURLController.text,
       "type": _typeController.text,
       "order": int.tryParse(_orderController.text) ?? 0,
       "is_active": _isActive
@@ -201,12 +206,16 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.deepForest)),
                           const Divider(),
-                          CustomTextField(
-                            controller: _imageURLController,
-                            labelText: isArabic
-                                ? 'رابط الصورة (Image URL)'
-                                : 'Image Url',
-                            hintText: 'https://example.com/image.png',
+                          // CustomTextField(
+                          //   controller: _imageURLController,
+                          //   labelText: isArabic
+                          //       ? 'رابط الصورة (Image URL)'
+                          //       : 'Image Url',
+                          //   hintText: 'https://example.com/image.png',
+                          // ),
+
+                          const SizedBox(
+                            height: 12,
                           ),
                           DropdownButtonFormField(
                             value: _typeController.text.isEmpty
@@ -257,6 +266,82 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
                               return null;
                             },
                           ),
+                          Text(
+                            isArabic
+                                ? 'اختر أيقونة القسم *'
+                                : 'Select Category Icon *',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.deepForest),
+                          ),
+                          const SizedBox(
+                            height: 8,
+                          ),
+                          Container(
+                              height: 110,
+                              child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: avaliableIcons.length,
+                                  itemBuilder: (context, index) {
+                                    final icon = avaliableIcons[index];
+                                    final isSelected =
+                                        _selectedIcon == icon['value'];
+                                    return GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedIcon = icon['value'];
+                                        });
+                                      },
+                                      child: Container(
+                                          width: 100,
+                                          margin:
+                                              const EdgeInsets.only(left: 10),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? AppColors.primaryGreen
+                                                    .withOpacity(0.1)
+                                                : Colors.white,
+                                            border: Border.all(
+                                              color: isSelected
+                                                  ? AppColors.primaryGreen
+                                                  : Colors.grey.shade300,
+                                              width: isSelected ? 2 : 1,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              SvgPicture.asset(
+                                                'assets/images/${icon['value']}',
+                                                height: 50,
+                                                width: 50,
+                                                placeholderBuilder:
+                                                    (BuildContext context) =>
+                                                        const Icon(
+                                                  Icons.drive_eta,
+                                                  size: 40,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                isArabic
+                                                    ? icon['name']!
+                                                    : icon['name_en']!,
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: isSelected
+                                                        ? FontWeight.bold
+                                                        : FontWeight.normal),
+                                              ),
+                                            ],
+                                          )),
+                                    );
+                                  })),
                           const SizedBox(height: 12),
                           Card(
                             color: AppColors.surface,
