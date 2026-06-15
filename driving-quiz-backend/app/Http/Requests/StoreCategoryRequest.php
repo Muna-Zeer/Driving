@@ -23,11 +23,11 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
 
     {
-        $nextOrder = Category::max('order')+1;
+     
         return [
             'image_url' => 'nullable|string',
             'type' => 'required|string|max:50',
-            'order' => $nextOrder,
+            'order' =>'nullable|integer',
             'is_active' => 'boolean',
             'translations' => 'required|array',
             'translations.*.locale' => 'required|string|max:2',

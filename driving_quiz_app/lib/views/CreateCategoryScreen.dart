@@ -27,8 +27,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
   final TextEditingController _imageURLController = TextEditingController();
   final TextEditingController _typeController =
       TextEditingController(text: 'car');
-  final TextEditingController _orderController =
-      TextEditingController(text: '0');
+
   CategoryAPI _categoryAPI = CategoryAPI();
   String? _selectedIcon;
 
@@ -51,7 +50,6 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
     _imageURLController.dispose();
     _tabController.dispose();
     _typeController.dispose();
-    _orderController.dispose();
     _nameControllers.forEach((_, c) => c.dispose());
     _badgeControllers.forEach((_, c) => c.dispose());
     super.dispose();
@@ -84,7 +82,6 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
       // "image_url":
       //     _imageURLController.text.isEmpty ? null : _imageURLController.text,
       "type": _typeController.text,
-      "order": int.tryParse(_orderController.text) ?? 0,
       "is_active": _isActive
     };
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -100,7 +97,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
             backgroundColor: AppColors.primaryGreen,
           ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       } else {
         if (!mounted) return;
         final decodedResponse = jsonDecode(response.body);
@@ -123,6 +120,12 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
           backgroundColor: Colors.redAccent,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -250,22 +253,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
                                     : 'Please Enter category type')
                                 : null,
                           ),
-                          CustomTextField(
-                            controller: _orderController,
-                            labelText: isArabic ? 'الترتيب (Order)' : 'Order',
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty)
-                                return (isArabic
-                                    ? 'يرجى إدخال الترتيب الرقمي'
-                                    : 'Please Enter Order number');
-                              if (int.tryParse(value) == null)
-                                return (isArabic
-                                    ? 'الترتيب يجب أن يكون رقماً صحيحاً'
-                                    : 'Must be valid Number');
-                              return null;
-                            },
-                          ),
+
                           Text(
                             isArabic
                                 ? 'اختر أيقونة القسم *'

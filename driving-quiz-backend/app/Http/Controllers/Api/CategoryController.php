@@ -42,23 +42,30 @@ class CategoryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCategoryRequest $request): JsonResponse
-    {
-        //
-        $category = Category::create($request->only(['image_url', 'type', 'order', 'is_active']));
-        foreach ($request->translations as $translationData) {
-            $category->translations()->create([
-                'locale' => $translationData['locale'],
-                'name'   => $translationData['name'],
-                'badge'  => $translationData['badge'] ?? null,
-            ]);
-        }
-        return response()->json([
-            'status' => true,
-            'message' => "Category created successfully",
-            'data' => new CategoryResource($category->load('translations'))
-        ], 201);
+  public function store(StoreCategoryRequest $request): JsonResponse
+{
+    $nextOrder = Category::max('order') + 1;
+
+    $categoryData = $request->only(['image_url', 'type', 'is_active']);
+    $categoryData['order'] = $nextOrder;
+
+    $category = Category::create($categoryData);
+
+    foreach ($request->translations as $translationData) {
+        $category->translations()->create([
+            'locale' => $translationData['locale'],
+            'name'   => $translationData['name'],
+            'badge'  => $translationData['badge'] ?? null,
+        ]);
     }
+
+
+    return response()->json([
+        'status' => true,
+        'message' => "Category created successfully",
+        'data' => new CategoryResource($category->load('translations'))
+    ], 201);
+}
 
     /**
      * Display the specified resource.

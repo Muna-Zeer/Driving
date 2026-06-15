@@ -49,6 +49,7 @@ class CategoryAPI {
         'Accept': 'application/json',
         'Authorization': 'Bearer $accessToken',
       },
+      body: jsonEncode(categoryData),
     );
 
     return response;
