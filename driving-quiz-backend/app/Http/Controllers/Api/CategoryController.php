@@ -102,15 +102,16 @@ class CategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id): JsonResponse
-    {
-        //
-        $realId = $this->decodeId($id);
-        Category::findOrFail($realId)->delete();
+   public function destroy($id): JsonResponse
+{
+    $category = Category::findOrFail($this->decodeId($id));
+    $deletedOrder = $category->order;
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Category deleted successfully'
-        ]);
-    }
+    $category->delete();
+
+    Category::where('order', '>', $deletedOrder)
+            ->decrement('order');
+
+    return response()->json(['status' => true, 'message' => 'Deleted and reordered successfully']);
+}
 }
