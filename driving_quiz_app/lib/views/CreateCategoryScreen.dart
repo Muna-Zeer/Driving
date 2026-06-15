@@ -91,7 +91,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
         child: Scaffold(
             appBar: AppBar(
               title: const CustomResponsiveNavbar(),
@@ -101,57 +101,64 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
             ),
             body: Center(
                 child: Container(
-                    constraints: const BoxConstraints(maxHeight: 600),
+                    constraints:
+                        const BoxConstraints(maxWidth: 800, maxHeight: 750),
                     padding: const EdgeInsets.all(24.0),
                     child: Form(
                         key: _formKey,
                         child: ListView(children: [
-                          CustomTextField(
-                            controller: _nameArabicController,
-                            labelText: isArabic
-                                ? '(بالعربية)اسم القسم*'
-                                : 'Name of Category',
-                            validator: (value) => value == null ||
-                                    value.trim().isEmpty
-                                ? (isArabic
-                                    ? 'يرجى إدخال اسم القسم'
-                                    : 'Please Enter the value of category name')
-                                : null,
+                          Container(
+                            color: AppColors.textSecondary,
+                            child: TabBar(
+                              controller: _tabController,
+                              labelColor: AppColors.primaryGreen,
+                              unselectedLabelColor: AppColors.textPrimary,
+                              indicatorColor: AppColors.primaryGreen,
+                              tabs: supportedLanguages.map((lang) {
+                                final Map<String, dynamic> langMap =
+                                    lang as Map<String, dynamic>;
+                                return Tab(
+                                    text: langMap['name']?.toString() ?? '');
+                              }).toList(),
+                            ),
                           ),
-                          CustomTextField(
-                            controller: _nameEnglishController,
-                            labelText: isArabic
-                                ? 'اسم القسم (بالإنجليزية)*'
-                                : 'Category Name (English)*',
-                            validator: (value) =>
-                                value == null || value.trim().isEmpty
-                                    ? (isArabic
-                                        ? 'يرجى إدخال اسم القسم بالإنجليزية'
-                                        : 'Please enter English category name')
-                                    : null,
-                          ),
-                          const Divider(),
-                          Text(
-                            isArabic
-                                ? 'نص الشارة العلوية المتغيرة (اختياري)'
-                                : 'Upper Badge Text (Optional)',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.deepForest),
-                          ),
-                          const Divider(),
-                          CustomTextField(
-                            controller: _badgeArabicController,
-                            labelText: isArabic
-                                ? 'نص الشارة (بالعربية) - مثل: استكمالي'
-                                : 'Badge Text (Arabic) - e.g., Supplementary',
-                          ),
-                          CustomTextField(
-                            controller: _badgeEnglishController,
-                            labelText: isArabic
-                                ? 'نص الشارة (بالإنجليزية)'
-                                : 'Badge Text (English)',
-                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                              height: 200,
+                              child: TabBarView(
+                                  controller: _tabController,
+                                  children: supportedLanguages.map((lang) {
+                                    final Map<String, dynamic> langMap =
+                                        lang as Map<String, dynamic>;
+                                    final String langCode =
+                                        langMap['code']?.toString() ?? 'en';
+                                    return Column(
+                                      children: [
+                                        CustomTextField(
+                                          controller:
+                                              _nameControllers[langCode]!,
+                                          labelText: isArabic
+                                              ? 'اسم القسم (${langMap['name']}) *'
+                                              : 'Category Name (${langMap['name']}) *',
+                                          validator: (value) => value == null ||
+                                                  value.trim().isEmpty
+                                              ? (isArabic
+                                                  ? 'يرجى إدخال اسم القسم'
+                                                  : 'Please enter category name')
+                                              : null,
+                                        ),
+                                        const SizedBox(height: 24),
+                                        CustomTextField(
+                                          controller:
+                                              _badgeControllers[langCode]!,
+                                          labelText: isArabic
+                                              ? 'نص الشارة العلوية (${langMap['name']}) - اختياري'
+                                              : 'Upper Badge Text (${langMap['name']}) - Optional',
+                                        ),
+                                      ],
+                                    );
+                                  }).toList())),
+                          const Divider(thickness: 1.5, height: 32),
                           Text(
                               isArabic
                                   ? 'الإعدادات العامة للقسم'
