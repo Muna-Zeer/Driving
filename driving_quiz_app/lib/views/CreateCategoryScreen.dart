@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:driving_quiz_app/SupportedLanguages.dart';
+import 'package:driving_quiz_app/services/CategoryService.dart';
 import 'package:driving_quiz_app/typeWidget.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
@@ -24,7 +27,8 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
       TextEditingController(text: 'car');
   final TextEditingController _orderController =
       TextEditingController(text: '0');
-
+  CategoryAPI _categoryAPI = CategoryAPI();
+  bool _isLoading = false;
   bool _isActive = true;
   @override
   void initState() {
@@ -49,10 +53,14 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
     super.dispose();
   }
 
-  void _submitData() {
+  void _submitData() async {
     if (_formKey.currentState == null || !_formKey.currentState!.validate()) {
       return;
     }
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+    });
     List<Map<String, dynamic>> translationsPayload = [];
     for (var lang in supportedLanguages) {
       final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
@@ -74,17 +82,43 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
       "order": int.tryParse(_orderController.text) ?? 0,
       "is_active": _isActive
     };
-    print("Final Payload sending: $newCategoryPayload");
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(isArabic
-            ? 'تمت إضافة الفئة بنجاح'
-            : 'Category created successfully'),
-        backgroundColor: AppColors.primaryGreen,
-      ),
-    );
-    Navigator.pop(context);
+    try {
+      final response = await _categoryAPI.sendCategoryToAPI(newCategoryPayload);
+      if (response.statusCode == 201) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isArabic
+                ? 'تمت إضافة الفئة بنجاح'
+                : 'Category created successfully'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        if (!mounted) return;
+        final decodedResponse = jsonDecode(response.body);
+        String BackendErrorMsg = decodedResponse['message'] ??
+            (isArabic ? 'فشل في إضافة القسم' : "Failed to add Category");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(BackendErrorMsg),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isArabic
+              ? 'خطأ في الاتصال بالشبكة: $e'
+              : 'Network Connection Error: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override
@@ -248,7 +282,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
                           ),
                           const SizedBox(height: 24),
                           ElevatedButton(
-                            onPressed: _submitData,
+                            onPressed: _isLoading ? null : _submitData,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryGreen,
                               padding: const EdgeInsets.symmetric(vertical: 16),
