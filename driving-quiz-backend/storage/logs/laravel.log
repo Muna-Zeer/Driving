@@ -771,3 +771,12 @@
 [2026-06-15 19:54:12] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
 [2026-06-17 13:07:06] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
 [2026-06-17 21:17:47] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:38:48] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:41:10] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:41:23] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:41:53] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:42:20] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:42:41] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:43:41] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:44:09] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:44:19] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
