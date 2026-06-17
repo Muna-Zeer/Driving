@@ -7,7 +7,6 @@ import 'package:driving_quiz_app/typeWidget.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/CustomTExtField.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 
 class CreateCategoryScreen extends StatefulWidget {
@@ -29,7 +28,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
       TextEditingController(text: 'car');
 
   CategoryAPI _categoryAPI = CategoryAPI();
-  String? _selectedIcon;
+  IconData? _selectedIcon;
 
   bool _isLoading = false;
   bool _isActive = true;
@@ -40,6 +39,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
         TabController(length: supportedLanguages.length, vsync: this);
 
     for (var lang in supportedLanguages) {
+      
       _nameControllers[lang['code']!] = TextEditingController();
       _badgeControllers[lang['code']!] = TextEditingController();
     }
@@ -78,9 +78,15 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
 
     final Map<String, dynamic> newCategoryPayload = {
       "translations": translationsPayload,
-      "image_url": _selectedIcon,
-      // "image_url":
-      //     _imageURLController.text.isEmpty ? null : _imageURLController.text,
+      "image_url": _selectedIcon == Icons.directions_car
+          ? 'car.png'
+          : _selectedIcon == Icons.local_shipping
+              ? 'truck.png'
+              : _selectedIcon == Icons.local_taxi
+                  ? 'taxi.png'
+                  : _selectedIcon == Icons.two_wheeler
+                      ? 'motorcycle.png'
+                      : null,
       "type": _typeController.text,
       "is_active": _isActive
     };
@@ -277,7 +283,12 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
                                     return GestureDetector(
                                       onTap: () {
                                         setState(() {
-                                          _selectedIcon = icon['value'];
+                                          if (isSelected) {
+                                            _selectedIcon = null;
+                                          } else {
+                                            _selectedIcon =
+                                                icon['value'] as IconData;
+                                          }
                                         });
                                       },
                                       child: Container(
@@ -302,17 +313,12 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
-                                              SvgPicture.asset(
-                                                'assets/images/${icon['value']}',
-                                                height: 50,
-                                                width: 50,
-                                                placeholderBuilder:
-                                                    (BuildContext context) =>
-                                                        const Icon(
-                                                  Icons.drive_eta,
-                                                  size: 40,
-                                                  color: Colors.grey,
-                                                ),
+                                              Icon(
+                                                icon['value'],
+                                                size: 50,
+                                                color: isSelected
+                                                    ? AppColors.primaryGreen
+                                                    : Colors.grey.shade700,
                                               ),
                                               const SizedBox(height: 4),
                                               Text(

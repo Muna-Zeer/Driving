@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:driving_quiz_app/models/CategoryModel.dart';
 import 'package:driving_quiz_app/services/APIService.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
