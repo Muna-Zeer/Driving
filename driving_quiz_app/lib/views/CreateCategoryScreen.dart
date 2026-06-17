@@ -39,9 +39,10 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
         TabController(length: supportedLanguages.length, vsync: this);
 
     for (var lang in supportedLanguages) {
-      
-      _nameControllers[lang['code']!] = TextEditingController();
-      _badgeControllers[lang['code']!] = TextEditingController();
+      final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
+      final String langCode = langMap['code']?.toString() ?? 'en';
+      _nameControllers[langCode] = TextEditingController();
+      _badgeControllers[langCode] = TextEditingController();
     }
   }
 
@@ -76,17 +77,17 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
       });
     }
 
+    String? imageName;
+    if (_selectedIcon == Icons.directions_car)
+      imageName = 'car.png';
+    else if (_selectedIcon == Icons.local_shipping)
+      imageName = 'truck.png';
+    else if (_selectedIcon == Icons.local_taxi)
+      imageName = 'taxi.png';
+    else if (_selectedIcon == Icons.two_wheeler) imageName = 'motorcycle.png';
     final Map<String, dynamic> newCategoryPayload = {
       "translations": translationsPayload,
-      "image_url": _selectedIcon == Icons.directions_car
-          ? 'car.png'
-          : _selectedIcon == Icons.local_shipping
-              ? 'truck.png'
-              : _selectedIcon == Icons.local_taxi
-                  ? 'taxi.png'
-                  : _selectedIcon == Icons.two_wheeler
-                      ? 'motorcycle.png'
-                      : null,
+      "image_url": imageName,
       "type": _typeController.text,
       "is_active": _isActive
     };

@@ -23,7 +23,7 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
 
     {
-     
+
         return [
             'image_url' => 'nullable|string',
             'type' => 'required|string|max:50',
@@ -31,7 +31,7 @@ class StoreCategoryRequest extends FormRequest
             'is_active' => 'boolean',
             'translations' => 'required|array',
             'translations.*.locale' => 'required|string|max:2',
-            'translations.*.name'   => 'required|string|max:255',
+            'translations.*.name'   => 'nullable|string|max:255',
             'translations.*.badge'  => 'nullable|string|max:50',
         ];
     }

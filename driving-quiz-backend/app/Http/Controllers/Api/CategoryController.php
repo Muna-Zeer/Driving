@@ -42,30 +42,40 @@ class CategoryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-  public function store(StoreCategoryRequest $request): JsonResponse
-{
-    $nextOrder = Category::max('order') + 1;
+    public function store(StoreCategoryRequest $request): JsonResponse
+    {
+        $nextOrder = Category::max('order') + 1;
 
-    $categoryData = $request->only(['image_url', 'type', 'is_active']);
-    $categoryData['order'] = $nextOrder;
+        $categoryData = $request->only(['image_url', 'type', 'is_active']);
+        $hasAtLeastOneName = collect($request->translations)->pluck('name')->filter()->isNotEmpty();
+        $categoryData['order'] = $nextOrder;
 
-    $category = Category::create($categoryData);
+        if (!$hasAtLeastOneName) {
+            return response()->json([
+                'status' => 'false',
+                'message' => 'الرجاء ادخال قسم واحد من اللغات' / 'At least one translation language is required',
 
-    foreach ($request->translations as $translationData) {
-        $category->translations()->create([
-            'locale' => $translationData['locale'],
-            'name'   => $translationData['name'],
-            'badge'  => $translationData['badge'] ?? null,
-        ]);
+            ], 422);
+        }
+        $category = Category::create($categoryData);
+
+        foreach ($request->translations as $translationData) {
+            if (!empty(trim($translationData['name']))) {
+                $category->translations()->create([
+                    'locale' => $translationData['locale'],
+                    'name'   => trim($translationData['name']),
+                    'badge'  => $translationData['badge'] ?? null,
+                ]);
+            }
+        }
+
+
+        return response()->json([
+            'status' => true,
+            'message' => "Category created successfully",
+            'data' => new CategoryResource($category->load('translations'))
+        ], 201);
     }
-
-
-    return response()->json([
-        'status' => true,
-        'message' => "Category created successfully",
-        'data' => new CategoryResource($category->load('translations'))
-    ], 201);
-}
 
     /**
      * Display the specified resource.
@@ -109,16 +119,16 @@ class CategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-   public function destroy($id): JsonResponse
-{
-    $category = Category::findOrFail($this->decodeId($id));
-    $deletedOrder = $category->order;
+    public function destroy($id): JsonResponse
+    {
+        $category = Category::findOrFail($this->decodeId($id));
+        $deletedOrder = $category->order;
 
-    $category->delete();
+        $category->delete();
 
-    Category::where('order', '>', $deletedOrder)
+        Category::where('order', '>', $deletedOrder)
             ->decrement('order');
 
-    return response()->json(['status' => true, 'message' => 'Deleted and reordered successfully']);
-}
+        return response()->json(['status' => true, 'message' => 'Deleted and reordered successfully']);
+    }
 }
