@@ -53,4 +53,19 @@ class CategoryAPI {
 
     return response;
   }
+
+  Future<http.Response> DeleteACtegory(String hashId) async {
+    final accessToken = await _storage.read(key: 'auth_token');
+    if (accessToken == null) {
+      throw Exception("User not Authorized");
+    }
+    final $response =
+        await http.delete(Uri.parse('$baseUrl/categories/$hashId'), headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $accessToken'
+    });
+
+    return $response;
+  }
 }
