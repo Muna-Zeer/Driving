@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:driving_quiz_app/models/CategoryModel.dart';
 import 'package:driving_quiz_app/services/CategoryService.dart';
 import 'package:driving_quiz_app/views/CreateCategoryScreen.dart';
@@ -5,6 +7,7 @@ import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomPagination.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
+import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -39,6 +42,60 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       setState(() {
         _userRole = role.trim();
       });
+    }
+  }
+
+  void handleDeleteCategory(BuildContext context, String hashedId) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    bool confirmDelete = await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(isArabic ? 'تأكيد الحذف' : 'Confirm Delete'),
+            content: Text(isArabic
+                ? 'هل أنت متأكد من حذف هذه الفئة نهائياً؟ سيتم إعادة ترتيب باقي الفئات تلقائياً.'
+                : 'Are you sure you want to delete this category?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(
+                  isArabic ? 'حذف' : 'Delete',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmDelete) return;
+
+    try {
+      final response = await _apiService.deleteCategoryFromAPI(hashedId);
+
+      if (response.statusCode == 200) {
+        if (!context.mounted) return;
+        AppAlerts.showAlert(context,
+            isArabic ? 'تم حذف الفئة بنجاح' : 'Category deleted successfully');
+
+        setState(() {
+          _categoriesFuture = _apiService.fetchCategories();
+        });
+      } else {
+        if (!context.mounted) return;
+        final decodedResponse = jsonDecode(response.body);
+        String errorMsg = decodedResponse['message'] ??
+            (isArabic ? 'فشل في حذف الفئة' : 'Failed to delete category');
+        AppAlerts.showError(context, errorMsg);
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      AppAlerts.showError(context,
+          isArabic ? 'خطأ في الاتصال بالشبكة: $e' : 'Network Error: $e');
     }
   }
 
@@ -144,6 +201,113 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           }),
         ));
   }
+
+  Widget _buildCategoryCard(
+      BuildContext context, CategoryModel category, bool showAdmin) {
+    final currentBadge = category.getBadgeText(context);
+    return Card(
+      color: AppColors.surface,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4.0),
+        side: const BorderSide(color: AppColors.border, width: 1),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {},
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: category.imageUrl.isNotEmpty
+                        ? Image.network(
+                            category.imageUrl,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.image_not_supported,
+                                    size: 40, color: AppColors.textSecondary),
+                          )
+                        : const Icon(Icons.directions_car,
+                            size: 40, color: AppColors.textSecondary),
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  color: AppColors.primaryGreen,
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    category.getName(context),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.textLight,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            if (currentBadge != null && currentBadge.isNotEmpty)
+              PositionedDirectional(
+                  top: 8,
+                  start: 8,
+                  child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        currentBadge,
+                        style: const TextStyle(
+                          color: AppColors.textLight,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ))),
+            if (showAdmin)
+              Positioned(
+                top: 4,
+                left: 4,
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: AppColors.textLight,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.edit,
+                            size: 16, color: AppColors.primaryGreen),
+                        onPressed: () {},
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: Colors.white.withAlpha(230),
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.delete,
+                            size: 16, color: Colors.red),
+                        onPressed: () {
+                          handleDeleteCategory(context, category.id.toString());
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 Widget _buildMobileDrawer() {
@@ -158,111 +322,4 @@ Widget _buildMobileDrawer() {
     ListTile(title: const Text('امتحان التجريبي '), onTap: () {}),
     ListTile(title: const Text('اتصل بنا  '), onTap: () {}),
   ]));
-}
-
-Widget _buildCategoryCard(
-    BuildContext context, CategoryModel category, bool showAdmin) {
-  final currentBadge = category.getBadgeText(context);
-  return Card(
-    color: AppColors.surface,
-    elevation: 2,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(4.0),
-      side: const BorderSide(color: AppColors.border, width: 1),
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      onTap: () {},
-      child: Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: category.imageUrl.isNotEmpty
-                      ? Image.network(
-                          category.imageUrl,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.image_not_supported,
-                                  size: 40, color: AppColors.textSecondary),
-                        )
-                      : const Icon(Icons.directions_car,
-                          size: 40, color: AppColors.textSecondary),
-                ),
-              ),
-              Container(
-                width: double.infinity,
-                color: AppColors.primaryGreen,
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Text(
-                  category.getName(context),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textLight,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          if (currentBadge != null && currentBadge.isNotEmpty)
-            PositionedDirectional(
-                top: 8,
-                start: 8,
-                child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      currentBadge,
-                      style: const TextStyle(
-                        color: AppColors.textLight,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ))),
-          if (showAdmin)
-            Positioned(
-              top: 4,
-              left: 4,
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: AppColors.textLight,
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      icon: const Icon(Icons.edit,
-                          size: 16,
-                          color: AppColors
-                              .primaryGreen), // Changed icon color so it is visible against a white background
-                      onPressed: () {},
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: Colors.white.withAlpha(230),
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      icon:
-                          const Icon(Icons.delete, size: 16, color: Colors.red),
-                      onPressed: () {},
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    ),
-  );
 }

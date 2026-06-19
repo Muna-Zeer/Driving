@@ -54,7 +54,7 @@ class CategoryAPI {
     return response;
   }
 
-  Future<http.Response> DeleteACtegory(String hashId) async {
+  Future<http.Response> deleteCategoryFromAPI(String hashId) async {
     final accessToken = await _storage.read(key: 'auth_token');
     if (accessToken == null) {
       throw Exception("User not Authorized");

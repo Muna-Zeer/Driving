@@ -7,6 +7,7 @@ import 'package:driving_quiz_app/typeWidget.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/CustomTExtField.dart';
+import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
 import 'package:flutter/material.dart';
 
 class CreateCategoryScreen extends StatefulWidget {
@@ -133,6 +134,52 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
           _isLoading = false;
         });
       }
+    }
+  }
+
+  void _handleDeleteCategroy(BuildContext context, String hashedId) async {
+    final isArabic = Localizations.localeOf(context).languageCode == "ar";
+    bool confirmDelete = await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+                    title: Text(isArabic ? 'تأكيد الحذف' : 'Confirm Delete'),
+                    content: Text(isArabic
+                        ? 'هل أنت متأكد من حذف هذه الفئة؟ سيتم ترتيب الفئات تلقائيا'
+                        : 'Are you sure to delete this category'),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text(isArabic ? 'إلغاء ' : 'Cancel')),
+                      TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text(isArabic ? 'حذف ' : 'Delete',
+                              style: const TextStyle(color: AppColors.error)))
+                    ])) ??
+        false;
+    if (confirmDelete) return;
+    try {
+      final response = await _categoryAPI.deleteCategoryFromAPI(hashedId);
+
+      if (response.statusCode == 200) {
+        if (!context.mounted) return;
+
+        AppAlerts.showAlert(context,
+            isArabic ? 'تم حذف الفئة بنجاح' : 'Category deleted successfully');
+
+        // _fetchCategories();
+      } else {
+        if (!context.mounted) return;
+        final decodedResponse = jsonDecode(response.body);
+        String errorMsg = decodedResponse['message'] ??
+            (isArabic ? 'فشل في حذف الفئة' : 'Failed to delete category');
+
+        AppAlerts.showError(context, errorMsg);
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+
+      AppAlerts.showError(context,
+          isArabic ? 'خطأ في الاتصال بالشبكة: $e' : 'Network Error: $e');
     }
   }
 
