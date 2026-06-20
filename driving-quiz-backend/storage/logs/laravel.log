@@ -624,3 +624,171 @@
 #37 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('C://Users//a-z//Dr...')
 #38 {main}
 "} 
+[2026-06-15 19:05:04] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","is_admin_raw_value":null} 
+[2026-06-15 19:05:04] local.ERROR: AdminMiddleware: Access denied for user mmm@gmail.com  
+[2026-06-15 19:27:25] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","is_admin_raw_value":null} 
+[2026-06-15 19:27:25] local.ERROR: AdminMiddleware: Access denied for user mmm@gmail.com  
+[2026-06-15 19:38:43] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-15 19:38:43] local.ERROR: array_key_first(): Argument #1 ($array) must be of type array, int given {"userId":4,"exception":"[object] (TypeError(code: 0): array_key_first(): Argument #1 ($array) must be of type array, int given at C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/ValidationRuleParser.php:100)
+[stacktrace]
+#0 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/ValidationRuleParser.php(100): array_key_first(100)
+#1 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/ValidationRuleParser.php(73): Illuminate/Validation/ValidationRuleParser->explodeExplicitRule(100, 'order')
+#2 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/ValidationRuleParser.php(51): Illuminate/Validation/ValidationRuleParser->explodeRules(Array)
+#3 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/Validator.php(1214): Illuminate/Validation/ValidationRuleParser->explode(Array)
+#4 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/Validator.php(1197): Illuminate/Validation/Validator->addRules(Array)
+#5 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/Validator.php(348): Illuminate/Validation/Validator->setRules(Array)
+#6 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/Factory.php(160): Illuminate/Validation/Validator->__construct(Object(Illuminate/Translation/Translator), Array, Array, Array, Array)
+#7 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/Factory.php(108): Illuminate/Validation/Factory->resolve(Array, Array, Array, Array)
+#8 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/FormRequest.php(124): Illuminate/Validation/Factory->make(Array, Array, Array, Array)
+#9 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/FormRequest.php(91): Illuminate/Foundation/Http/FormRequest->createDefaultValidator(Object(Illuminate/Validation/Factory))
+#10 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/ValidatesWhenResolvedTrait.php(25): Illuminate/Foundation/Http/FormRequest->getValidatorInstance()
+#11 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Providers/FormRequestServiceProvider.php(30): Illuminate/Foundation/Http/FormRequest->validateResolved()
+#12 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(1302): Illuminate/Foundation/Providers/FormRequestServiceProvider->Illuminate/Foundation/Providers/{closure}(Object(App/Http/Requests/StoreCategoryRequest), Object(Illuminate/Foundation/Application))
+#13 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(1267): Illuminate/Container/Container->fireCallbackArray(Object(App/Http/Requests/StoreCategoryRequest), Array)
+#14 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(1252): Illuminate/Container/Container->fireAfterResolvingCallbacks('App//Http//Reques...', Object(App/Http/Requests/StoreCategoryRequest))
+#15 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(813): Illuminate/Container/Container->fireResolvingCallbacks('App//Http//Reques...', Object(App/Http/Requests/StoreCategoryRequest))
+#16 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(986): Illuminate/Container/Container->resolve('App//Http//Reques...', Array, true)
+#17 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(731): Illuminate/Foundation/Application->resolve('App//Http//Reques...', Array)
+#18 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(971): Illuminate/Container/Container->make('App//Http//Reques...', Array)
+#19 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/ResolvesRouteDependencies.php(85): Illuminate/Foundation/Application->make('App//Http//Reques...')
+#20 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/ResolvesRouteDependencies.php(50): Illuminate/Routing/ControllerDispatcher->transformDependency(Object(ReflectionParameter), Array, Object(stdClass))
+#21 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/ResolvesRouteDependencies.php(30): Illuminate/Routing/ControllerDispatcher->resolveMethodDependencies(Array, Object(ReflectionMethod))
+#22 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(60): Illuminate/Routing/ControllerDispatcher->resolveClassMethodDependencies(Array, Object(App/Http/Controllers/Api/CategoryController), 'store')
+#23 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(40): Illuminate/Routing/ControllerDispatcher->resolveParameters(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/Api/CategoryController), 'store')
+#24 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(260): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/Api/CategoryController), 'store')
+#25 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#26 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#27 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#28 C:/Users/a-z/Driving/driving-quiz-backend/app/Http/Middleware/AdminMiddleware.php(31): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#29 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): App/Http/Middleware/AdminMiddleware->handle(Object(Illuminate/Http/Request), Object(Closure))
+#30 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#31 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#32 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#33 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(135): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#34 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#35 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#36 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php(57): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#37 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Auth/Middleware/Authenticate->handle(Object(Illuminate/Http/Request), Object(Closure), 'sanctum')
+#38 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#39 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(807): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#40 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#41 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#42 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#43 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#44 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#45 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#46 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#47 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#48 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#49 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#50 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#51 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#52 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#53 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#54 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#55 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#56 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#57 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#58 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#59 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#60 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#61 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#62 C:/Users/a-z/Driving/driving-quiz-backend/public/index.php(52): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#63 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('C://Users//a-z//Dr...')
+#64 {main}
+"} 
+[2026-06-15 19:39:41] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-15 19:39:41] local.ERROR: array_key_first(): Argument #1 ($array) must be of type array, int given {"userId":4,"exception":"[object] (TypeError(code: 0): array_key_first(): Argument #1 ($array) must be of type array, int given at C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/ValidationRuleParser.php:100)
+[stacktrace]
+#0 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/ValidationRuleParser.php(100): array_key_first(100)
+#1 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/ValidationRuleParser.php(73): Illuminate/Validation/ValidationRuleParser->explodeExplicitRule(100, 'order')
+#2 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/ValidationRuleParser.php(51): Illuminate/Validation/ValidationRuleParser->explodeRules(Array)
+#3 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/Validator.php(1214): Illuminate/Validation/ValidationRuleParser->explode(Array)
+#4 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/Validator.php(1197): Illuminate/Validation/Validator->addRules(Array)
+#5 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/Validator.php(348): Illuminate/Validation/Validator->setRules(Array)
+#6 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/Factory.php(160): Illuminate/Validation/Validator->__construct(Object(Illuminate/Translation/Translator), Array, Array, Array, Array)
+#7 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/Factory.php(108): Illuminate/Validation/Factory->resolve(Array, Array, Array, Array)
+#8 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/FormRequest.php(124): Illuminate/Validation/Factory->make(Array, Array, Array, Array)
+#9 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/FormRequest.php(91): Illuminate/Foundation/Http/FormRequest->createDefaultValidator(Object(Illuminate/Validation/Factory))
+#10 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Validation/ValidatesWhenResolvedTrait.php(25): Illuminate/Foundation/Http/FormRequest->getValidatorInstance()
+#11 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Providers/FormRequestServiceProvider.php(30): Illuminate/Foundation/Http/FormRequest->validateResolved()
+#12 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(1302): Illuminate/Foundation/Providers/FormRequestServiceProvider->Illuminate/Foundation/Providers/{closure}(Object(App/Http/Requests/StoreCategoryRequest), Object(Illuminate/Foundation/Application))
+#13 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(1267): Illuminate/Container/Container->fireCallbackArray(Object(App/Http/Requests/StoreCategoryRequest), Array)
+#14 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(1252): Illuminate/Container/Container->fireAfterResolvingCallbacks('App//Http//Reques...', Object(App/Http/Requests/StoreCategoryRequest))
+#15 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(813): Illuminate/Container/Container->fireResolvingCallbacks('App//Http//Reques...', Object(App/Http/Requests/StoreCategoryRequest))
+#16 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(986): Illuminate/Container/Container->resolve('App//Http//Reques...', Array, true)
+#17 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Container/Container.php(731): Illuminate/Foundation/Application->resolve('App//Http//Reques...', Array)
+#18 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(971): Illuminate/Container/Container->make('App//Http//Reques...', Array)
+#19 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/ResolvesRouteDependencies.php(85): Illuminate/Foundation/Application->make('App//Http//Reques...')
+#20 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/ResolvesRouteDependencies.php(50): Illuminate/Routing/ControllerDispatcher->transformDependency(Object(ReflectionParameter), Array, Object(stdClass))
+#21 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/ResolvesRouteDependencies.php(30): Illuminate/Routing/ControllerDispatcher->resolveMethodDependencies(Array, Object(ReflectionMethod))
+#22 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(60): Illuminate/Routing/ControllerDispatcher->resolveClassMethodDependencies(Array, Object(App/Http/Controllers/Api/CategoryController), 'store')
+#23 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(40): Illuminate/Routing/ControllerDispatcher->resolveParameters(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/Api/CategoryController), 'store')
+#24 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(260): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/Api/CategoryController), 'store')
+#25 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#26 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#27 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#28 C:/Users/a-z/Driving/driving-quiz-backend/app/Http/Middleware/AdminMiddleware.php(31): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#29 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): App/Http/Middleware/AdminMiddleware->handle(Object(Illuminate/Http/Request), Object(Closure))
+#30 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#31 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#32 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#33 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(135): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#34 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#35 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#36 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php(57): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#37 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Auth/Middleware/Authenticate->handle(Object(Illuminate/Http/Request), Object(Closure), 'sanctum')
+#38 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#39 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(807): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#40 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#41 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#42 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#43 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#44 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#45 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#46 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#47 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#48 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#49 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#50 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#51 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#52 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#53 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#54 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#55 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#56 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#57 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#58 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#59 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#60 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#61 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#62 C:/Users/a-z/Driving/driving-quiz-backend/public/index.php(52): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#63 C:/Users/a-z/Driving/driving-quiz-backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('C://Users//a-z//Dr...')
+#64 {main}
+"} 
+[2026-06-15 19:47:25] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-15 19:52:57] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-15 19:54:12] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 13:07:06] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:17:47] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:38:48] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:41:10] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:41:23] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:41:53] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:42:20] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:42:41] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:43:41] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:44:09] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-17 21:44:19] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-19 21:22:02] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-19 21:22:16] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-19 21:26:23] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-19 21:26:37] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-19 21:26:45] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-19 21:30:12] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-19 21:39:48] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-19 21:41:55] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-19 21:46:10] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-20 18:18:36] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-20 18:33:24] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 
+[2026-06-20 18:38:30] local.INFO: AdminMiddleware: Checking user permissions {"id":4,"email":"mmm@gmail.com","role":"admin"} 

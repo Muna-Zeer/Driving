@@ -13,13 +13,13 @@ class CategoryFactory extends Factory
 {
     protected $model = Category::class;
 
-    public function definition(): array
-    {
-        return [
-            'image_url' => 'categories/' . $this->faker->word() . '.png',
-            'type'      => $this->faker->randomElement(['truck', 'car', 'motorcycle', 'tractor']),
-            'order'     => $this->faker->unique()->numberBetween(1, 100),
-            'is_active' => true,
-        ];
-    }
+  public function definition(): array
+{
+    return [
+        'image_url' => 'categories/' . $this->faker->word() . '.png',
+        'type'      => $this->faker->randomElement(['truck', 'car', 'motorcycle', 'tractor']),
+        'order'     => $this->faker->unique()->numberBetween(1, 100),
+        'is_active' => true,
+    ];
+}
 }

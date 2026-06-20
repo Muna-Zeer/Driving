@@ -1,4 +1,5 @@
 name: driving_quiz_app
+
 description: A new Flutter project for driving theory practice.
 publish_to: 'none' 
 
@@ -7,11 +8,21 @@ version: 1.0.0+1
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+
 dependencies:
   flutter:
     sdk: flutter
   flutter_localizations:
-    sdk: flutter  
+    sdk: flutter
+  intl: 0.20.2
+
 
   # The "Big Three" for your Laravel connection
   http: ^1.2.0                 # To talk to your Laravel API
@@ -23,7 +34,8 @@ dependencies:
   google_fonts: ^6.2.1         # To make the app look professional
   cupertino_icons: ^1.0.6
   flutter_secure_storage: ^10.3.1
-  
+  flutter_svg: ^2.2.3
+
 
 dev_dependencies:
   flutter_test:
@@ -39,13 +51,25 @@ flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/icon.png"
+
+
   adaptive_icon_foreground: "assets/icon.png"
+
   uses-material-design: true
 
   # Add this section to allow the app to see your images
   assets:
+
     - assets/icon.png
     - assets/images/ # This will include all images you put in this folder
+
+
+
+    - assets/logo.png
+
+    - assets/icon.png
+    - assets/images/
+     # This will include all images you put in this folder
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

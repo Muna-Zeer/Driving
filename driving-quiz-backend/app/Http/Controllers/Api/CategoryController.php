@@ -7,7 +7,7 @@ use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
-use Hashids\Hashids;
+use Vinkla\Hashids\Facades\Hashids;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -44,14 +44,32 @@ class CategoryController extends Controller
      */
     public function store(StoreCategoryRequest $request): JsonResponse
     {
-        //
-        $category = Category::create($request->only(['image_url', 'type', 'order', 'is_active']));
-        foreach ($request->translations as $locale => $data) {
-            $category->translations()->create([
-                'locale' => $locale,
-                'name' => $data['name']
-            ]);
+        $nextOrder = Category::max('order') + 1;
+
+        $categoryData = $request->only(['image_url', 'type', 'is_active']);
+        $hasAtLeastOneName = collect($request->translations)->pluck('name')->filter()->isNotEmpty();
+        $categoryData['order'] = $nextOrder;
+
+        if (!$hasAtLeastOneName) {
+            return response()->json([
+                'status' => 'false',
+                'message' => 'الرجاء ادخال قسم واحد من اللغات' / 'At least one translation language is required',
+
+            ], 422);
         }
+        $category = Category::create($categoryData);
+
+        foreach ($request->translations as $translationData) {
+            if (!empty(trim($translationData['name']))) {
+                $category->translations()->create([
+                    'locale' => $translationData['locale'],
+                    'name'   => trim($translationData['name']),
+                    'badge'  => $translationData['badge'] ?? null,
+                ]);
+            }
+        }
+
+
         return response()->json([
             'status' => true,
             'message' => "Category created successfully",
@@ -101,15 +119,36 @@ class CategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id):JsonResponse
+    public function destroy($id): \Illuminate\Http\JsonResponse
     {
-        //
-        $realId = $this->decodeId($id);
-        Category::findOrFail($realId)->delete();
+        $decodedArray = Hashids::decode($id);
+
+        if (empty($decodedArray)) {
+            return response()->json([
+                'status' => false,
+                'message' => "Laravel failed to decode the Hash ID: '$id'"
+            ], 404);
+        }
+
+        $realId = $decodedArray[0];
+
+        $category = \App\Models\Category::find($realId);
+
+        if (!$category) {
+            return response()->json([
+                'status' => false,
+                'message' => "Decoded ID is $realId, but no category exists with this ID in database."
+            ], 404);
+        }
+
+        $deletedOrder = $category->order;
+        $category->delete();
+
+        \App\Models\Category::where('order', '>', $deletedOrder)->decrement('order');
 
         return response()->json([
             'status' => true,
-            'message' => 'Category deleted successfully'
+            'message' => 'Deleted and reordered successfully'
         ]);
     }
 }

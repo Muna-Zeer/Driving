@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:driving_quiz_app/services/auth_service.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:driving_quiz_app/widgets/drivingAlerts.dart'; // تأكد من مطابقة مسار التنبيهات لديك
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -16,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
   bool _isLoading = false;
 
   void _loginSubmit() async {
@@ -29,6 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim());
 
+      // final data = jsonDecode(response.body);
+
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -37,9 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (payload['status'] == 'success') {
         AppAlerts.showAlert(context, "مرحباً بك مجدداً! تم تسجيل الدخول بنجاح ",
             icon: Icons.login_outlined);
-        Future.delayed(const Duration(microseconds: 1500), () {
+        Future.delayed(const Duration(milliseconds: 1500), () {
           if (mounted) {
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.of(context)
+                .pushNamedAndRemoveUntil('/', (route) => false);
           }
         });
       } else {
@@ -49,8 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
           icon: Icons.error_outline,
         );
       }
-
-      Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
 

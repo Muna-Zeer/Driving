@@ -11,8 +11,8 @@ class Category extends Model
 
     protected $fillable = ['image_url', 'type', 'order', 'is_active'];
 
-  
-    protected $appends = ['hashed_id'];
+    protected $appends = ['hashed_id', 'current_name', 'current_badge'];
+
 
     public function getHashedIdAttribute()
     {
@@ -25,7 +25,16 @@ class Category extends Model
     {
         return $this->hasMany(CategoryTranslation::class);
     }
-
+    public function getCurrentNameAttribute()
+    {
+        $translation = $this->translations()->where('locale', app()->getLocale())->first();
+        return $translation ? $translation->name : optional($this->translations()->first())->name;
+    }
+  public function getCurrentBadgeAttribute()
+    {
+        $translation = $this->translations()->where('locale', app()->getLocale())->first();
+        return $translation ? $translation->badge : null;
+    }
 
     public function levels()
     {

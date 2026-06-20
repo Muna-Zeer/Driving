@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -11,7 +12,6 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-
         if (!Auth::check()) {
             Log::warning('AdminMiddleware: No user authenticated via Sanctum.');
             return response()->json(['message' => 'Not authenticated'], 401);
@@ -20,16 +20,17 @@ class AdminMiddleware
         $user = Auth::user();
 
         Log::info('AdminMiddleware: Checking user permissions', [
-            'id' => $user->id,
+            'id'    => $user->id,
             'email' => $user->email,
-            'is_admin_raw_value' => $user->is_admin,
+            'role'  => $user->role,
         ]);
 
-        if ($user->is_admin) {
+        $role = strtolower((string)$user->role);
+
+        if ($user->role === 'admin' || $user->role === 'super_admin') {
             return $next($request);
         }
-
-        Log::error('AdminMiddleware: Access denied for user ' . $user->email);
-        return response()->json(['message' => 'Forbidden: Admin access only'], 403);
+        Log::error('AdminMiddleware: Access denied for user ' . $user->email . ' with role ' . $user->role);
+        return response()->json(['message' => 'Forbidden: Admin or Super Admin access only'], 403);
     }
 }

@@ -1,7 +1,5 @@
-import 'package:driving_quiz_app/views/LoginScreen.dart';
-import 'package:driving_quiz_app/views/SignUp.dart';
+
 import 'package:driving_quiz_app/widgets/AppColors.dart';
-import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCategoryRequest extends FormRequest
@@ -20,15 +21,18 @@ class StoreCategoryRequest extends FormRequest
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
+
     {
+
         return [
-            'image_url'=>'nullable|string',
-            'type'=>'required|string|max:50',
-            'order'=>'integer',
-            'is_active'=>'boolean',
-            'translations'=>'required|array',
-            'translations.ar.name'=>'required|string|max:50',
-            'translations.en.name'=>'required|string|max:50',
+            'image_url' => 'nullable|string',
+            'type' => 'required|string|max:50',
+            'order' =>'nullable|integer',
+            'is_active' => 'boolean',
+            'translations' => 'required|array',
+            'translations.*.locale' => 'required|string|max:2',
+            'translations.*.name'   => 'nullable|string|max:255',
+            'translations.*.badge'  => 'nullable|string|max:50',
         ];
     }
 }
