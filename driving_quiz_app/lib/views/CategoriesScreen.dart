@@ -76,7 +76,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
     try {
       final response = await _apiService.deleteCategoryFromAPI(hashedId);
-
+      print('Hashed ID to delete: $hashedId');
       if (response.statusCode == 200) {
         if (!context.mounted) return;
         AppAlerts.showAlert(context,

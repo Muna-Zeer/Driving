@@ -32,14 +32,22 @@ class CategoryModel {
   }
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
-    String defaultName = json['name'] ?? 'Unknown';
+    // 🟢 قراءة المعرّف المشفر من حقل 'id' بشكل آمن تماماً
+    String categoryId = '';
+    if (json['id'] != null) {
+      categoryId = json['id'].toString();
+    }
+
+    // قراءة الاسم العام المترجم القادم من Laravel Resource
+    String defaultName = json['name']?.toString() ?? 'Unknown';
 
     String nameArabic = defaultName;
     String nameEnglish = defaultName;
     String? badgeArabic;
     String? badgeEnglish;
 
-    if (json['translations'] != null) {
+    // إذا كان السيرفر يرسل قائمة الترجمات الكاملة (translations)
+    if (json['translations'] != null && json['translations'] is List) {
       final List<dynamic> transList = json['translations'];
       for (var item in transList) {
         if (item['locale'] == 'ar') {
@@ -51,14 +59,15 @@ class CategoryModel {
         }
       }
     } else {
-      if (json['name_ar'] != null) nameArabic = json['name_ar'];
-      if (json['name_en'] != null) nameEnglish = json['name_en'];
-      if (json['badge_ar'] != null) badgeArabic = json['badge_ar'];
-      if (json['badge_en'] != null) badgeEnglish = json['badge_en'];
+      // إذا كان السيرفر يرسل الحقول منفصلة مباشرة
+      if (json['name_ar'] != null) nameArabic = json['name_ar'].toString();
+      if (json['name_en'] != null) nameEnglish = json['name_en'].toString();
+      if (json['badge_ar'] != null) badgeArabic = json['badge_ar'].toString();
+      if (json['badge_en'] != null) badgeEnglish = json['badge_en'].toString();
     }
 
     return CategoryModel(
-      id: json['id']?.toString() ?? '',
+      id: categoryId, // 🟢 هنا سيتم تخزين الـ Hash الحقيقي الكامل (مثل jR4vlO) وليس حرفاً واحداً
       imageUrl: json['image'] ?? json['image_url'] ?? '',
       type: json['type'] ?? 'standard',
       order: json['order'] is int

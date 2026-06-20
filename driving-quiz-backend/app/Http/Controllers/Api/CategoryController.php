@@ -7,7 +7,7 @@ use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
-use Hashids\Hashids;
+use Vinkla\Hashids\Facades\Hashids;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -119,16 +119,36 @@ class CategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id): JsonResponse
+    public function destroy($id): \Illuminate\Http\JsonResponse
     {
-        $category = Category::findOrFail($this->decodeId($id));
-        $deletedOrder = $category->order;
+        $decodedArray = Hashids::decode($id);
 
+        if (empty($decodedArray)) {
+            return response()->json([
+                'status' => false,
+                'message' => "Laravel failed to decode the Hash ID: '$id'"
+            ], 404);
+        }
+
+        $realId = $decodedArray[0];
+
+        $category = \App\Models\Category::find($realId);
+
+        if (!$category) {
+            return response()->json([
+                'status' => false,
+                'message' => "Decoded ID is $realId, but no category exists with this ID in database."
+            ], 404);
+        }
+
+        $deletedOrder = $category->order;
         $category->delete();
 
-        Category::where('order', '>', $deletedOrder)
-            ->decrement('order');
+        \App\Models\Category::where('order', '>', $deletedOrder)->decrement('order');
 
-        return response()->json(['status' => true, 'message' => 'Deleted and reordered successfully']);
+        return response()->json([
+            'status' => true,
+            'message' => 'Deleted and reordered successfully'
+        ]);
     }
 }
