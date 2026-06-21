@@ -68,4 +68,23 @@ class CategoryAPI {
 
     return $response;
   }
+
+  Future<http.Response> updateCategoryInAPI(
+      String hashId, Map<String, dynamic> data) async {
+    final accessToken = await _storage.read(key: 'auth_token');
+    if (accessToken == null) {
+      throw Exception("User not Authorized");
+    }
+    final response = await http.put(
+      Uri.parse('$baseUrl/categories/$hashId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $accessToken'
+      },
+      body: jsonEncode(data),
+    );
+
+    return response;
+  }
 }

@@ -127,7 +127,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
     try {
       http.Response response;
       if (isEditMode) {
-        response = await _categoryAPI.EditCategoryToAPI(
+        response = await _categoryAPI.updateCategoryInAPI(
             widget.category!.id, newCategoryPayload);
       } else {
         response = await _categoryAPI.sendCategoryToAPI(newCategoryPayload);

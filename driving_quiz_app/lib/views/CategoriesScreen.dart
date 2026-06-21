@@ -8,6 +8,7 @@ import 'package:driving_quiz_app/widgets/CustomPagination.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -284,7 +285,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         padding: EdgeInsets.zero,
                         icon: const Icon(Icons.edit,
                             size: 16, color: AppColors.primaryGreen),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    CreateCategoryScreen(category: category)),
+                          ).then((wasUpdated) {
+                            if (wasUpdated == true) {
+                              setState(() {
+                                _categoriesFuture =
+                                    _apiService.fetchCategories();
+                              });
+                            }
+                          });
+                        },
                       ),
                     ),
                     const SizedBox(width: 4),
