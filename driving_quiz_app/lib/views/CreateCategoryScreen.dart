@@ -8,8 +8,8 @@ import 'package:driving_quiz_app/typeWidget.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/CustomTExtField.dart';
-import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class CreateCategoryScreen extends StatefulWidget {
   final CategoryModel? category;
@@ -113,6 +113,10 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
     else if (_selectedIcon == Icons.local_taxi)
       imageName = 'taxi.png';
     else if (_selectedIcon == Icons.two_wheeler) imageName = 'motorcycle.png';
+
+    if (imageName == null && isEditMode) {
+      imageName = widget.category!.imageUrl;
+    }
     final Map<String, dynamic> newCategoryPayload = {
       "translations": translationsPayload,
       "image_url": imageName,
@@ -121,14 +125,25 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
     };
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     try {
-      final response = await _categoryAPI.sendCategoryToAPI(newCategoryPayload);
-      if (response.statusCode == 201) {
+      http.Response response;
+      if (isEditMode) {
+        response = await _categoryAPI.EditCategoryToAPI(
+            widget.category!.id, newCategoryPayload);
+      } else {
+        response = await _categoryAPI.sendCategoryToAPI(newCategoryPayload);
+      }
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(isArabic
-                ? 'تمت إضافة الفئة بنجاح'
-                : 'Category created successfully'),
+                ? (isEditMode
+                    ? 'تمت إضافة الفئة بنجاح'
+                    : 'تم تحديث الفئة بنجاح')
+                : (isEditMode
+                    ? 'Category created successfully'
+                    : 'Updated category successfully')),
             backgroundColor: AppColors.primaryGreen,
           ),
         );
