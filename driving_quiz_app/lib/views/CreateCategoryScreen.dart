@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:driving_quiz_app/CategoriesIcons.dart';
 import 'package:driving_quiz_app/SupportedLanguages.dart';
+import 'package:driving_quiz_app/models/CategoryModel.dart';
 import 'package:driving_quiz_app/services/CategoryService.dart';
 import 'package:driving_quiz_app/typeWidget.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
@@ -11,7 +12,8 @@ import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
 import 'package:flutter/material.dart';
 
 class CreateCategoryScreen extends StatefulWidget {
-  const CreateCategoryScreen({Key? key}) : super(key: key);
+  final CategoryModel? category;
+  const CreateCategoryScreen({Key? key, this.category}) : super(key: key);
 
   @override
   State<CreateCategoryScreen> createState() => _CreateCategoryScreenState();
@@ -30,7 +32,7 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
 
   CategoryAPI _categoryAPI = CategoryAPI();
   IconData? _selectedIcon;
-
+  bool get isEditMode => widget.category != null;
   bool _isLoading = false;
   bool _isActive = true;
   @override
@@ -42,8 +44,33 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
     for (var lang in supportedLanguages) {
       final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
       final String langCode = langMap['code']?.toString() ?? 'en';
-      _nameControllers[langCode] = TextEditingController();
-      _badgeControllers[langCode] = TextEditingController();
+      String initialName = '';
+      String? initialBadge;
+
+      if (isEditMode) {
+        initialName = langCode == 'ar'
+            ? widget.category!.nameAr
+            : widget.category!.nameEn;
+        initialBadge = langCode == 'ar'
+            ? widget.category!.badgeAr
+            : widget.category!.badgeEn;
+      }
+      _nameControllers[langCode] = TextEditingController(text: initialName);
+      _badgeControllers[langCode] =
+          TextEditingController(text: initialBadge ?? '');
+    }
+    if (isEditMode) {
+      _typeController.text = widget.category!.type;
+      final img = widget.category!.imageUrl;
+      if (img.contains('car.png')) {
+        _selectedIcon = Icons.directions_car;
+      } else if (img.contains('truck.png')) {
+        _selectedIcon = Icons.local_shipping;
+      } else if (img.contains('taxi.png')) {
+        _selectedIcon = Icons.local_taxi;
+      } else if (img.contains('motorcycle.png')) {
+        _selectedIcon = Icons.two_wheeler;
+      }
     }
   }
 
@@ -134,52 +161,6 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
           _isLoading = false;
         });
       }
-    }
-  }
-
-  void _handleDeleteCategroy(BuildContext context, String hashedId) async {
-    final isArabic = Localizations.localeOf(context).languageCode == "ar";
-    bool confirmDelete = await showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-                    title: Text(isArabic ? 'تأكيد الحذف' : 'Confirm Delete'),
-                    content: Text(isArabic
-                        ? 'هل أنت متأكد من حذف هذه الفئة؟ سيتم ترتيب الفئات تلقائيا'
-                        : 'Are you sure to delete this category'),
-                    actions: [
-                      TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: Text(isArabic ? 'إلغاء ' : 'Cancel')),
-                      TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: Text(isArabic ? 'حذف ' : 'Delete',
-                              style: const TextStyle(color: AppColors.error)))
-                    ])) ??
-        false;
-    if (confirmDelete) return;
-    try {
-      final response = await _categoryAPI.deleteCategoryFromAPI(hashedId);
-
-      if (response.statusCode == 200) {
-        if (!context.mounted) return;
-
-        AppAlerts.showAlert(context,
-            isArabic ? 'تم حذف الفئة بنجاح' : 'Category deleted successfully');
-
-        // _fetchCategories();
-      } else {
-        if (!context.mounted) return;
-        final decodedResponse = jsonDecode(response.body);
-        String errorMsg = decodedResponse['message'] ??
-            (isArabic ? 'فشل في حذف الفئة' : 'Failed to delete category');
-
-        AppAlerts.showError(context, errorMsg);
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-
-      AppAlerts.showError(context,
-          isArabic ? 'خطأ في الاتصال بالشبكة: $e' : 'Network Error: $e');
     }
   }
 
