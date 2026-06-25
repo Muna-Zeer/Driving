@@ -135,18 +135,22 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isArabic
-                ? (isEditMode
-                    ? 'تمت إضافة الفئة بنجاح'
-                    : 'تم تحديث الفئة بنجاح')
-                : (isEditMode
-                    ? 'Category created successfully'
-                    : 'Updated category successfully')),
+            content: Text(
+              isArabic
+                  ? (isEditMode
+                      ? 'تم تحديث الفئة بنجاح'
+                      : 'تمت إضافة الفئة بنجاح')
+                  : (isEditMode
+                      ? 'Category updated successfully'
+                      : 'Category created successfully'),
+            ),
             backgroundColor: AppColors.primaryGreen,
           ),
         );
+
         Navigator.pop(context, true);
       } else {
         if (!mounted) return;

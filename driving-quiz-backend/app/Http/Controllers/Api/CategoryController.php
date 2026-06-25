@@ -19,11 +19,12 @@ class CategoryController extends Controller
         $this->hashids = new Hashids(config('app.key'), 10);
     }
 
-    private function decodeId($hashedId)
-    {
-        $decoded = $this->hashids->decode($hashedId);
-        return $decoded[0] ?? abort(404, 'Category not found.');
-    }
+   protected function decodeId($id)
+{
+    $decoded = \Vinkla\Hashids\Facades\Hashids::decode($id);
+
+    return is_array($decoded) && !empty($decoded) ? $decoded[0] : null;
+}
     /**
      * Display a listing of the resource.
      */
@@ -94,28 +95,41 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateCategoryRequest $request, $id): JsonResponse
-    {
-        //
-        $realId = $this->decodeId($id);
-        $category = Category::with('translations')->findOrFail($realId);
-        $category->update($request->only(['image_url', 'type', 'order', 'is_active']));
+   public function update(UpdateCategoryRequest $request, $id): JsonResponse
+{
+    $realId = $this->decodeId($id);
 
-        if ($request->has('translations')) {
-            foreach ($request->translations as $locale => $data) {
+    if (!$realId) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Invalid or expired Category ID'
+        ], 404);
+    }
+
+    $category = Category::with('translations')->findOrFail($realId);
+
+    $category->update($request->only(['image_url', 'type', 'order', 'is_active']));
+
+    if ($request->has('translations') && is_array($request->translations)) {
+        foreach ($request->translations as $translation) {
+            if (isset($translation['locale']) && isset($translation['name'])) {
                 $category->translations()->updateOrCreate(
-                    ['locale' => $locale],
-                    ['name' => $data['name']]
+                    ['locale' => $translation['locale']],
+                    [
+                        'name'  => $translation['name'],
+                        'badge' => $translation['badge'] ?? null
+                    ]
                 );
             }
         }
-        return response()->json([
-            'status' => true,
-            'message' => 'Category updated successfully',
-            'data' => new CategoryResource($category->load('translations'))
-        ]);
     }
 
+    return response()->json([
+        'status' => true,
+        'message' => 'Category updated successfully',
+        'data' => new CategoryResource($category->load('translations'))
+    ]);
+}
     /**
      * Remove the specified resource from storage.
      */
