@@ -1,3 +1,4 @@
+
 class Level {
   final int? id;
   final String? groupKey;
@@ -17,6 +18,43 @@ class Level {
     this.categoryId,
     required this.translations,
   });
+  String get nameAr => translations
+      .firstWhere((t) => t.locale == 'ar',
+          orElse: () => LevelTranslation(locale: 'ar', name: ''))
+      .name;
+  String get nameEn => translations
+      .firstWhere((t) => t.locale == 'en',
+          orElse: () => LevelTranslation(locale: 'en', name: ''))
+      .name;
+
+  factory Level.fromJson(Map<String, dynamic> json) {
+    var list = json['translations'] as List;
+    List<LevelTranslation> translationsList = list != null
+        ? list.map((l) => LevelTranslation.fromJson(l)).toList()
+        : [];
+    return Level(
+      id: json['id'],
+      groupKey: json['group_key'],
+      levelNumber: json['level_number'] ?? 1,
+      questionCount: json['questions_count'] ?? 0,
+      order: json['order'] ?? 1,
+      isActive: json['is_active'] == true || json['is_active'] == 1,
+      categoryId: json['category_id'],
+      translations: translationsList,
+    );
+  }
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      'group_key': groupKey,
+      'level_number': levelNumber,
+      'question_count': questionCount,
+      'order': order,
+      'is_active': isActive,
+      'category_id': categoryId,
+      'translations': translations.map((t) => t.toJson()).toList()
+    };
+  }
 }
 
 class LevelTranslation {
@@ -43,11 +81,11 @@ class LevelTranslation {
   }
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'level_id': levelId,
+      if (id != null) 'id': id,
+      if (levelId != null) 'level_id': levelId,
       'locale': locale,
       'name': name,
-      'description': description,
+      if (description != null) 'description': description,
     };
   }
 }
