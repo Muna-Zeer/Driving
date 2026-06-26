@@ -2,6 +2,7 @@ import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:driving_quiz_app/services/APIService.dart';
+import 'dart:convert';
 
 class ManageLevelScreen extends StatefulWidget {
   final Map<String, dynamic> category;
@@ -27,6 +28,7 @@ class ManageLevelScreenState extends State<ManageLevelScreen>
   final _sortOrderController = TextEditingController();
   bool _isActive = true;
   bool get _isEditMode => widget.level != null;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -68,8 +70,10 @@ class ManageLevelScreenState extends State<ManageLevelScreen>
             'order': int.tryParse(_sortOrderController.text.trim())?? 1,
             'is_active' : _isActive
           };
+                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           try {
             http.Response response;
+
             if(_isEditMode){
               final String levelId = widget.level!['id'];
               response = await http.put(Uri.parse('$baseUrl/levels/$levelId'),body:levelPayload);
