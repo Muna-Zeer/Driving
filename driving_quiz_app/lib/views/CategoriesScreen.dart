@@ -222,16 +222,57 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
-                    child: category.imageUrl.isNotEmpty
-                        ? Image.network(
-                            category.imageUrl,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.image_not_supported,
-                                    size: 40, color: AppColors.textSecondary),
-                          )
-                        : const Icon(Icons.directions_car,
-                            size: 40, color: AppColors.textSecondary),
+                    child: Builder(
+                      builder: (context) {
+                        String dbImageValue = category.imageUrl.toLowerCase();
+
+                        if (dbImageValue.isEmpty) {
+                          return const Icon(
+                            Icons.directions_car,
+                            size: 40,
+                            color: AppColors.textSecondary,
+                          );
+                        }
+
+                        if (dbImageValue.contains('car.png') ||
+                            dbImageValue.contains('vero.png') ||
+                            dbImageValue.contains('quia.png')) {
+                          dbImageValue = 'car.png';
+                        } else if (dbImageValue.contains('truck.png') ||
+                            dbImageValue.contains('iusto.png') ||
+                            dbImageValue.contains('provident.png') ||
+                            dbImageValue.contains('labore.png') ||
+                            dbImageValue.contains('mollitia.png')) {
+                          dbImageValue = 'truck.png';
+                        } else if (dbImageValue.contains('taxi.png') ||
+                            dbImageValue.contains('tractor')) {
+                          dbImageValue = 'taxi.png';
+                        } else if (dbImageValue.contains('motorcycle.png') ||
+                            dbImageValue.contains('ut.png') ||
+                            dbImageValue.contains('omnis.png') ||
+                            dbImageValue.contains('ullam.png')) {
+                          dbImageValue = 'motorcycle.png';
+                        }
+
+                        IconData displayIcon = Icons.image_not_supported;
+
+                        if (dbImageValue.contains('car.png')) {
+                          displayIcon = Icons.directions_car;
+                        } else if (dbImageValue.contains('truck.png')) {
+                          displayIcon = Icons.local_shipping;
+                        } else if (dbImageValue.contains('taxi.png')) {
+                          displayIcon = Icons.local_taxi;
+                        } else if (dbImageValue.contains('motorcycle.png')) {
+                          displayIcon = Icons.two_wheeler;
+                        }
+
+                        return Icon(
+                          displayIcon,
+                          size: 40,
+                          color: AppColors.textSecondary,
+                        );
+                      },
+                    ),
                   ),
                 ),
                 Container(

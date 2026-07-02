@@ -30,7 +30,7 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
   bool _isActive = true;
   bool get _isEditMode => widget.level != null;
   bool _isLoading = false;
-
+  List<dynamic> _levels = [];
   @override
   void initState() {
     super.initState();
@@ -55,6 +55,34 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
     if (_isEditMode) {
       _sortOrderController.text = widget.level!['order']?.toString() ?? '1';
       _isActive = widget.level!['is_active'] ?? true;
+    }
+  }
+
+  Future<void> _fetchLevels() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await Future.delayed(const Duration(milliseconds: 500));
+    try{
+          final response = await http.get(Uri.parse('$baseUrl/levels?category_id=${widget.category['id']}/levels'))
+       setState((){
+            _levels = List.generate(12,(index)=>{
+               'id':'lvl_$index',
+               'level_number':index+1,
+               'question_count':10,
+               'order':index+1,
+               'is_active':true,
+               'translations':[
+                {'locale':'ar','name':'المستوى${index + 1}'},
+                {'locale':'en','name':'Level  ${index + 1}'},
+               ]
+            });
+            _isLoading = false;
+            
+       });
+    
+    }catch(e){
+
     }
   }
 
