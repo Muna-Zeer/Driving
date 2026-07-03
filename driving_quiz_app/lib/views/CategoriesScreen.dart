@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:driving_quiz_app/SupportedLanguages.dart';
 import 'package:driving_quiz_app/models/CategoryModel.dart';
 import 'package:driving_quiz_app/services/CategoryService.dart';
+import 'package:driving_quiz_app/views/CategoryLevelDashboard.dart';
 import 'package:driving_quiz_app/views/CreateCategoryScreen.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomPagination.dart';
@@ -76,7 +78,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
     try {
       final response = await _apiService.deleteCategoryFromAPI(hashedId);
-      print('Hashed ID to delete: $hashedId');
       if (response.statusCode == 200) {
         if (!context.mounted) return;
         AppAlerts.showAlert(context,
@@ -214,7 +215,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CategoryLevelsDashboardScreen(
+                category: category,
+                supportedLanguages: supportedLanguages,
+              ),
+            ),
+          );
+        },
         child: Stack(
           children: [
             Column(

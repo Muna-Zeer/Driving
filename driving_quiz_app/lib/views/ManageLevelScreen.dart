@@ -1,20 +1,19 @@
+import 'package:driving_quiz_app/SupportedLanguages.dart';
+import 'package:driving_quiz_app/models/CategoryModel.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
-import 'package:driving_quiz_app/widgets/CustomTextField.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:driving_quiz_app/services/APIService.dart';
 import 'dart:convert';
 
 class ManageLevelScreen extends StatefulWidget {
-  final Map<String, dynamic> category;
+  final CategoryModel category;
   final Map<String, dynamic>? level;
-  final List<dynamic> supportedLanguages;
 
   const ManageLevelScreen({
     Key? key,
     required this.category,
     this.level,
-    required this.supportedLanguages,
   }) : super(key: key);
   @override
   State<ManageLevelScreen> createState() => _ManageLevelScreenState();
@@ -35,10 +34,13 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
   void initState() {
     super.initState();
     _tabController =
-        TabController(length: widget.supportedLanguages.length, vsync: this);
-    for (var lang in widget.supportedLanguages) {
+        TabController(length: supportedLanguages.length, vsync: this);
+
+    for (var lang in supportedLanguages) {
       final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
       final String langCode = langMap['code']?.toString() ?? 'en';
+      _nameControllers[langCode] = TextEditingController();
+
       String initialName = '';
 
       if (_isEditMode) {
@@ -58,105 +60,98 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
     }
   }
 
-  Future<void> _fetchLevels() async {
+  Future<void> _savedLevel() async {
+    if (_isLoading) return;
     setState(() {
       _isLoading = true;
     });
-    await Future.delayed(const Duration(milliseconds: 500));
-    try{
-          final response = await http.get(Uri.parse('$baseUrl/levels?category_id=${widget.category['id']}/levels'))
-       setState((){
-            _levels = List.generate(12,(index)=>{
-               'id':'lvl_$index',
-               'level_number':index+1,
-               'question_count':10,
-               'order':index+1,
-               'is_active':true,
-               'translations':[
-                {'locale':'ar','name':'المستوى${index + 1}'},
-                {'locale':'en','name':'Level  ${index + 1}'},
-               ]
-            });
-            _isLoading = false;
-            
-       });
-    
-    }catch(e){
-
-    }
-  }
-
-  Future<void> _savedLevel() async {
     List<Map<String, dynamic>> translationsPayload = [];
-    for (var lang in widget.supportedLanguages) {
+    for (var lang in supportedLanguages) {
       final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
       final String langCode = langMap['code']?.toString() ?? 'en';
       final String nameText = _nameControllers[langCode]?.text.trim() ?? '';
 
       translationsPayload.add({'locale': langCode, 'name': nameText});
-
-      final Map<String, dynamic> levelPayload = {
-        "category_id": widget.category['id'],
-        'translations': translationsPayload,
-        'order': int.tryParse(_sortOrderController.text.trim()) ?? 1,
-        'is_active': _isActive
+    }
+    final Map<String, dynamic> levelPayload = {
+      "category_id": widget.category.id,
+      'translations': translationsPayload,
+      'order': int.tryParse(_sortOrderController.text.trim()) ?? 1,
+      'is_active': _isActive
+    };
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    try {
+      http.Response response;
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       };
-      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-      try {
-        http.Response response;
-
-        if (_isEditMode) {
-          final String levelId = widget.level!['id'];
-          response = await http.put(Uri.parse('$baseUrl/levels/$levelId'),
-              body: levelPayload);
-        } else {
-          response =
-              await http.post(Uri.parse('$baseUrl/levels'), body: levelPayload);
-        }
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          Navigator.of(context).pop(true);
-        } else {
-          if (!mounted) return;
-          final decodedResponse = jsonDecode(response.body);
-          String BackendErrorMsg = decodedResponse['message'] ??
-              (isArabic ? 'فشل في إضافة المستوى' : "Failed to add new Level");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(BackendErrorMsg),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      } catch (e) {
+      if (_isEditMode) {
+        final String levelId = widget.level!['id'].toString();
+        response = await http.put(Uri.parse('$baseUrl/levels/$levelId'),
+            headers: headers, body: jsonEncode(levelPayload));
+      } else {
+        response = await http.post(
+          Uri.parse('$baseUrl/levels'),
+          headers: headers,
+          body: jsonEncode(levelPayload),
+        );
+      }
+      if (response.statusCode == 200 || response.statusCode == 201) {
         if (!mounted) return;
+        Navigator.of(context).pop(true);
+      } else {
+        if (!mounted) return;
+        final decodedResponse = jsonDecode(response.body);
+        String BackendErrorMsg = decodedResponse['message'] ??
+            (isArabic ? 'فشل في إضافة المستوى' : "Failed to add new Level");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isArabic
-                ? 'خطأ في الاتصال بالشبكة: $e'
-                : 'Network Connection Error: $e'),
-            backgroundColor: Colors.redAccent,
+            content: Text(BackendErrorMsg),
+            backgroundColor: AppColors.error,
           ),
         );
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isArabic
+              ? 'خطأ في الاتصال بالشبكة: $e'
+              : 'Network Connection Error: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final String categoryName = widget.category.nameAr ?? 'تؤوريا';
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditMode ? 'تعديل مستوى' : 'إضافة مستوى جديد'),
+        // title: Text('إدارة مستويات: $categoryName'),
+        centerTitle: true,
+
         bottom: TabBar(
           controller: _tabController,
-          tabs: widget.supportedLanguages
-              .map<Widget>((lang) => Tab(text: lang['name_en']))
-              .toList(),
+          tabs: supportedLanguages.map<Widget>((lang) {
+            final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
+
+            final String tabText = langMap['name_en']?.toString() ??
+                langMap['name']?.toString() ??
+                langMap['code']?.toString()?.toUpperCase() ??
+                'Lang';
+
+            return Tab(text: tabText);
+          }).toList(),
         ),
       ),
       body: Padding(
@@ -166,12 +161,23 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: widget.supportedLanguages.map<Widget>((lang) {
-                  final String langCode = lang['code'];
-                  return TextField(
-                    controller: _nameControllers[langCode],
-                    decoration: InputDecoration(
-                        labelText: 'اسم المستوى (${lang['name_en']})'),
+                children: supportedLanguages.map<Widget>((lang) {
+                  final Map<String, dynamic> langMap =
+                      lang as Map<String, dynamic>;
+                  final String langCode = langMap['code']?.toString() ?? 'en';
+
+                  final String fieldLabel =
+                      langMap['name'] ?? langCode.toUpperCase();
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: TextField(
+                      controller: _nameControllers[langCode],
+                      decoration: InputDecoration(
+                        labelText: 'اسم المستوى ($fieldLabel)',
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
                   );
                 }).toList(),
               ),
