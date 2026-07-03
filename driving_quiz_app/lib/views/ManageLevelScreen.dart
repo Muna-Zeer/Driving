@@ -1,6 +1,7 @@
 import 'package:driving_quiz_app/SupportedLanguages.dart';
 import 'package:driving_quiz_app/models/CategoryModel.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
+import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:driving_quiz_app/services/APIService.dart';
@@ -22,7 +23,9 @@ class ManageLevelScreen extends StatefulWidget {
 class _ManageLevelScreenState extends State<ManageLevelScreen>
     with SingleTickerProviderStateMixin {
   final baseUrl = APIService.getBaseUrl();
-
+  final _levelNumberController = TextEditingController();
+  final _questionsCountController = TextEditingController();
+  final _groupKeyController = TextEditingController();
   late TabController _tabController;
   final Map<String, TextEditingController> _nameControllers = {};
   final _sortOrderController = TextEditingController();
@@ -30,6 +33,17 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
   bool get _isEditMode => widget.level != null;
   bool _isLoading = false;
   List<dynamic> _levels = [];
+
+  @override
+  void dispose() {
+    _questionsCountController.dispose();
+    _groupKeyController.dispose();
+    _sortOrderController.dispose();
+    _levelNumberController.dispose();
+    _tabController.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -134,25 +148,14 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
   @override
   Widget build(BuildContext context) {
     final String categoryName = widget.category.nameAr ?? 'تؤوريا';
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditMode ? 'تعديل مستوى' : 'إضافة مستوى جديد'),
-        // title: Text('إدارة مستويات: $categoryName'),
-        centerTitle: true,
-
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: supportedLanguages.map<Widget>((lang) {
-            final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
-
-            final String tabText = langMap['name_en']?.toString() ??
-                langMap['name']?.toString() ??
-                langMap['code']?.toString()?.toUpperCase() ??
-                'Lang';
-
-            return Tab(text: tabText);
-          }).toList(),
-        ),
+        title: const CustomResponsiveNavbar(),
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.deepForest,
+        elevation: 1,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -195,9 +198,21 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _savedLevel,
-              child: Text(_isEditMode ? 'تحديث' : 'حفظ'),
-            )
+              onPressed: _isLoading ? null : _savedLevel,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(
+                isArabic ? 'حفظ وإدراج القسم' : 'Save and Publish',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
         ),
       ),

@@ -426,6 +426,11 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen>
                                   fontWeight: FontWeight.bold),
                             ),
                           ),
-                        ]))))));
+                        ])
+                        )
+                        )
+                        )
+                        )
+                        );
   }
 }
