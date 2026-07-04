@@ -307,30 +307,26 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
                       Row(
                         children: [
                           Expanded(
-                            child: TextField(
+                            child: CustomTextField(
                               controller: _levelNumberController,
                               keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText:
-                                    isArabic ? 'رقم المستوى' : 'Level Number',
-                                border: const OutlineInputBorder(),
-                                prefixIcon:
-                                    const Icon(Icons.format_list_numbered),
-                              ),
+
+                              labelText:
+                                  isArabic ? 'رقم المستوى' : 'Level Number',
+
+                              // const Icon(Icons.format_list_numbered),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: TextField(
+                            child: CustomTextField(
                               controller: _questionsCountController,
                               keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: isArabic
-                                    ? 'عدد الأسئلة'
-                                    : 'Questions Count',
-                                border: const OutlineInputBorder(),
-                                prefixIcon: const Icon(Icons.quiz),
-                              ),
+
+                              labelText:
+                                  isArabic ? 'عدد الأسئلة' : 'Questions Count',
+
+                              // prefixIcon: const Icon(Icons.quiz),
                             ),
                           ),
                         ],
