@@ -2,6 +2,7 @@ import 'package:driving_quiz_app/SupportedLanguages.dart';
 import 'package:driving_quiz_app/models/CategoryModel.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
+import 'package:driving_quiz_app/widgets/CustomTextField.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:driving_quiz_app/services/APIService.dart';
@@ -58,6 +59,12 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
       String initialName = '';
 
       if (_isEditMode) {
+        _levelNumberController.text =
+            widget.level!['level_number']?.toString() ?? '';
+        _questionsCountController.text =
+            widget.level!['questions_count']?.toString() ?? '';
+        _groupKeyController.text = widget.level!['group_key']?.toString() ?? '';
+        _isActive = widget.level!['is_active'] ?? true;
         final List<dynamic> translations = widget.level!['translations'] ?? [];
         final existingTranslation = translations.firstWhere(
             (test) => test['locale'] == langCode,
@@ -65,6 +72,12 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
         initialName = existingTranslation != null
             ? existingTranslation['name'] ?? ''
             : '';
+      } else {
+        _levelNumberController.text = '';
+        _questionsCountController.text = '';
+        _groupKeyController.text = '';
+        _isActive = true;
+        _sortOrderController.text = '1';
       }
       _nameControllers[langCode] = TextEditingController(text: initialName);
     }
@@ -89,9 +102,14 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
     }
     final Map<String, dynamic> levelPayload = {
       "category_id": widget.category.id,
+      "level_number": int.tryParse(_levelNumberController.text.trim()) ?? 1,
+      "questions_count":
+          int.tryParse(_questionsCountController.text.trim()) ?? 0,
+      "group_key": _groupKeyController.text.trim().isEmpty
+          ? null
+          : _groupKeyController.text.trim(),
+      "is_active": _isActive,
       'translations': translationsPayload,
-      'order': int.tryParse(_sortOrderController.text.trim()) ?? 1,
-      'is_active': _isActive
     };
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     try {
@@ -151,71 +169,240 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const CustomResponsiveNavbar(),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.deepForest,
         elevation: 1,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: supportedLanguages.map<Widget>((lang) {
-                  final Map<String, dynamic> langMap =
-                      lang as Map<String, dynamic>;
-                  final String langCode = langMap['code']?.toString() ?? 'en';
-
-                  final String fieldLabel =
-                      langMap['name'] ?? langCode.toUpperCase();
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: TextField(
-                      controller: _nameControllers[langCode],
-                      decoration: InputDecoration(
-                        labelText: 'اسم المستوى ($fieldLabel)',
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            TextField(
-              controller: _sortOrderController,
-              keyboardType: TextInputType.number,
-              decoration:
-                  const InputDecoration(labelText: 'ترتيب العرض (Order)'),
-            ),
-            SwitchListTile(
-              title: const Text('نشط / Active'),
-              value: _isActive,
-              onChanged: (val) => setState(() => _isActive = val),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _savedLevel,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGreen,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+      body: SingleChildScrollView(
+          child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 800),
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            children: [
+              Card(
+                elevation: 0,
+                color: AppColors.surface,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey[200]!),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Center(
+                    child: Row(
+                      children: [
+                        Icon(Icons.layers,
+                            color: AppColors.primaryGreen, size: 28),
+                        const SizedBox(width: 12),
+                        Text(
+                          _isEditMode
+                              ? (isArabic
+                                  ? 'تعديل مستوى - $categoryName'
+                                  : 'Edit Level - $categoryName')
+                              : (isArabic
+                                  ? 'إضافة مستوى جديد - $categoryName'
+                                  : 'Add New Level - $categoryName'),
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              child: Text(
-                isArabic ? 'حفظ وإدراج القسم' : 'Save and Publish',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold),
+              const SizedBox(height: 16),
+              Card(
+                elevation: 0,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey[200]!),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isArabic
+                              ? 'أسماء المستوى باللغات'
+                              : 'Level Translations',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[700]),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 90,
+                          child: TabBar(
+                            controller: _tabController,
+                            labelColor: AppColors.primaryGreen,
+                            unselectedLabelColor: AppColors.textPrimary,
+                            indicatorColor: AppColors.primaryGreen,
+                            tabs: supportedLanguages.map((lang) {
+                              final Map<String, dynamic> langMap =
+                                  lang as Map<String, dynamic>;
+                              return Tab(
+                                  text: langMap['name']?.toString() ?? '');
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                            height: 200,
+                            child: TabBarView(
+                                controller: _tabController,
+                                children: supportedLanguages.map((lang) {
+                                  final Map<String, dynamic> langMap =
+                                      lang as Map<String, dynamic>;
+                                  final String langCode =
+                                      langMap['code']?.toString() ?? 'en';
+                                  return Column(
+                                    children: [
+                                      CustomTextField(
+                                        controller: _nameControllers[langCode]!,
+                                        labelText: isArabic
+                                            ? 'اسم المستوى (${langMap['name']}) *'
+                                            : 'Level Name (${langMap['name']}) *',
+                                        validator: (value) => value == null ||
+                                                value.trim().isEmpty
+                                            ? (isArabic
+                                                ? 'يرجى إدخال اسم المستوى'
+                                                : 'Please enter level name')
+                                            : null,
+                                      ),
+                                      const SizedBox(height: 24),
+                                    ],
+                                  );
+                                }).toList())),
+                      ]),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Card(
+                elevation: 0,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey[200]!),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isArabic
+                            ? 'إعدادات المستوى التقنية'
+                            : 'Technical Specifications',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[700]),
+                      ),
+                      // const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _levelNumberController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText:
+                                    isArabic ? 'رقم المستوى' : 'Level Number',
+                                border: const OutlineInputBorder(),
+                                prefixIcon:
+                                    const Icon(Icons.format_list_numbered),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _questionsCountController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: isArabic
+                                    ? 'عدد الأسئلة'
+                                    : 'Questions Count',
+                                border: const OutlineInputBorder(),
+                                prefixIcon: const Icon(Icons.quiz),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      TextField(
+                        controller: _groupKeyController,
+                        decoration: InputDecoration(
+                          labelText: isArabic
+                              ? 'مفتاح المجموعة (Optional)'
+                              : 'Group Key (Optional)',
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.vpn_key),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Card(
+                elevation: 0,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey[200]!),
+                ),
+                child: SwitchListTile(
+                  title: Text(
+                    isArabic ? 'نشط / تفعيل الظهور' : 'Is Active / Publish',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(isArabic
+                      ? 'تحكم بظهور المستوى للمستخدمين'
+                      : 'Control level visibility'),
+                  value: _isActive,
+                  activeColor: AppColors.primaryGreen,
+                  onChanged: (val) => setState(() => _isActive = val),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _savedLevel,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
+                    : Text(
+                        _isEditMode
+                            ? (isArabic ? 'تحديث البيانات' : 'Update Level')
+                            : (isArabic
+                                ? 'حفظ وإدراج المستوى'
+                                : 'Save and Publish'),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold),
+                      ),
+              ),
+            ],
+          ),
         ),
-      ),
+      )),
     );
   }
 }
