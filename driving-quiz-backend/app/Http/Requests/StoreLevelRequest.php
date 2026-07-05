@@ -11,7 +11,7 @@ class StoreLevelRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -33,9 +33,9 @@ class StoreLevelRequest extends FormRequest
             'order' => ['nullable', 'integer'],
             'is_active' => ['boolean'],
 
-            'translations' => ['required', 'array'],
-            'translations.ar.name' => ['required', 'string'],
-            'translations.*.name' => ['required', 'string'],
+            'translations' => 'required|array',
+            'translations.locale' => 'nullable|string|max:2',
+            'translations.*.name' => 'nullable|string|max:255',
         ];
     }
 }

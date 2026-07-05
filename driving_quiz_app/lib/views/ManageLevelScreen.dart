@@ -4,9 +4,11 @@ import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/CustomTextField.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:driving_quiz_app/services/APIService.dart';
 import 'dart:convert';
+import 'package:driving_quiz_app/services/LevelService.dart';
 
 class ManageLevelScreen extends StatefulWidget {
   final CategoryModel category;
@@ -33,15 +35,22 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
   bool _isActive = true;
   bool get _isEditMode => widget.level != null;
   bool _isLoading = false;
-  List<dynamic> _levels = [];
-
+  final LevelService _levelAPI = LevelService();
+  final _storage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+  );
   @override
   void dispose() {
+    _levelNumberController.removeListener(_updateGroupKey);
+    _nameControllers['ar']?.removeListener(_updateGroupKey);
     _questionsCountController.dispose();
     _groupKeyController.dispose();
     _sortOrderController.dispose();
     _levelNumberController.dispose();
     _tabController.dispose();
+    _nameControllers.forEach((key, controller) => controller.dispose);
     super.dispose();
   }
 
@@ -50,7 +59,10 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
     super.initState();
     _tabController =
         TabController(length: supportedLanguages.length, vsync: this);
-
+    _levelNumberController.addListener(_updateGroupKey);
+    if (_nameControllers['ar'] != null) {
+      _nameControllers['ar']!.addListener(_updateGroupKey);
+    }
     for (var lang in supportedLanguages) {
       final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
       final String langCode = langMap['code']?.toString() ?? 'en';
@@ -114,35 +126,49 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     try {
       http.Response response;
+      final accessToken = await _storage.read(key: 'auth_token');
+      if (accessToken == null) {
+        throw Exception(
+            isArabic ? 'المستخدم غير مصرح له' : "User not authenticated");
+      }
       final Map<String, String> headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Authorization': 'Bearer $accessToken'
       };
       if (_isEditMode) {
         final String levelId = widget.level!['id'].toString();
-        response = await http.put(Uri.parse('$baseUrl/levels/$levelId'),
+        response = await http.put(Uri.parse('$baseUrl/level/$levelId'),
             headers: headers, body: jsonEncode(levelPayload));
       } else {
-        response = await http.post(
-          Uri.parse('$baseUrl/levels'),
-          headers: headers,
-          body: jsonEncode(levelPayload),
-        );
-      }
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (!mounted) return;
-        Navigator.of(context).pop(true);
-      } else {
-        if (!mounted) return;
-        final decodedResponse = jsonDecode(response.body);
-        String BackendErrorMsg = decodedResponse['message'] ??
-            (isArabic ? 'فشل في إضافة المستوى' : "Failed to add new Level");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(BackendErrorMsg),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        final response = await _levelAPI.sendLevelToAPI(levelPayload);
+        if (response.statusCode == 201) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isArabic
+                  ? 'تمت إضافة الفئة بنجاح'
+                  : 'Category created successfully'),
+              backgroundColor: AppColors.primaryGreen,
+            ),
+          );
+          Navigator.pop(context, true);
+        }
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          if (!mounted) return;
+          Navigator.of(context).pop(true);
+        } else {
+          if (!mounted) return;
+          final decodedResponse = jsonDecode(response.body);
+          String BackendErrorMsg = decodedResponse['message'] ??
+              (isArabic ? 'فشل في إضافة المستوى' : "Failed to add new Level");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(BackendErrorMsg),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -160,6 +186,18 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
           _isLoading = false;
         });
       }
+    }
+  }
+
+  void _updateGroupKey() {
+    final String CategoryName = _nameControllers['ar']?.text.trim() ?? '';
+    final String LevelNumber = _levelNumberController.text.trim();
+
+    if (CategoryName.isNotEmpty && LevelNumber.isNotEmpty) {
+      final String cleanCategory = CategoryName.replaceAll(RegExp(r'\s+'), '_');
+      _groupKeyController.text = '${cleanCategory}_ ${LevelNumber}';
+    } else {
+      _groupKeyController.clear();
     }
   }
 

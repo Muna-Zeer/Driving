@@ -43,7 +43,11 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::post('login', [AuthController::class, 'login']);
-Route::apiResource('level', LevelController::class);
+
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+ Route::apiResource('level', LevelController::class);
+});
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
