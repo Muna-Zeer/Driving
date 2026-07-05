@@ -29,6 +29,7 @@ class StoreLevelRequest extends FormRequest
                 'min:1',
                 'unique:levels,level_number,NULL,id,group_key,' . $this->group_key
             ],
+            'category_id'=>'required|exists:categories,id',
             'questions_count' => ['required', 'integer', 'min:1'],
             'order' => ['nullable', 'integer'],
             'is_active' => ['boolean'],

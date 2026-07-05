@@ -51,22 +51,26 @@ class LevelController extends Controller
      */
     public function store(StoreLevelRequest $request): JsonResponse
     {
-        $data = $request->validated();
+        $levelData = $request->validated();
+        $nextOrder = Level::where('category_id',$request->category_id)->max('order')+1;
+        $hasAtLeastOneName = collect($request->translations)->pluck('name')->filter()->isNotEmpty();
+        $levelData['order'] = $nextOrder;
 
-        $level = Level::create([
-            'group_key' => $data['group_key'],
-            'level_number' => $data['level_number'],
-            'questions_count' => $data['questions_count'],
-            'order' => $data['order'] ?? $data['level_number'],
-            'is_active' => $data['is_active'] ?? true,
-        ]);
+        if (!$hasAtLeastOneName) {
+            return response()->json([
+                'status' => 'false',
+                'message' => 'الرجاء ادخال قسم واحد من اللغات' / 'At least one translation language is required',
 
-        foreach ($data['translations'] as $locale => $t) {
+            ], 422);}
+        $level = Level::create($levelData);
+
+        foreach ($levelData['translations'] as $locale => $t) {
+            if(!empty(trim($t['name']))){
             $level->translations()->create([
                 'locale' => $locale,
                 'name' => $t['name'],
                 'description' => $t['description'] ?? null,
-            ]);
+            ]);}
         }
 
         return response()->json([

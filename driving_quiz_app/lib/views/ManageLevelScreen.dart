@@ -60,13 +60,10 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
     _tabController =
         TabController(length: supportedLanguages.length, vsync: this);
     _levelNumberController.addListener(_updateGroupKey);
-    if (_nameControllers['ar'] != null) {
-      _nameControllers['ar']!.addListener(_updateGroupKey);
-    }
+
     for (var lang in supportedLanguages) {
       final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
       final String langCode = langMap['code']?.toString() ?? 'en';
-      _nameControllers[langCode] = TextEditingController();
 
       String initialName = '';
 
@@ -77,6 +74,7 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
             widget.level!['questions_count']?.toString() ?? '';
         _groupKeyController.text = widget.level!['group_key']?.toString() ?? '';
         _isActive = widget.level!['is_active'] ?? true;
+
         final List<dynamic> translations = widget.level!['translations'] ?? [];
         final existingTranslation = translations.firstWhere(
             (test) => test['locale'] == langCode,
@@ -91,8 +89,14 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
         _isActive = true;
         _sortOrderController.text = '1';
       }
+
       _nameControllers[langCode] = TextEditingController(text: initialName);
     }
+
+    if (_nameControllers['ar'] != null) {
+      _nameControllers['ar']!.addListener(_updateGroupKey);
+    }
+
     if (_isEditMode) {
       _sortOrderController.text = widget.level!['order']?.toString() ?? '1';
       _isActive = widget.level!['is_active'] ?? true;
@@ -113,14 +117,16 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
       translationsPayload.add({'locale': langCode, 'name': nameText});
     }
     final Map<String, dynamic> levelPayload = {
-      "category_id": widget.category.id,
+      "category_id": _isEditMode
+          ? (widget.level!['category_id'] ?? widget.category.id)
+          : widget.category.id,
       "level_number": int.tryParse(_levelNumberController.text.trim()) ?? 1,
       "questions_count":
           int.tryParse(_questionsCountController.text.trim()) ?? 0,
       "group_key": _groupKeyController.text.trim().isEmpty
           ? null
           : _groupKeyController.text.trim(),
-      "is_active": _isActive,
+      "is_active": _isActive ? 1 : 0,
       'translations': translationsPayload,
     };
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -147,8 +153,8 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(isArabic
-                  ? 'تمت إضافة الفئة بنجاح'
-                  : 'Category created successfully'),
+                  ? 'تمت إضافة المستوى بنجاح'
+                  : 'Level created successfully'),
               backgroundColor: AppColors.primaryGreen,
             ),
           );
