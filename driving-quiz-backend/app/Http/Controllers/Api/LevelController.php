@@ -9,6 +9,7 @@ use App\Http\Resources\LevelResource;
 use App\Models\Level;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Vinkla\Hashids\Facades\Hashids;
 
 class LevelController extends Controller
 {
@@ -17,13 +18,23 @@ class LevelController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $group = $request->get('group_key');
+        $query = Level::with('translations')->where('is_active',true);
 
-        $levels = Level::with('translations')
-            ->when($group, fn($q) => $q->where('group_key', $group))
-            ->where('is_active', true)
-            ->orderBy('level_number')
-            ->get();
+        if($request->has('category_id')){
+            $hashedId = $request->get('category_id');
+            $decoded = Hashids::decode($hashedId);
+            if(!empty($decoded)){
+                $query->where('category_id',$decoded[0]);
+            }
+            else{
+                return response()->json(['status'=>false,'message'=>'Invalid Category Hash'],400);
+            }
+        }
+
+       if($request->has('group_key')){
+           $query->where('group_key',$request->get('group_key'));
+       }
+       $levels = $query->orderBy('order')->get();
 
         return response()->json([
             'status' => true,

@@ -55,7 +55,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Public routes (Guests can see categories)
 Route::get('categories', [CategoryController::class, 'index']);
 Route::get('categories/{id}', [CategoryController::class, 'show']);
-
+Route::get('categories/{id}/levels',[LevelController::class,'index']);
 // Protected routes (Only Admins can modify)
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('categories', [CategoryController::class, 'store']);
