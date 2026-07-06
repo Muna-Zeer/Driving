@@ -52,25 +52,30 @@ class LevelController extends Controller
     public function store(StoreLevelRequest $request): JsonResponse
     {
         $levelData = $request->validated();
-        $nextOrder = Level::where('category_id',$request->category_id)->max('order')+1;
-        $hasAtLeastOneName = collect($request->translations)->pluck('name')->filter()->isNotEmpty();
+        $nextOrder = Level::where('category_id', $request->category_id)->max('order') + 1;
         $levelData['order'] = $nextOrder;
+
+        $hasAtLeastOneName = collect($request->translations)->contains(function ($t) {
+            return !empty(trim($t['name'] ?? ''));
+        });
 
         if (!$hasAtLeastOneName) {
             return response()->json([
-                'status' => 'false',
-                'message' => 'الرجاء ادخال قسم واحد من اللغات' / 'At least one translation language is required',
+                'status' => false,
+                'message' => 'At least one translation language is required',
+            ], 422);
+        }
 
-            ], 422);}
         $level = Level::create($levelData);
 
-        foreach ($levelData['translations'] as $locale => $t) {
-            if(!empty(trim($t['name']))){
-            $level->translations()->create([
-                'locale' => $locale,
-                'name' => $t['name'],
-                'description' => $t['description'] ?? null,
-            ]);}
+        foreach ($levelData['translations'] as $t) {
+            if (!empty(trim($t['name'] ?? ''))) {
+                $level->translations()->create([
+                    'locale' => $t['locale'],
+                    'name' => $t['name'],
+                    'description' => $t['description'] ?? null,
+                ]);
+            }
         }
 
         return response()->json([

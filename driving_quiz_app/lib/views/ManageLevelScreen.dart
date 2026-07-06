@@ -118,8 +118,9 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
     }
     final Map<String, dynamic> levelPayload = {
       "category_id": _isEditMode
-          ? (widget.level!['category_id'] ?? widget.category.id)
-          : widget.category.id,
+          ? (widget.level!['category_id']?.toString() ??
+              widget.category.id.toString())
+          : widget.category.id.toString(),
       "level_number": int.tryParse(_levelNumberController.text.trim()) ?? 1,
       "questions_count":
           int.tryParse(_questionsCountController.text.trim()) ?? 0,
@@ -146,8 +147,14 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
         final String levelId = widget.level!['id'].toString();
         response = await http.put(Uri.parse('$baseUrl/level/$levelId'),
             headers: headers, body: jsonEncode(levelPayload));
+        print("====== API SENDING PAYLOAD ======");
+        print(jsonEncode(levelPayload));
+        print("=================================");
       } else {
         final response = await _levelAPI.sendLevelToAPI(levelPayload);
+        print("====== API SENDING PAYLOAD ======");
+        print(jsonEncode(levelPayload));
+        print("=================================");
         if (response.statusCode == 201) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(

@@ -1,4 +1,3 @@
-
 class Level {
   final int? id;
   final String? groupKey;
@@ -44,6 +43,15 @@ class Level {
     );
   }
   Map<String, dynamic> toJson() {
+    // Converts the List<LevelTranslation> into a Map like {"ar": {"name": "sdsd"}, "en": {"name": ""}}
+    final Map<String, dynamic> translationMap = {};
+    for (var t in translations) {
+      translationMap[t.locale] = {
+        'name': t.name,
+        if (t.description != null) 'description': t.description,
+      };
+    }
+
     return {
       if (id != null) 'id': id,
       'group_key': groupKey,
@@ -52,7 +60,7 @@ class Level {
       'order': order,
       'is_active': isActive,
       'category_id': categoryId,
-      'translations': translations.map((t) => t.toJson()).toList()
+      'translations': translationMap
     };
   }
 }
