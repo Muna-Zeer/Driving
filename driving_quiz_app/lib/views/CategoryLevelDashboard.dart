@@ -1,11 +1,17 @@
+import 'dart:convert';
 import 'package:driving_quiz_app/models/CategoryModel.dart';
-import 'package:driving_quiz_app/views/CreateCategoryScreen.dart';
+import 'package:driving_quiz_app/models/levelModel.dart';
+import 'package:driving_quiz_app/services/LevelService.dart';
 import 'package:driving_quiz_app/views/ManageLevelScreen.dart';
+import 'package:driving_quiz_app/widgets/AppColors.dart';
+import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
 import 'package:flutter/material.dart';
 
 class CategoryLevelsDashboardScreen extends StatefulWidget {
   final CategoryModel category;
   final List<dynamic> supportedLanguages;
+  final _userRole = '';
+  bool get isAdmin => _userRole == 'admin' || _userRole == 'super_admin';
 
   const CategoryLevelsDashboardScreen({
     Key? key,
@@ -20,156 +26,242 @@ class CategoryLevelsDashboardScreen extends StatefulWidget {
 
 class _CategoryLevelsDashboardScreenState
     extends State<CategoryLevelsDashboardScreen> {
-  List<dynamic> _levels = [];
+  List<Level> _levels = [];
   bool _isLoading = true;
-
+  final LevelService _apiService = LevelService();
+  late Future<List<Level>> _levelsFuture;
   @override
   void initState() {
     super.initState();
-    _fetchLevelsForCategory();
+    _loadLevelData();
   }
 
-  Future<void> _fetchLevelsForCategory() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-
+  Future<void> _loadLevelData() async {
     setState(() {
-      _levels = List.generate(
-          12,
-          (index) => {
-                'id': 'lvl_$index',
-                'level_number': index + 1,
-                'questions_count': 30,
-                'order': index + 1,
-                'is_active': true,
-                'translations': [
-                  {'locale': 'ar', 'name': 'المستوى ${index + 1}'},
-                  {'locale': 'en', 'name': 'Level ${index + 1}'}
-                ]
-              });
-      _isLoading = false;
+      _isLoading = true;
     });
+    try {
+      final data = await _apiService.fetchLevelsForCategory(widget.category.id);
+      setState(() {
+        _levels = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          'Error Downloading levels $e',
+        ),
+      ));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final String categoryName = widget.category.nameAr ?? 'تؤوريا';
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        title: Text('إدارة مستويات: $categoryName'),
-        centerTitle: true,
-        actions: [
-          TextButton.icon(
-            onPressed: _levels.length >= 30
-                ? null
-                : () async {
-                    final bool? refresh = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ManageLevelScreen(
-                          category: widget.category,
-                        ),
-                      ),
-                    );
-                    if (refresh == true) _fetchLevelsForCategory();
-                  },
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('إضافة مستوى جديد',
-                style: TextStyle(color: Colors.white)),
-            style: TextButton.styleFrom(
-              backgroundColor:
-                  _levels.length >= 30 ? Colors.grey : Colors.green,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-            ),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'المستويات المتاحة (${_levels.length} / 30)',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color:
-                            _levels.length >= 30 ? Colors.red : Colors.black87),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // READ OPERATION
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _levels.length,
-                      itemBuilder: (context, index) {
-                        final level = _levels[index];
-                        final String levelName =
-                            level['translations'][0]['name'];
-
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.green.shade100,
-                              child: Text('${level['level_number']}',
-                                  style: const TextStyle(color: Colors.green)),
-                            ),
-                            title: Text(levelName,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            subtitle: Text(
-                                'عدد الأسئلة: ${level['questions_count']} | الترتيب: ${level['order']}'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // UPDATE OPERATION (Modified to trigger navigation)
-                                IconButton(
-                                  icon: const Icon(Icons.edit,
-                                      color: Colors.orange),
-                                  onPressed: () => _openLevelForm(level),
-                                ),
-                                // DELETE OPERATION
-                                IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
-                                  onPressed: () =>
-                                      _confirmDeleteLevel(level['id']),
-                                ),
-                              ],
+    return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF5F7FA),
+          appBar: AppBar(
+            title: Text('إدارة مستويات: $categoryName'),
+            centerTitle: true,
+            actions: [
+              TextButton.icon(
+                onPressed: _levels.length >= 30
+                    ? null
+                    : () async {
+                        final bool? refresh = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ManageLevelScreen(
+                              category: widget.category,
                             ),
                           ),
                         );
+                        if (refresh == true) _loadLevelData();
+                      },
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text('إضافة مستوى جديد',
+                    style: TextStyle(color: Colors.white)),
+                style: TextButton.styleFrom(
+                  backgroundColor:
+                      _levels.length >= 30 ? Colors.grey : Colors.green,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+              ),
+              const SizedBox(width: 16),
+            ],
+          ),
+          body: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF7CB342))))
+              : _levels.isEmpty
+                  ? Center(
+                      child: Text(isArabic
+                          ? 'لا توجد مستويات متاحة حاليا'
+                          : "No Levels are Available"))
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 12.0),
+                      itemCount: _levels.length,
+                      itemBuilder: (context, index) {
+                        final level = _levels[index];
+                        final String levelName = level.nameAr.isNotEmpty
+                            ? level.nameAr
+                            : categoryName;
+                        return Container(
+                            margin: const EdgeInsets.only(bottom: 14.0),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                  0xFF7CB342), // Primary Green hue matching sample image
+                              borderRadius: BorderRadius.circular(10.0),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 3),
+                                )
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10.0),
+                              child: Container(
+                                  decoration: const BoxDecoration(
+                                      border: Border(
+                                          bottom: BorderSide(
+                                              color: Color(0xFF558B2F),
+                                              width: 6))),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 42,
+                                        height: 42,
+                                        decoration: const BoxDecoration(
+                                            color: AppColors.surface,
+                                            shape: BoxShape.circle),
+                                        alignment: Alignment.center,
+                                        child: Text('$level.levelNumber',
+                                            style: const TextStyle(
+                                              color: AppColors.primaryGreen,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                            )),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                          child: Text(
+                                        '$levelName ${level.levelNumber}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      )),
+                                      if (widget.isAdmin)
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.edit,
+                                                  color: Colors.white70),
+                                              onPressed: () =>
+                                                  _openLevelForm(level),
+                                            ),
+                                            IconButton(
+                                              icon: Icon(Icons.delete,
+                                                  color: Colors.white70),
+                                              onPressed: () =>
+                                                  handleDeleteLevel(context,
+                                                      level.id.toString()),
+                                            )
+                                          ],
+                                        )
+                                    ],
+                                  )),
+                            ));
                       },
                     ),
-                  ),
-                ],
-              ),
-            ),
-    );
+        ));
   }
 
-  // Handles updating existing levels by navigating to the form with payload data
-  void _openLevelForm(Map<String, dynamic>? level) async {
+  void _openLevelForm(Level? level) async {
+    Map<String, dynamic>? mappedData;
+    if (level != null) {
+      mappedData = level.toJson();
+    }
+
     final bool? refresh = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ManageLevelScreen(
           category: widget.category,
-          level: level,
+          level: mappedData,
         ),
       ),
     );
-    if (refresh == true) _fetchLevelsForCategory();
+    if (refresh == true) _loadLevelData();
   }
 
-  void _confirmDeleteLevel(String levelId) {
-    print("Triggering delete request for: $levelId");
+  void handleDeleteLevel(BuildContext context, String hashedId) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    bool confirmDelete = await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(isArabic ? 'تأكيد الحذف' : 'Confirm Delete'),
+            content: Text(isArabic
+                ? 'هل أنت متأكد من حذف هذا المستوى نهائياً؟ سيتم إعادة ترتيب باقي المستويات تلقائياً.'
+                : 'Are you sure you want to delete this level?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(
+                  isArabic ? 'حذف' : 'Delete',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmDelete) return;
+
+    try {
+      final response = await _apiService.deleteLevelFromAPI(hashedId);
+      if (response.statusCode == 200) {
+        if (!context.mounted) return;
+        AppAlerts.showAlert(context,
+            isArabic ? 'تم حذف الفئة بنجاح' : 'Category deleted successfully');
+
+        setState(() {
+          _levelsFuture =
+              _apiService.fetchLevelsForCategory(widget.category.id);
+        });
+      } else {
+        if (!context.mounted) return;
+        final decodedResponse = jsonDecode(response.body);
+        String errorMsg = decodedResponse['message'] ??
+            (isArabic ? 'فشل في حذف المستوى' : 'Failed to delete level');
+        AppAlerts.showError(context, errorMsg);
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      AppAlerts.showError(context,
+          isArabic ? 'خطأ في الاتصال بالشبكة: $e' : 'Network Error: $e');
+    }
   }
 }

@@ -245,23 +245,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                           );
                         }
 
-                        if (dbImageValue.contains('car.png') ||
-                            dbImageValue.contains('vero.png') ||
-                            dbImageValue.contains('quia.png')) {
+                        if (dbImageValue.contains('car.png')) {
                           dbImageValue = 'car.png';
-                        } else if (dbImageValue.contains('truck.png') ||
-                            dbImageValue.contains('iusto.png') ||
-                            dbImageValue.contains('provident.png') ||
-                            dbImageValue.contains('labore.png') ||
-                            dbImageValue.contains('mollitia.png')) {
+                        } else if (dbImageValue.contains('truck.png')) {
                           dbImageValue = 'truck.png';
                         } else if (dbImageValue.contains('taxi.png') ||
                             dbImageValue.contains('tractor')) {
                           dbImageValue = 'taxi.png';
-                        } else if (dbImageValue.contains('motorcycle.png') ||
-                            dbImageValue.contains('ut.png') ||
-                            dbImageValue.contains('omnis.png') ||
-                            dbImageValue.contains('ullam.png')) {
+                        } else if (dbImageValue.contains('motorcycle.png')) {
                           dbImageValue = 'motorcycle.png';
                         }
 
