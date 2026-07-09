@@ -1,66 +1,58 @@
 class Level {
-  final int? id;
-  final String? groupKey;
+  final String id;
+  final String categoryId;
+  final String groupKey;
   final int levelNumber;
-  final int questionCount;
-  final int order;
+  final int questionsCount;
   final bool isActive;
-  final int? categoryId;
-  final List<LevelTranslation> translations;
+  final String? name;
+  final String? description;
+  final List<dynamic> translations; // Handles list safety
+
   Level({
-    this.id,
-    this.groupKey,
+    required this.id,
+    required this.categoryId,
+    required this.groupKey,
     required this.levelNumber,
-    required this.questionCount,
-    required this.order,
+    required this.questionsCount,
     required this.isActive,
-    this.categoryId,
-    required this.translations,
+    this.name,
+    this.description,
+    this.translations = const [],
   });
-  String get nameAr => translations
-      .firstWhere((t) => t.locale == 'ar',
-          orElse: () => LevelTranslation(locale: 'ar', name: ''))
-      .name;
-  String get nameEn => translations
-      .firstWhere((t) => t.locale == 'en',
-          orElse: () => LevelTranslation(locale: 'en', name: ''))
-      .name;
 
   factory Level.fromJson(Map<String, dynamic> json) {
-    var list = json['translations'] as List;
-    List<LevelTranslation> translationsList = list != null
-        ? list.map((l) => LevelTranslation.fromJson(l)).toList()
-        : [];
     return Level(
-      id: json['id'],
-      groupKey: json['group_key'],
-      levelNumber: json['level_number'] ?? 1,
-      questionCount: json['questions_count'] ?? 0,
-      order: json['order'] ?? 1,
+      id: json['id']?.toString() ?? '',
+      categoryId: json['category_id']?.toString() ?? '',
+      groupKey: json['group_key']?.toString() ?? '',
+      levelNumber: json['level_number'] is int
+          ? json['level_number']
+          : int.tryParse(json['level_number']?.toString() ?? '0') ?? 0,
+      questionsCount: json['questions_count'] is int
+          ? json['questions_count']
+          : int.tryParse(json['questions_count']?.toString() ?? '0') ?? 0,
       isActive: json['is_active'] == true || json['is_active'] == 1,
-      categoryId: json['category_id'],
-      translations: translationsList,
+      name: json['name']?.toString(),
+      description: json['description']?.toString(),
+      // ✅ NULL-SAFE LIST CASTING: Fallback to [] if 'translations' is null
+      translations: (json['translations'] is List) 
+          ? json['translations'] as List<dynamic> 
+          : [],
     );
   }
-  Map<String, dynamic> toJson() {
-    // Converts the List<LevelTranslation> into a Map like {"ar": {"name": "sdsd"}, "en": {"name": ""}}
-    final Map<String, dynamic> translationMap = {};
-    for (var t in translations) {
-      translationMap[t.locale] = {
-        'name': t.name,
-        if (t.description != null) 'description': t.description,
-      };
-    }
 
+  Map<String, dynamic> toJson() {
     return {
-      if (id != null) 'id': id,
+      'id': id,
+      'category_id': categoryId,
       'group_key': groupKey,
       'level_number': levelNumber,
-      'question_count': questionCount,
-      'order': order,
+      'questions_count': questionsCount,
       'is_active': isActive,
-      'category_id': categoryId,
-      'translations': translationMap
+      'name': name,
+      'description': description,
+      'translations': translations,
     };
   }
 }

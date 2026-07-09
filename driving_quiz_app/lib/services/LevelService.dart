@@ -13,20 +13,34 @@ class LevelService {
   );
   Future<List<Level>> fetchLevelsForCategory(String categoryId) async {
     try {
-      final response =
-          await http.get(Uri.parse('$baseUrl/categories/$categoryId/levels'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/categories/$categoryId/levels'),
+        headers: {'Accept': 'application/json'},
+      );
+
       if (response.statusCode == 200) {
-        final Map<String, dynamic> decodedData = json.decode(response.body);
-        if (decodedData['status'] == true && decodedData['data'] != null) {
-          List<dynamic> list = decodedData['data'];
-          print(response.body);
-          return list.map((item) => Level.fromJson(item)).toList();
+        final dynamic decoded = json.decode(response.body);
+
+        if (decoded is Map<String, dynamic> &&
+            decoded['status'] == true &&
+            decoded['data'] != null &&
+            decoded['data'] is List) {
+          // ✅ Safe cast using List.from
+          final List<dynamic> list = List<dynamic>.from(decoded['data']);
+
+          return list.map((item) {
+            if (item is Map<String, dynamic>) {
+              return Level.fromJson(item);
+            }
+            {
+              throw Exception('Invalid item format in levels list');
+            }
+          }).toList();
         } else {
           return [];
         }
       } else {
-        throw Exception(
-            'Failed to load levels: Server status ${response.statusCode}');
+        throw Exception('Server returned status ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('API Connection Error: $e');

@@ -29,7 +29,6 @@ class _CategoryLevelsDashboardScreenState
   List<Level> _levels = [];
   bool _isLoading = true;
   final LevelService _apiService = LevelService();
-  late Future<List<Level>> _levelsFuture;
   @override
   void initState() {
     super.initState();
@@ -41,19 +40,23 @@ class _CategoryLevelsDashboardScreenState
       _isLoading = true;
     });
     try {
+      print("Fetching levels for Category ID: ${widget.category.id}");
       final data = await _apiService.fetchLevelsForCategory(widget.category.id);
+
+      print("Parsed Levels Count: ${data.length}"); // Look for this in console!
+
       setState(() {
         _levels = data;
         _isLoading = false;
       });
     } catch (e) {
+      print("Error parsing level objects: $e");
       setState(() {
         _isLoading = false;
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-          'Error Downloading levels $e',
-        ),
+        content: Text('Error Downloading levels $e'),
       ));
     }
   }
@@ -113,14 +116,14 @@ class _CategoryLevelsDashboardScreenState
                       itemCount: _levels.length,
                       itemBuilder: (context, index) {
                         final level = _levels[index];
-                        final String levelName = level.nameAr.isNotEmpty
-                            ? level.nameAr
-                            : categoryName;
+                        final String levelName =
+                            (level.name != null && level.name!.isNotEmpty)
+                                ? level.name!
+                                : categoryName;
                         return Container(
                             margin: const EdgeInsets.only(bottom: 14.0),
                             decoration: BoxDecoration(
-                              color: const Color(
-                                  0xFF7CB342), // Primary Green hue matching sample image
+                              color: const Color(0xFF7CB342),
                               borderRadius: BorderRadius.circular(10.0),
                               boxShadow: [
                                 BoxShadow(
@@ -149,7 +152,7 @@ class _CategoryLevelsDashboardScreenState
                                             color: AppColors.surface,
                                             shape: BoxShape.circle),
                                         alignment: Alignment.center,
-                                        child: Text('$level.levelNumber',
+                                        child: Text('${level.levelNumber}',
                                             style: const TextStyle(
                                               color: AppColors.primaryGreen,
                                               fontWeight: FontWeight.bold,
@@ -247,10 +250,10 @@ class _CategoryLevelsDashboardScreenState
         AppAlerts.showAlert(context,
             isArabic ? 'تم حذف الفئة بنجاح' : 'Category deleted successfully');
 
-        setState(() {
-          _levelsFuture =
-              _apiService.fetchLevelsForCategory(widget.category.id);
-        });
+        // setState(() {
+        //   _levelsFuture =
+        //       _apiService.fetchLevelsForCategory(widget.category.id);
+        // });
       } else {
         if (!context.mounted) return;
         final decodedResponse = jsonDecode(response.body);

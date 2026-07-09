@@ -16,32 +16,31 @@ class LevelController extends Controller
     /**
      * List levels
      */
-    public function index(Request $request): JsonResponse
-    {
-        $query = Level::with('translations')->where('is_active',true);
-
-        if($request->has('category_id')){
-            $hashedId = $request->get('category_id');
-            $decoded = Hashids::decode($hashedId);
-            if(!empty($decoded)){
-                $query->where('category_id',$decoded[0]);
-            }
-            else{
-                return response()->json(['status'=>false,'message'=>'Invalid Category Hash'],400);
-            }
-        }
-
-       if($request->has('group_key')){
-           $query->where('group_key',$request->get('group_key'));
-       }
-       $levels = $query->orderBy('order')->get();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Levels fetched successfully',
-            'data' => LevelResource::collection($levels)
-        ]);
+    // 1. Accept $id as an explicit argument parameter matched from your route {id}
+   public function index(Request $request, $id): JsonResponse
+{
+    $decoded = Hashids::decode($id);
+    
+    if (empty($decoded)) {
+        return response()->json(['status' => false, 'message' => 'Invalid Category Hash'], 400);
     }
+
+    // Force it to be a clean integer (e.g., 6)
+    $categoryId = (int) $decoded[0]; 
+
+    // Query using whereRaw or explicit integer to ensure SQL matches it perfectly
+    $levels = Level::with('translations')
+        ->whereRaw('category_id = ?', [$categoryId]) 
+        ->where('is_active', true)
+        ->orderBy('order')
+        ->get();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Levels fetched successfully',
+        'data' => LevelResource::collection($levels)
+    ]);
+}
 
     /**
      * Show single level
