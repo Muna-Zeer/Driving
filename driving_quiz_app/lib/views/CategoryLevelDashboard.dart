@@ -2,8 +2,11 @@ import 'dart:convert';
 import 'package:driving_quiz_app/models/CategoryModel.dart';
 import 'package:driving_quiz_app/models/levelModel.dart';
 import 'package:driving_quiz_app/services/LevelService.dart';
+import 'package:driving_quiz_app/views/CategoriesScreen.dart';
 import 'package:driving_quiz_app/views/ManageLevelScreen.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
+import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
+import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
 import 'package:flutter/material.dart';
 
@@ -33,6 +36,7 @@ class _CategoryLevelsDashboardScreenState
   void initState() {
     super.initState();
     _loadLevelData();
+    loadUserRole();
   }
 
   Future<void> _loadLevelData() async {
@@ -40,17 +44,13 @@ class _CategoryLevelsDashboardScreenState
       _isLoading = true;
     });
     try {
-      print("Fetching levels for Category ID: ${widget.category.id}");
       final data = await _apiService.fetchLevelsForCategory(widget.category.id);
-
-      print("Parsed Levels Count: ${data.length}"); // Look for this in console!
 
       setState(() {
         _levels = data;
         _isLoading = false;
       });
     } catch (e) {
-      print("Error parsing level objects: $e");
       setState(() {
         _isLoading = false;
       });
@@ -69,37 +69,35 @@ class _CategoryLevelsDashboardScreenState
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          backgroundColor: const Color(0xFFF5F7FA),
-          appBar: AppBar(
-            title: Text('إدارة مستويات: $categoryName'),
-            centerTitle: true,
-            actions: [
-              TextButton.icon(
-                onPressed: _levels.length >= 30
-                    ? null
-                    : () async {
-                        final bool? refresh = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ManageLevelScreen(
-                              category: widget.category,
-                            ),
-                          ),
-                        );
-                        if (refresh == true) _loadLevelData();
-                      },
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('إضافة مستوى جديد',
-                    style: TextStyle(color: Colors.white)),
-                style: TextButton.styleFrom(
-                  backgroundColor:
-                      _levels.length >= 30 ? Colors.grey : Colors.green,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                ),
-              ),
-              const SizedBox(width: 16),
-            ],
-          ),
+          backgroundColor: AppColors.background,
+          appBar: const CustomResponsiveNavbar(),
+          floatingActionButton: isAdmin
+              ? FloatingActionButton.extended(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              ManageLevelScreen(category: widget.category)),
+                    );
+                  },
+                  backgroundColor: AppColors.primaryGreen,
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text('إضافة قسم جديد',
+                      style: TextStyle(color: Colors.white)),
+                )
+              : null,
+          endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
+              ? buildMobileDrawer()
+              : null,
+          body: LayoutBuilder(builder: (context, constraints) {
+            int crossAxisCount = 2;
+            if (BreakPoint.isDesktop(constraints.maxWidth)) {
+              crossAxisCount = 5;
+            } else if (BreakPoint.isTablet(constraints.maxWidth)) {
+              crossAxisCount = 3;
+            }
+          }),
           body: _isLoading
               ? const Center(
                   child: CircularProgressIndicator(
@@ -123,7 +121,7 @@ class _CategoryLevelsDashboardScreenState
                         return Container(
                             margin: const EdgeInsets.only(bottom: 14.0),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF7CB342),
+                              color: AppColors.primaryGreen,
                               borderRadius: BorderRadius.circular(10.0),
                               boxShadow: [
                                 BoxShadow(

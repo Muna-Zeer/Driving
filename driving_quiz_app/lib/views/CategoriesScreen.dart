@@ -123,7 +123,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 )
               : null,
           endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
-              ? _buildMobileDrawer()
+              ? buildMobileDrawer()
               : null,
           body: LayoutBuilder(builder: (context, constraints) {
             int crossAxisCount = 2;
@@ -353,7 +353,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 }
 
-Widget _buildMobileDrawer() {
+Widget buildMobileDrawer() {
   return Drawer(
       child: ListView(padding: EdgeInsets.zero, children: [
     const DrawerHeader(
