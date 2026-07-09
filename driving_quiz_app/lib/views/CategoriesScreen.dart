@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:driving_quiz_app/SupportedLanguages.dart';
 import 'package:driving_quiz_app/models/CategoryModel.dart';
+import 'package:driving_quiz_app/services/AdminService.dart';
 import 'package:driving_quiz_app/services/CategoryService.dart';
 import 'package:driving_quiz_app/views/CategoryLevelDashboard.dart';
 import 'package:driving_quiz_app/views/CreateCategoryScreen.dart';
@@ -11,7 +12,6 @@ import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({Key? key}) : super(key: key);
@@ -22,29 +22,23 @@ class CategoriesScreen extends StatefulWidget {
 class _CategoriesScreenState extends State<CategoriesScreen> {
   final CategoryAPI _apiService = CategoryAPI();
   late Future<List<CategoryModel>> _categoriesFuture;
-  final _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
-  );
+  final AdminService _authService = AdminService();
+  bool _isLoadingRole = true;
   int _currentPage = 1;
   final int _itemsPerPage = 6;
-  String _userRole = '';
-  bool get isAdmin => _userRole == 'admin' || _userRole == 'super_admin';
+
   @override
   void initState() {
     super.initState();
     _categoriesFuture = _apiService.fetchCategories();
-    loadUserRole();
+    _initRole();
   }
 
-  Future<void> loadUserRole() async {
-    String? role = await _storage.read(key: 'user_role');
-    if (role != null) {
-      setState(() {
-        _userRole = role.trim();
-      });
-    }
+  Future<void> _initRole() async {
+    await _authService.loadUserRole();
+    setState(() {
+      _isLoadingRole = false;
+    });
   }
 
   void handleDeleteCategory(BuildContext context, String hashedId) async {
@@ -102,6 +96,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isAdmin = _authService.isAdmin;
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(

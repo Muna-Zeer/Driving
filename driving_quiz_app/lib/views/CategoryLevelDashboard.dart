@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:driving_quiz_app/models/CategoryModel.dart';
 import 'package:driving_quiz_app/models/levelModel.dart';
+import 'package:driving_quiz_app/services/AdminService.dart';
 import 'package:driving_quiz_app/services/LevelService.dart';
 import 'package:driving_quiz_app/views/CategoriesScreen.dart';
 import 'package:driving_quiz_app/views/ManageLevelScreen.dart';
@@ -13,8 +14,6 @@ import 'package:flutter/material.dart';
 class CategoryLevelsDashboardScreen extends StatefulWidget {
   final CategoryModel category;
   final List<dynamic> supportedLanguages;
-  final _userRole = '';
-  bool get isAdmin => _userRole == 'admin' || _userRole == 'super_admin';
 
   const CategoryLevelsDashboardScreen({
     Key? key,
@@ -32,11 +31,21 @@ class _CategoryLevelsDashboardScreenState
   List<Level> _levels = [];
   bool _isLoading = true;
   final LevelService _apiService = LevelService();
+  AdminService _authService = AdminService();
+  bool _isLoadingRole = true;
+
   @override
   void initState() {
     super.initState();
     _loadLevelData();
-    loadUserRole();
+    _initRole();
+  }
+
+  Future<void> _initRole() async {
+    await _authService.loadUserRole();
+    setState(() {
+      _isLoadingRole = false;
+    });
   }
 
   Future<void> _loadLevelData() async {
@@ -65,7 +74,7 @@ class _CategoryLevelsDashboardScreenState
   Widget build(BuildContext context) {
     final String categoryName = widget.category.nameAr ?? 'تؤوريا';
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
+    final isAdmin = _authService.isAdmin;
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
@@ -90,14 +99,14 @@ class _CategoryLevelsDashboardScreenState
           endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
               ? buildMobileDrawer()
               : null,
-          body: LayoutBuilder(builder: (context, constraints) {
-            int crossAxisCount = 2;
-            if (BreakPoint.isDesktop(constraints.maxWidth)) {
-              crossAxisCount = 5;
-            } else if (BreakPoint.isTablet(constraints.maxWidth)) {
-              crossAxisCount = 3;
-            }
-          }),
+          // body: LayoutBuilder(builder: (context, constraints) {
+          //   int crossAxisCount = 2;
+          //   if (BreakPoint.isDesktop(constraints.maxWidth)) {
+          //     crossAxisCount = 5;
+          //   } else if (BreakPoint.isTablet(constraints.maxWidth)) {
+          //     crossAxisCount = 3;
+          //   }
+          // }),
           body: _isLoading
               ? const Center(
                   child: CircularProgressIndicator(
@@ -167,7 +176,7 @@ class _CategoryLevelsDashboardScreenState
                                           fontWeight: FontWeight.bold,
                                         ),
                                       )),
-                                      if (widget.isAdmin)
+                                      if (isAdmin)
                                         Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
