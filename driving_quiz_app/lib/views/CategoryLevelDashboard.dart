@@ -78,129 +78,170 @@ class _CategoryLevelsDashboardScreenState
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: const CustomResponsiveNavbar(),
-          floatingActionButton: isAdmin
-              ? FloatingActionButton.extended(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              ManageLevelScreen(category: widget.category)),
-                    );
-                  },
-                  backgroundColor: AppColors.primaryGreen,
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  label: const Text('إضافة قسم جديد',
-                      style: TextStyle(color: Colors.white)),
-                )
-              : null,
-          endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
-              ? buildMobileDrawer()
-              : null,
-          // body: LayoutBuilder(builder: (context, constraints) {
-          //   int crossAxisCount = 2;
-          //   if (BreakPoint.isDesktop(constraints.maxWidth)) {
-          //     crossAxisCount = 5;
-          //   } else if (BreakPoint.isTablet(constraints.maxWidth)) {
-          //     crossAxisCount = 3;
-          //   }
-          // }),
-          body: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Color(0xFF7CB342))))
-              : _levels.isEmpty
-                  ? Center(
-                      child: Text(isArabic
-                          ? 'لا توجد مستويات متاحة حاليا'
-                          : "No Levels are Available"))
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 12.0),
-                      itemCount: _levels.length,
-                      itemBuilder: (context, index) {
-                        final level = _levels[index];
-                        final String levelName =
-                            (level.name != null && level.name!.isNotEmpty)
-                                ? level.name!
-                                : categoryName;
-                        return Container(
-                            margin: const EdgeInsets.only(bottom: 14.0),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryGreen,
-                              borderRadius: BorderRadius.circular(10.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 3),
-                                )
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10.0),
-                              child: Container(
-                                  decoration: const BoxDecoration(
-                                      border: Border(
-                                          bottom: BorderSide(
-                                              color: Color(0xFF558B2F),
-                                              width: 6))),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 10),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 42,
-                                        height: 42,
-                                        decoration: const BoxDecoration(
-                                            color: AppColors.surface,
-                                            shape: BoxShape.circle),
-                                        alignment: Alignment.center,
-                                        child: Text('${level.levelNumber}',
-                                            style: const TextStyle(
-                                              color: AppColors.primaryGreen,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                            )),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                          child: Text(
-                                        '$levelName ${level.levelNumber}',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      )),
-                                      if (isAdmin)
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(
-                                              icon: const Icon(Icons.edit,
-                                                  color: Colors.white70),
-                                              onPressed: () =>
-                                                  _openLevelForm(level),
-                                            ),
-                                            IconButton(
-                                              icon: Icon(Icons.delete,
-                                                  color: Colors.white70),
-                                              onPressed: () =>
-                                                  handleDeleteLevel(context,
-                                                      level.id.toString()),
-                                            )
-                                          ],
-                                        )
-                                    ],
+            backgroundColor: AppColors.background,
+            appBar: const CustomResponsiveNavbar(),
+            floatingActionButton: isAdmin
+                ? FloatingActionButton.extended(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                ManageLevelScreen(category: widget.category)),
+                      );
+                    },
+                    backgroundColor: AppColors.primaryGreen,
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    label: const Text('إضافة قسم جديد',
+                        style: TextStyle(color: Colors.white)),
+                  )
+                : null,
+            endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
+                ? buildMobileDrawer()
+                : null,
+            body: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF7CB342))))
+                : _levels.isEmpty
+                    ? Center(
+                        child: Text(isArabic
+                            ? 'لا توجد مستويات متاحة حاليا'
+                            : "No Levels are Available"))
+                    : LayoutBuilder(builder: (context, constraints) {
+                        int crossAxisCount = 1;
+                        double childAspectRatio = 3.8;
+
+                        if (BreakPoint.isDesktop(constraints.maxWidth)) {
+                          crossAxisCount = 2;
+                          childAspectRatio = 3.5;
+                        } else if (BreakPoint.isTablet(constraints.maxWidth)) {
+                          crossAxisCount = 2;
+                          childAspectRatio = 3.2;
+                        }
+
+                        return Align(
+                            alignment: Alignment.topCenter,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 1200),
+                              child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: GridView.builder(
+                                    itemCount: _levels.length,
+                                    gridDelegate:
+                                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                                      maxCrossAxisExtent: 8500,
+                                      mainAxisExtent: 80,
+                                      crossAxisSpacing: 12.0,
+                                      mainAxisSpacing: 12.0,
+                                    ),
+                                    itemBuilder: (context, index) {
+                                      final level = _levels[index];
+                                      final String levelName =
+                                          (level.name != null &&
+                                                  level.name!.isNotEmpty)
+                                              ? level.name!
+                                              : categoryName;
+                                      return Container(
+                                          margin: const EdgeInsets.only(
+                                              bottom: 14.0),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primaryGreen,
+                                            borderRadius:
+                                                BorderRadius.circular(10.0),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.15),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 3),
+                                              )
+                                            ],
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(10.0),
+                                            child: Container(
+                                                decoration: const BoxDecoration(
+                                                    border: Border(
+                                                        bottom: BorderSide(
+                                                            color: Color(
+                                                                0xFF558B2F),
+                                                            width: 6))),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 10),
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                      width: 42,
+                                                      height: 42,
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                              color: AppColors
+                                                                  .surface,
+                                                              shape: BoxShape
+                                                                  .circle),
+                                                      alignment:
+                                                          Alignment.center,
+                                                      child: Text(
+                                                          '${level.levelNumber}',
+                                                          style:
+                                                              const TextStyle(
+                                                            color: AppColors
+                                                                .primaryGreen,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 18,
+                                                          )),
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    Expanded(
+                                                        child: Text(
+                                                      '$levelName ${level.levelNumber}',
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    )),
+                                                    if (isAdmin)
+                                                      Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          IconButton(
+                                                            icon: const Icon(
+                                                                Icons.edit,
+                                                                color: Colors
+                                                                    .white70),
+                                                            onPressed: () =>
+                                                                _openLevelForm(
+                                                                    level),
+                                                          ),
+                                                          IconButton(
+                                                            icon: Icon(
+                                                                Icons.delete,
+                                                                color: Colors
+                                                                    .white70),
+                                                            onPressed: () =>
+                                                                handleDeleteLevel(
+                                                                    context,
+                                                                    level.id
+                                                                        .toString()),
+                                                          )
+                                                        ],
+                                                      )
+                                                  ],
+                                                )),
+                                          ));
+                                    },
                                   )),
                             ));
-                      },
-                    ),
-        ));
+                      })));
   }
 
   void _openLevelForm(Level? level) async {
