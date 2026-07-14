@@ -28,7 +28,7 @@ class CategoryLevelsDashboardScreen extends StatefulWidget {
 
 class _CategoryLevelsDashboardScreenState
     extends State<CategoryLevelsDashboardScreen> {
-  List<Level> _levels = [];
+  List<Level> levels = [];
   bool _isLoading = true;
   final LevelService _apiService = LevelService();
   AdminService _authService = AdminService();
@@ -37,7 +37,7 @@ class _CategoryLevelsDashboardScreenState
   @override
   void initState() {
     super.initState();
-    _loadLevelData();
+    loadLevelData();
     _initRole();
   }
 
@@ -48,7 +48,7 @@ class _CategoryLevelsDashboardScreenState
     });
   }
 
-  Future<void> _loadLevelData() async {
+  Future<void> loadLevelData() async {
     setState(() {
       _isLoading = true;
     });
@@ -56,7 +56,7 @@ class _CategoryLevelsDashboardScreenState
       final data = await _apiService.fetchLevelsForCategory(widget.category.id);
 
       setState(() {
-        _levels = data;
+        levels = data;
         _isLoading = false;
       });
     } catch (e) {
@@ -104,7 +104,7 @@ class _CategoryLevelsDashboardScreenState
                     child: CircularProgressIndicator(
                         valueColor:
                             AlwaysStoppedAnimation<Color>(Color(0xFF7CB342))))
-                : _levels.isEmpty
+                : levels.isEmpty
                     ? Center(
                         child: Text(isArabic
                             ? 'لا توجد مستويات متاحة حاليا'
@@ -128,7 +128,7 @@ class _CategoryLevelsDashboardScreenState
                               child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: GridView.builder(
-                                    itemCount: _levels.length,
+                                    itemCount: levels.length,
                                     gridDelegate:
                                         const SliverGridDelegateWithMaxCrossAxisExtent(
                                       maxCrossAxisExtent: 8500,
@@ -137,7 +137,7 @@ class _CategoryLevelsDashboardScreenState
                                       mainAxisSpacing: 12.0,
                                     ),
                                     itemBuilder: (context, index) {
-                                      final level = _levels[index];
+                                      final level = levels[index];
                                       final String levelName =
                                           (level.name != null &&
                                                   level.name!.isNotEmpty)
@@ -259,7 +259,7 @@ class _CategoryLevelsDashboardScreenState
         ),
       ),
     );
-    if (refresh == true) _loadLevelData();
+    if (refresh == true) loadLevelData();
   }
 
   void handleDeleteLevel(BuildContext context, String hashedId) async {
@@ -298,10 +298,7 @@ class _CategoryLevelsDashboardScreenState
         AppAlerts.showAlert(context,
             isArabic ? 'تم حذف الفئة بنجاح' : 'Category deleted successfully');
 
-        // setState(() {
-        //   _levelsFuture =
-        //       _apiService.fetchLevelsForCategory(widget.category.id);
-        // });
+        loadLevelData();
       } else {
         if (!context.mounted) return;
         final decodedResponse = jsonDecode(response.body);

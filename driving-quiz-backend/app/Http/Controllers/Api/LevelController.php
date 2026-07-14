@@ -20,17 +20,16 @@ class LevelController extends Controller
    public function index(Request $request, $id): JsonResponse
 {
     $decoded = Hashids::decode($id);
-    
+
     if (empty($decoded)) {
         return response()->json(['status' => false, 'message' => 'Invalid Category Hash'], 400);
     }
 
     // Force it to be a clean integer (e.g., 6)
-    $categoryId = (int) $decoded[0]; 
+    $categoryId = (int) $decoded[0];
 
-    // Query using whereRaw or explicit integer to ensure SQL matches it perfectly
     $levels = Level::with('translations')
-        ->whereRaw('category_id = ?', [$categoryId]) 
+        ->whereRaw('category_id = ?', [$categoryId])
         ->where('is_active', true)
         ->orderBy('order')
         ->get();
@@ -132,13 +131,38 @@ class LevelController extends Controller
     /**
      * Delete level
      */
-    public function destroy(Level $level): JsonResponse
+    public function destroy(String $id): JsonResponse
     {
+        {
+        $decodedArray = Hashids::decode($id);
+
+        if (empty($decodedArray)) {
+            return response()->json([
+                'status' => false,
+                'message' => "Laravel failed to decode the Hash ID: '$id'"
+            ], 404);
+        }
+
+        $realId = $decodedArray[0];
+
+        $level = \App\Models\Level::find($realId);
+
+        if (!$level) {
+            return response()->json([
+                'status' => false,
+                'message' => "Decoded ID is $realId, but no level exists with this ID in database."
+            ], 404);
+        }
+
+        $deletedOrder = $level->order;
         $level->delete();
+
+        \App\Models\Level::where('order', '>', $deletedOrder)->decrement('order');
 
         return response()->json([
             'status' => true,
-            'message' => 'Level deleted successfully'
+            'message' => 'Deleted and reordered successfully'
         ]);
+    }
     }
 }
