@@ -105,17 +105,24 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
 
   Future<void> _savedLevel() async {
     if (_isLoading) return;
+
     setState(() {
       _isLoading = true;
     });
-    List<Map<String, dynamic>> translationsPayload = [];
+
+    Map<String, dynamic> translationsPayload = {};
     for (var lang in supportedLanguages) {
       final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
       final String langCode = langMap['code']?.toString() ?? 'en';
       final String nameText = _nameControllers[langCode]?.text.trim() ?? '';
 
-      translationsPayload.add({'locale': langCode, 'name': nameText});
+      if (nameText.isNotEmpty) {
+        translationsPayload[langCode] = {
+          'name': nameText,
+        };
+      }
     }
+
     final Map<String, dynamic> levelPayload = {
       "category_id": _isEditMode
           ? (widget.level!['category_id']?.toString() ??
@@ -128,60 +135,92 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
           ? null
           : _groupKeyController.text.trim(),
       "is_active": _isActive ? 1 : 0,
+      "order": int.tryParse(_sortOrderController.text.trim()) ?? 1,
       'translations': translationsPayload,
     };
+
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     try {
       http.Response response;
       final accessToken = await _storage.read(key: 'auth_token');
+
       if (accessToken == null) {
         throw Exception(
             isArabic ? 'المستخدم غير مصرح له' : "User not authenticated");
       }
+
       final Map<String, String> headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Authorization': 'Bearer $accessToken'
       };
+
       if (_isEditMode) {
         final String levelId = widget.level!['id'].toString();
-        response = await http.put(Uri.parse('$baseUrl/level/$levelId'),
-            headers: headers, body: jsonEncode(levelPayload));
-        print("====== API SENDING PAYLOAD ======");
-        print(jsonEncode(levelPayload));
-        print("=================================");
+        response = await http.put(
+          Uri.parse('$baseUrl/level/$levelId'),
+          headers: headers,
+          body: jsonEncode(levelPayload),
+        );
       } else {
-        final response = await _levelAPI.sendLevelToAPI(levelPayload);
-        print("====== API SENDING PAYLOAD ======");
-        print(jsonEncode(levelPayload));
-        print("=================================");
-        if (response.statusCode == 201) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isArabic
-                  ? 'تمت إضافة المستوى بنجاح'
-                  : 'Level created successfully'),
-              backgroundColor: AppColors.primaryGreen,
-            ),
-          );
-          Navigator.pop(context, true);
+        response = await _levelAPI.sendLevelToAPI(levelPayload);
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (!mounted) return;
+
+        final decodedResponseBody = jsonDecode(response.body);
+
+        if (_isEditMode && decodedResponseBody['data'] != null) {
+          setState(() {
+            widget.level!['level_number'] =
+                decodedResponseBody['data']['level_number'];
+            widget.level!['questions_count'] =
+                decodedResponseBody['data']['questions_count'];
+            widget.level!['group_key'] =
+                decodedResponseBody['data']['group_key'];
+            widget.level!['is_active'] =
+                decodedResponseBody['data']['is_active'];
+            widget.level!['order'] = decodedResponseBody['data']['order'];
+            widget.level!['translations'] =
+                decodedResponseBody['data']['translations'];
+          });
         }
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          if (!mounted) return;
-          Navigator.of(context).pop(true);
-        } else {
-          if (!mounted) return;
-          final decodedResponse = jsonDecode(response.body);
-          String BackendErrorMsg = decodedResponse['message'] ??
-              (isArabic ? 'فشل في إضافة المستوى' : "Failed to add new Level");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(BackendErrorMsg),
-              backgroundColor: AppColors.error,
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isEditMode
+                  ? (isArabic
+                      ? 'تم تحديث المستوى بنجاح'
+                      : 'Level updated successfully')
+                  : (isArabic
+                      ? 'تمت إضافة المستوى بنجاح'
+                      : 'Level created successfully'),
             ),
-          );
-        }
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
+
+        Navigator.of(context).pop(true);
+      } else {
+        if (!mounted) return;
+
+        final decodedResponse = jsonDecode(response.body);
+        String backendErrorMsg = decodedResponse['message'] ??
+            (_isEditMode
+                ? (isArabic ? 'فشل في تحديث المستوى' : "Failed to update Level")
+                : (isArabic
+                    ? 'فشل في إضافة المستوى'
+                    : "Failed to add new Level"));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(backendErrorMsg),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -246,7 +285,7 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
                   child: Center(
                     child: Row(
                       children: [
-                        Icon(Icons.layers,
+                        const Icon(Icons.layers,
                             color: AppColors.primaryGreen, size: 28),
                         const SizedBox(width: 12),
                         Text(

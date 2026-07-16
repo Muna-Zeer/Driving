@@ -97,10 +97,29 @@ class LevelController extends Controller
     /**
      * Update level
      */
-    public function update(UpdateLevelRequest $request, Level $level): JsonResponse
+    public function update(UpdateLevelRequest $request, String $id): JsonResponse
     {
-        $data = $request->validated();
 
+        $decodedArray = Hashids::decode($id);
+        if(empty($decodedArray)){
+            return response()->json([
+                "status"=>false,
+                "message"=>"Failed to decode the hashIds $id"
+            ]);
+        }
+        $realId = $decodedArray[0];
+
+        $level = \App\Models\Level::find($realId);
+
+        if(!$level){
+            return response()->json([
+            'status' => false,
+            'message' => "No level exists with this ID in the database."
+        ], 404);
+        }
+
+          $data = $request->validated();
+          
         $level->update([
             'group_key' => $data['group_key'] ?? $level->group_key,
             'level_number' => $data['level_number'] ?? $level->level_number,
