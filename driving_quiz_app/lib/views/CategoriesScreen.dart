@@ -1,7 +1,10 @@
 import 'dart:convert';
 
+import 'package:driving_quiz_app/SupportedLanguages.dart';
 import 'package:driving_quiz_app/models/CategoryModel.dart';
+import 'package:driving_quiz_app/services/AdminService.dart';
 import 'package:driving_quiz_app/services/CategoryService.dart';
+import 'package:driving_quiz_app/views/CategoryLevelDashboard.dart';
 import 'package:driving_quiz_app/views/CreateCategoryScreen.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomPagination.dart';
@@ -9,7 +12,6 @@ import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
 import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({Key? key}) : super(key: key);
@@ -20,29 +22,23 @@ class CategoriesScreen extends StatefulWidget {
 class _CategoriesScreenState extends State<CategoriesScreen> {
   final CategoryAPI _apiService = CategoryAPI();
   late Future<List<CategoryModel>> _categoriesFuture;
-  final _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
-  );
+  final AdminService _authService = AdminService();
+  bool _isLoadingRole = true;
   int _currentPage = 1;
   final int _itemsPerPage = 6;
-  String _userRole = '';
-  bool get isAdmin => _userRole == 'admin' || _userRole == 'super_admin';
+
   @override
   void initState() {
     super.initState();
     _categoriesFuture = _apiService.fetchCategories();
-    loadUserRole();
+    _initRole();
   }
 
-  Future<void> loadUserRole() async {
-    String? role = await _storage.read(key: 'user_role');
-    if (role != null) {
-      setState(() {
-        _userRole = role.trim();
-      });
-    }
+  Future<void> _initRole() async {
+    await _authService.loadUserRole();
+    setState(() {
+      _isLoadingRole = false;
+    });
   }
 
   void handleDeleteCategory(BuildContext context, String hashedId) async {
@@ -76,7 +72,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
     try {
       final response = await _apiService.deleteCategoryFromAPI(hashedId);
-      print('Hashed ID to delete: $hashedId');
       if (response.statusCode == 200) {
         if (!context.mounted) return;
         AppAlerts.showAlert(context,
@@ -101,6 +96,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isAdmin = _authService.isAdmin;
     return Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
@@ -122,7 +118,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 )
               : null,
           endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
-              ? _buildMobileDrawer()
+              ? buildMobileDrawer()
               : null,
           body: LayoutBuilder(builder: (context, constraints) {
             int crossAxisCount = 2;
@@ -214,7 +210,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CategoryLevelsDashboardScreen(
+                category: category,
+                supportedLanguages: supportedLanguages,
+              ),
+            ),
+          );
+        },
         child: Stack(
           children: [
             Column(
@@ -222,16 +228,48 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
-                    child: category.imageUrl.isNotEmpty
-                        ? Image.network(
-                            category.imageUrl,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.image_not_supported,
-                                    size: 40, color: AppColors.textSecondary),
-                          )
-                        : const Icon(Icons.directions_car,
-                            size: 40, color: AppColors.textSecondary),
+                    child: Builder(
+                      builder: (context) {
+                        String dbImageValue = category.imageUrl.toLowerCase();
+
+                        if (dbImageValue.isEmpty) {
+                          return const Icon(
+                            Icons.directions_car,
+                            size: 40,
+                            color: AppColors.textSecondary,
+                          );
+                        }
+
+                        if (dbImageValue.contains('car.png')) {
+                          dbImageValue = 'car.png';
+                        } else if (dbImageValue.contains('truck.png')) {
+                          dbImageValue = 'truck.png';
+                        } else if (dbImageValue.contains('taxi.png') ||
+                            dbImageValue.contains('tractor')) {
+                          dbImageValue = 'taxi.png';
+                        } else if (dbImageValue.contains('motorcycle.png')) {
+                          dbImageValue = 'motorcycle.png';
+                        }
+
+                        IconData displayIcon = Icons.image_not_supported;
+
+                        if (dbImageValue.contains('car.png')) {
+                          displayIcon = Icons.directions_car;
+                        } else if (dbImageValue.contains('truck.png')) {
+                          displayIcon = Icons.local_shipping;
+                        } else if (dbImageValue.contains('taxi.png')) {
+                          displayIcon = Icons.local_taxi;
+                        } else if (dbImageValue.contains('motorcycle.png')) {
+                          displayIcon = Icons.two_wheeler;
+                        }
+
+                        return Icon(
+                          displayIcon,
+                          size: 40,
+                          color: AppColors.textSecondary,
+                        );
+                      },
+                    ),
                   ),
                 ),
                 Container(
@@ -310,7 +348,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 }
 
-Widget _buildMobileDrawer() {
+Widget buildMobileDrawer() {
   return Drawer(
       child: ListView(padding: EdgeInsets.zero, children: [
     const DrawerHeader(

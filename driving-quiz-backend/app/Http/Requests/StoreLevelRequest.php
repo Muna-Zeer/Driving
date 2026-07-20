@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use Vinkla\Hashids\Facades\Hashids;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreLevelRequest extends FormRequest
@@ -11,9 +12,22 @@ class StoreLevelRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
+
+protected function prepareForValidation()
+{
+    if ($this->has('category_id') && is_string($this->category_id)) {
+        $decoded = Hashids::decode($this->category_id);
+
+        if (!empty($decoded)) {
+            $this->merge([
+                'category_id' => $decoded[0],
+            ]);
+        }
+    }
+}
     /**
      * Get the validation rules that apply to the request.
      *
@@ -29,13 +43,14 @@ class StoreLevelRequest extends FormRequest
                 'min:1',
                 'unique:levels,level_number,NULL,id,group_key,' . $this->group_key
             ],
+            'category_id' => 'required|exists:categories,id',
             'questions_count' => ['required', 'integer', 'min:1'],
             'order' => ['nullable', 'integer'],
             'is_active' => ['boolean'],
 
-            'translations' => ['required', 'array'],
-            'translations.ar.name' => ['required', 'string'],
-            'translations.*.name' => ['required', 'string'],
+            'translations' => 'required|array|min:1',
+            'translations.*.locale' => 'required|string|max:2',
+            'translations.*.name' => 'nullable|string|max:255',
         ];
     }
 }

@@ -19,6 +19,7 @@ class Level extends Model
 
     protected $fillable = [
         'group_key',
+        'category_id',
         'level_number',
         'questions_count',
         'order',

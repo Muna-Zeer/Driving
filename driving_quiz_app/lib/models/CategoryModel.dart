@@ -32,13 +32,11 @@ class CategoryModel {
   }
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
-    // 🟢 قراءة المعرّف المشفر من حقل 'id' بشكل آمن تماماً
     String categoryId = '';
     if (json['id'] != null) {
       categoryId = json['id'].toString();
     }
 
-    // قراءة الاسم العام المترجم القادم من Laravel Resource
     String defaultName = json['name']?.toString() ?? 'Unknown';
 
     String nameArabic = defaultName;
@@ -46,7 +44,6 @@ class CategoryModel {
     String? badgeArabic;
     String? badgeEnglish;
 
-    // إذا كان السيرفر يرسل قائمة الترجمات الكاملة (translations)
     if (json['translations'] != null && json['translations'] is List) {
       final List<dynamic> transList = json['translations'];
       for (var item in transList) {
@@ -59,7 +56,6 @@ class CategoryModel {
         }
       }
     } else {
-      // إذا كان السيرفر يرسل الحقول منفصلة مباشرة
       if (json['name_ar'] != null) nameArabic = json['name_ar'].toString();
       if (json['name_en'] != null) nameEnglish = json['name_en'].toString();
       if (json['badge_ar'] != null) badgeArabic = json['badge_ar'].toString();
@@ -78,5 +74,17 @@ class CategoryModel {
       badgeAr: badgeArabic,
       badgeEn: badgeEnglish,
     );
+  }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name_ar': nameAr,
+      'name_en': nameEn,
+      'image_url': imageUrl,
+      'badge_ar': badgeAr,
+      'badge_en': badgeEn,
+      'type': type,
+      'order': order,
+    };
   }
 }

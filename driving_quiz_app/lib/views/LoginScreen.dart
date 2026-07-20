@@ -3,7 +3,7 @@ import 'package:driving_quiz_app/services/auth_service.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
-import 'package:driving_quiz_app/widgets/drivingAlerts.dart'; // تأكد من مطابقة مسار التنبيهات لديك
+import 'package:driving_quiz_app/widgets/drivingAlerts.dart'; 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
