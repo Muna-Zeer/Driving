@@ -174,6 +174,7 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
 
         if (_isEditMode && decodedResponseBody['data'] != null) {
           setState(() {
+            widget.level!['id'] = decodedResponseBody['data']['id'];
             widget.level!['level_number'] =
                 decodedResponseBody['data']['level_number'];
             widget.level!['questions_count'] =
