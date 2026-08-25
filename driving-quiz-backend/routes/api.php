@@ -18,36 +18,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-/*
-|--------------------------------------------------------------------------
-| Public Routes (المسارات العامة - المتاحة للجميع بدون صلاحيات)
-|--------------------------------------------------------------------------
-*/
-
-Route::post('/register', [AuthController::class, 'register']);
-
-Route::post('/login', [AuthController::class, 'login']);
-
-Route::post('/auth/guest-authenticate', [AuthController::class, 'guestAuthenticate']);
-
-
-
-
-Route::middleware('auth:sanctum')->group(function () {
-
-    Route::post('/auth/upgrade-account', [AuthController::class, 'upgradeGuestAccount']);
-
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
-});
-
 Route::post('login', [AuthController::class, 'login']);
-
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
- Route::apiResource('level', LevelController::class);
-});
-
+Route::apiResource('level', LevelController::class);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -55,7 +27,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Public routes (Guests can see categories)
 Route::get('categories', [CategoryController::class, 'index']);
 Route::get('categories/{id}', [CategoryController::class, 'show']);
-Route::get('categories/{id}/levels',[LevelController::class,'index']);
+
 // Protected routes (Only Admins can modify)
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('categories', [CategoryController::class, 'store']);
