@@ -53,7 +53,9 @@ class _CategoryLevelsDashboardScreenState
       _isLoading = true;
     });
     try {
+      print("Fetching levels for category ID: ${widget.category.id}");
       final data = await _apiService.fetchLevelsForCategory(widget.category.id);
+      print("Fetched levels count: ${data.length}");
 
       setState(() {
         levels = data;

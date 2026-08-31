@@ -17,29 +17,29 @@ class LevelController extends Controller
      * List levels
      */
     // 1. Accept $id as an explicit argument parameter matched from your route {id}
-   public function index(Request $request, $id): JsonResponse
-{
-    $decoded = Hashids::decode($id);
+    public function index(Request $request, $id): JsonResponse
+    {
+        $decoded = Hashids::decode($id);
 
-    if (empty($decoded)) {
-        return response()->json(['status' => false, 'message' => 'Invalid Category Hash'], 400);
+        if (empty($decoded)) {
+            return response()->json(['status' => false, 'message' => 'Invalid Category Hash'], 400);
+        }
+
+        // Force it to be a clean integer (e.g., 6)
+        $categoryId = (int) $decoded[0];
+
+        $levels = Level::with('translations')
+            ->whereRaw('category_id = ?', [$categoryId])
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Levels fetched successfully',
+            'data' => LevelResource::collection($levels)
+        ]);
     }
-
-    // Force it to be a clean integer (e.g., 6)
-    $categoryId = (int) $decoded[0];
-
-    $levels = Level::with('translations')
-        ->whereRaw('category_id = ?', [$categoryId])
-        ->where('is_active', true)
-        ->orderBy('order')
-        ->get();
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Levels fetched successfully',
-        'data' => LevelResource::collection($levels)
-    ]);
-}
 
     /**
      * Show single level
@@ -99,27 +99,26 @@ class LevelController extends Controller
      */
     public function update(UpdateLevelRequest $request, String $id): JsonResponse
     {
-
         $decodedArray = Hashids::decode($id);
-        if(empty($decodedArray)){
+        if (empty($decodedArray)) {
             return response()->json([
-                "status"=>false,
-                "message"=>"Failed to decode the hashIds $id"
+                "status" => false,
+                "message" => "Failed to decode the hashIds $id"
             ]);
         }
         $realId = $decodedArray[0];
 
         $level = \App\Models\Level::find($realId);
 
-        if(!$level){
+        if (!$level) {
             return response()->json([
-            'status' => false,
-            'message' => "No level exists with this ID in the database."
-        ], 404);
+                'status' => false,
+                'message' => "No level exists with this ID in the database."
+            ], 404);
         }
 
-          $data = $request->validated();
-          
+        $data = $request->validated();
+
         $level->update([
             'group_key' => $data['group_key'] ?? $level->group_key,
             'level_number' => $data['level_number'] ?? $level->level_number,
@@ -128,15 +127,18 @@ class LevelController extends Controller
             'is_active' => $data['is_active'] ?? $level->is_active,
         ]);
 
-        if (isset($data['translations'])) {
-            foreach ($data['translations'] as $locale => $t) {
-                $level->translations()->updateOrCreate(
-                    ['locale' => $locale],
-                    [
-                        'name' => $t['name'],
-                        'description' => $t['description'] ?? null,
-                    ]
-                );
+        // Fixed: Expects an indexed array list of maps matching store()
+        if (isset($data['translations']) && is_array($data['translations'])) {
+            foreach ($data['translations'] as $t) {
+                if (!empty(trim($t['name'] ?? ''))) {
+                    $level->translations()->updateOrCreate(
+                        ['locale' => $t['locale']],
+                        [
+                            'name' => $t['name'],
+                            'description' => $t['description'] ?? null,
+                        ]
+                    );
+                }
             }
         }
 
@@ -151,37 +153,36 @@ class LevelController extends Controller
      * Delete level
      */
     public function destroy(String $id): JsonResponse
-    {
-        {
-        $decodedArray = Hashids::decode($id);
+    { {
+            $decodedArray = Hashids::decode($id);
 
-        if (empty($decodedArray)) {
+            if (empty($decodedArray)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Laravel failed to decode the Hash ID: '$id'"
+                ], 404);
+            }
+
+            $realId = $decodedArray[0];
+
+            $level = \App\Models\Level::find($realId);
+
+            if (!$level) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Decoded ID is $realId, but no level exists with this ID in database."
+                ], 404);
+            }
+
+            $deletedOrder = $level->order;
+            $level->delete();
+
+            \App\Models\Level::where('order', '>', $deletedOrder)->decrement('order');
+
             return response()->json([
-                'status' => false,
-                'message' => "Laravel failed to decode the Hash ID: '$id'"
-            ], 404);
+                'status' => true,
+                'message' => 'Deleted and reordered successfully'
+            ]);
         }
-
-        $realId = $decodedArray[0];
-
-        $level = \App\Models\Level::find($realId);
-
-        if (!$level) {
-            return response()->json([
-                'status' => false,
-                'message' => "Decoded ID is $realId, but no level exists with this ID in database."
-            ], 404);
-        }
-
-        $deletedOrder = $level->order;
-        $level->delete();
-
-        \App\Models\Level::where('order', '>', $deletedOrder)->decrement('order');
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Deleted and reordered successfully'
-        ]);
-    }
     }
 }

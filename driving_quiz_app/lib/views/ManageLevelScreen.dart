@@ -78,10 +78,11 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
 
         final List<dynamic> translations = widget.level!['translations'] ?? [];
         final existingTranslation = translations.firstWhere(
-            (test) => test['locale'] == langCode,
-            orElse: () => null);
+          (test) => test['locale'] == langCode,
+          orElse: () => null,
+        );
         initialName = existingTranslation != null
-            ? existingTranslation['name'] ?? ''
+            ? (existingTranslation['name'] ?? '')
             : '';
       } else {
         _levelNumberController.text = '';
@@ -91,11 +92,10 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
         _sortOrderController.text = '1';
       }
 
-      _nameControllers[langCode] = TextEditingController(text: initialName);
-    }
-
-    if (_nameControllers['ar'] != null) {
-      _nameControllers['ar']!.addListener(_updateGroupKey);
+      final controller = TextEditingController(text: initialName);
+      controller.addListener(
+          _updateGroupKey); // Dynamic group key listener for ALL languages
+      _nameControllers[langCode] = controller;
     }
 
     if (_isEditMode) {
@@ -107,22 +107,42 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
   Future<void> _savedLevel() async {
     if (_isLoading) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    Map<String, dynamic> translationsPayload = {};
+    // 1. Build translations list using standard Indexed Array structure
+    List<Map<String, String>> translationsPayload = [];
+
     for (var lang in supportedLanguages) {
       final Map<String, dynamic> langMap = lang as Map<String, dynamic>;
       final String langCode = langMap['code']?.toString() ?? 'en';
       final String nameText = _nameControllers[langCode]?.text.trim() ?? '';
 
       if (nameText.isNotEmpty) {
-        translationsPayload[langCode] = {
+        translationsPayload.add({
+          'locale': langCode,
           'name': nameText,
-        };
+        });
       }
     }
+
+    // 2. Validate single-language entry before submitting
+    if (translationsPayload.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isArabic
+                ? 'يرجى إدخال اسم المستوى بلغة واحدة على الأقل'
+                : 'Please enter a level name in at least one language',
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
 
     final Map<String, dynamic> levelPayload = {
       "category_id": _isEditMode
@@ -139,8 +159,6 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
       "order": int.tryParse(_sortOrderController.text.trim()) ?? 1,
       'translations': translationsPayload,
     };
-
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     try {
       http.Response response;
@@ -228,9 +246,11 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isArabic
-              ? 'خطأ في الاتصال بالشبكة: $e'
-              : 'Network Connection Error: $e'),
+          content: Text(
+            isArabic
+                ? 'خطأ في الاتصال بالشبكة: $e'
+                : 'Network Connection Error: $e',
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -247,6 +267,7 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
     final String nameAr = _nameControllers['ar']?.text.trim() ?? '';
     final String nameEn = _nameControllers['en']?.text.trim() ?? '';
 
+    // Fallback chain so English or Arabic creates group_key properly
     final String categoryName = nameAr.isNotEmpty ? nameAr : nameEn;
     final String levelNumber = _levelNumberController.text.trim();
 
