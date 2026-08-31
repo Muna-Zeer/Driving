@@ -45,6 +45,7 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
   void dispose() {
     _levelNumberController.removeListener(_updateGroupKey);
     _nameControllers['ar']?.removeListener(_updateGroupKey);
+    _nameControllers['en']?.removeListener(_updateGroupKey);
     _questionsCountController.dispose();
     _groupKeyController.dispose();
     _sortOrderController.dispose();
@@ -243,12 +244,15 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
   }
 
   void _updateGroupKey() {
-    final String CategoryName = _nameControllers['ar']?.text.trim() ?? '';
-    final String LevelNumber = _levelNumberController.text.trim();
+    final String nameAr = _nameControllers['ar']?.text.trim() ?? '';
+    final String nameEn = _nameControllers['en']?.text.trim() ?? '';
 
-    if (CategoryName.isNotEmpty && LevelNumber.isNotEmpty) {
-      final String cleanCategory = CategoryName.replaceAll(RegExp(r'\s+'), '_');
-      _groupKeyController.text = '${cleanCategory}_ ${LevelNumber}';
+    final String categoryName = nameAr.isNotEmpty ? nameAr : nameEn;
+    final String levelNumber = _levelNumberController.text.trim();
+
+    if (categoryName.isNotEmpty && levelNumber.isNotEmpty) {
+      final String cleanCategory = categoryName.replaceAll(RegExp(r'\s+'), '_');
+      _groupKeyController.text = '${cleanCategory}_$levelNumber';
     } else {
       _groupKeyController.clear();
     }
