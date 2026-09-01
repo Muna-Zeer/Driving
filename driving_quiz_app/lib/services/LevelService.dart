@@ -12,10 +12,17 @@ class LevelService {
     ),
   );
   Future<List<Level>> fetchLevelsForCategory(String categoryId) async {
+    final accessToken = await _storage.read(key: 'auth_token');
+    if (accessToken == null) {
+      throw Exception("User not Authorized");
+    }
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/categories/$categoryId/levels'),
-        headers: {'Accept': 'application/json'},
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
       );
 
       if (response.statusCode == 200) {

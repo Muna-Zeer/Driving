@@ -37,10 +37,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
 
 // Protected routes for question processes(Only Admins can modify)
+    Route::get('categories/{id}/levels', [LevelController::class, 'index']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
-    // Category levels route mapped to LevelController@index
-    Route::get('categories/{id}/levels', [LevelController::class, 'index']);
 
     // Questions routes
     Route::get('questions', [QuestionController::class, 'index']);
