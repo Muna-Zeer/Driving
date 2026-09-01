@@ -18,4 +18,45 @@ class QuestionService {
     }
     throw Exception('Failed to load questions for level ');
   }
+
+  Future<bool> createQuestion(Map<String, dynamic> questionData) async {
+    final accessToken = await _storage.read(key: 'auth_token');
+    final response = await http.post(
+      Uri.parse('$baseUrl/question'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $accessToken'
+      },
+      body: jsonEncode(questionData),
+    );
+    return response.statusCode == 201 || response.statusCode == 200;
+  }
+
+  Future<bool> updateQuestion(String questionId, Map<String,dynamic>payload)async{
+    final accessToken = await _storage.read(key: 'auth_token');
+    final response = await http.put(
+      Uri.parse('$baseUrl/question'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $accessToken'
+      },
+      body: jsonEncode(payload),
+    );
+    return  response.statusCode == 200;
+  }
+
+  Future <bool> deleteQuestion( String questionId)async{
+   final token = await _storage.read(key: 'auth_token');
+    final response = await http.delete(
+      Uri.parse('$baseUrl/question/$questionId'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    return response.statusCode == 200;
+    
+  }
 }
