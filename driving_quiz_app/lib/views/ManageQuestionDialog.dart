@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:driving_quiz_app/services/QuestionService.dart';
 
 class ManageQuestionDialog extends StatefulWidget {
   final String levelId;
@@ -27,13 +26,57 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
 
   int _correctOptionIndex = 0;
   bool _isSubmiting = false;
-}
 
-final List<Map<FormLocale, TextEditingController>> _optionControllers =
-    List.generate(
-        4,
-        (_) => {
-              FormLocale.en: TextEditingController(),
-              FormLocale.ar: TextEditingController(),
-            });
-final List<String> _identifiers = ['A', 'B', 'C', 'D'];
+  final List<Map<FormLocale, TextEditingController>> _optionControllers =
+      List.generate(
+          4,
+          (_) => {
+                FormLocale.en: TextEditingController(),
+                FormLocale.ar: TextEditingController(),
+              });
+  final List<String> _identifiers = ['A', 'B', 'C', 'D'];
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditing = widget.question != null; // Detect Edit Mode
+    _imageUrlController =
+        TextEditingController(text: widget.question?['image_url'] ?? '');
+
+    if (_isEditing) {
+      _populateFormForEdit();
+    }
+  }
+
+  void _populateFormForEdit() {
+    final qTranslations = widget.question?['translations'] ?? [];
+    _questionControllers[FormLocale.en]!.text = qTranslations
+            .firstWhere((t) => t['locale'] == 'en', orElse: () => {})['text'] ??
+        '';
+    _questionControllers[FormLocale.ar]!.text = qTranslations
+            .firstWhere((t) => t['locale'] == 'ar', orElse: () => {})['text'] ??
+        '';
+
+    if (widget.question['options'] != null) {
+      final options = widget.question!['options'] as List;
+      for (int i = 0; i < options.length && i < 4; i++) {
+        if (options[i]['is_correct'] == true || options[i]['is_correct'] == 1) {
+          _correctOptionIndex = i;
+        }
+
+        final optTranslations = options[i]['translations'] as List ?? [];
+        _optionControllers[i][FormLocale.en]!.text = optTranslations.firstWhere(
+                (t) => t['locale'] == 'en',
+                orElse: () => {})['text'] ??
+            '';
+        _optionControllers[i][FormLocale.ar]!.text = optTranslations.firstWhere(
+                (t) => t['locale'] == 'ar',
+                orElse: () => {})['text'] ??
+            '';
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {}
+}
