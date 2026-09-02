@@ -5,6 +5,7 @@ import 'package:driving_quiz_app/services/AdminService.dart';
 import 'package:driving_quiz_app/services/LevelService.dart';
 import 'package:driving_quiz_app/views/CategoriesScreen.dart';
 import 'package:driving_quiz_app/views/ManageLevelScreen.dart';
+import 'package:driving_quiz_app/views/ManageQuestionDialog.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
@@ -164,81 +165,109 @@ class _CategoryLevelsDashboardScreenState
                                           child: ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(10.0),
-                                            child: Container(
-                                                decoration: const BoxDecoration(
-                                                    border: Border(
-                                                        bottom: BorderSide(
-                                                            color: Color(
-                                                                0xFF558B2F),
-                                                            width: 6))),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
+                                            child: InkWell(
+                                                // Navigation handler triggered when tapping the card
+                                                onTap: () {
+                                                  if (isAdmin) {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            ManageQuestionDialog(
+                                                                levelId: level
+                                                                    .id
+                                                                    .toString()),
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    // Navigator.push(
+                                                    //   context,
+                                                    //   MaterialPageRoute(
+                                                    //     builder: (context) => UserQuizScreen(levelId: level.id.toString()),
+                                                    //   ),
+                                                    // );
+                                                  }
+                                                },
+                                                child: Container(
+                                                    decoration: const BoxDecoration(
+                                                        border: Border(
+                                                            bottom: BorderSide(
+                                                                color: Color(
+                                                                    0xFF558B2F),
+                                                                width: 6))),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
                                                         horizontal: 12,
                                                         vertical: 10),
-                                                child: Row(
-                                                  children: [
-                                                    Container(
-                                                      width: 42,
-                                                      height: 42,
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                              color: AppColors
-                                                                  .surface,
-                                                              shape: BoxShape
-                                                                  .circle),
-                                                      alignment:
-                                                          Alignment.center,
-                                                      child: Text(
-                                                          '${level.levelNumber}',
+                                                    child: Row(
+                                                      children: [
+                                                        Container(
+                                                          width: 42,
+                                                          height: 42,
+                                                          decoration:
+                                                              const BoxDecoration(
+                                                                  color: AppColors
+                                                                      .surface,
+                                                                  shape: BoxShape
+                                                                      .circle),
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: Text(
+                                                              '${level.levelNumber}',
+                                                              style:
+                                                                  const TextStyle(
+                                                                color: AppColors
+                                                                    .primaryGreen,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 18,
+                                                              )),
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 12),
+                                                        Expanded(
+                                                            child: Text(
+                                                          '$levelName ${level.levelNumber}',
                                                           style:
                                                               const TextStyle(
-                                                            color: AppColors
-                                                                .primaryGreen,
+                                                            color: Colors.white,
+                                                            fontSize: 18,
                                                             fontWeight:
                                                                 FontWeight.bold,
-                                                            fontSize: 18,
-                                                          )),
-                                                    ),
-                                                    const SizedBox(width: 12),
-                                                    Expanded(
-                                                        child: Text(
-                                                      '$levelName ${level.levelNumber}',
-                                                      style: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    )),
-                                                    if (isAdmin)
-                                                      Row(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          IconButton(
-                                                            icon: const Icon(
-                                                                Icons.edit,
-                                                                color: Colors
-                                                                    .white70),
-                                                            onPressed: () =>
-                                                                _openLevelForm(
-                                                                    level),
                                                           ),
-                                                          IconButton(
-                                                            icon: const Icon(
-                                                                Icons.delete,
-                                                                color: Colors
-                                                                    .white70),
-                                                            onPressed: () =>
-                                                                handleDeleteLevel(
-                                                                    context,
-                                                                    level.id
-                                                                        .toString()),
+                                                        )),
+                                                        if (isAdmin)
+                                                          Row(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              IconButton(
+                                                                icon: const Icon(
+                                                                    Icons.edit,
+                                                                    color: Colors
+                                                                        .white70),
+                                                                onPressed: () =>
+                                                                    _openLevelForm(
+                                                                        level),
+                                                              ),
+                                                              IconButton(
+                                                                icon: const Icon(
+                                                                    Icons
+                                                                        .delete,
+                                                                    color: Colors
+                                                                        .white70),
+                                                                onPressed: () =>
+                                                                    handleDeleteLevel(
+                                                                        context,
+                                                                        level.id
+                                                                            .toString()),
+                                                              )
+                                                            ],
                                                           )
-                                                        ],
-                                                      )
-                                                  ],
-                                                )),
+                                                      ],
+                                                    ))),
                                           ));
                                     },
                                   )),
