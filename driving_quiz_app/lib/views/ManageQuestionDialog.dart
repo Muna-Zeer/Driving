@@ -1,4 +1,5 @@
 import 'package:driving_quiz_app/services/QuestionService.dart';
+import 'package:driving_quiz_app/widgets/CustomTExtField.dart';
 import 'package:flutter/material.dart';
 
 class ManageQuestionDialog extends StatefulWidget {
@@ -16,7 +17,7 @@ enum FormLocale { ar, en }
 
 class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
   final _formKey = GlobalKey<FormState>();
-  FormLocale _currentLocale = FormLocale.en;
+  FormLocale _activeLocale = FormLocale.en;
   final QuestionService _questionService = QuestionService();
 
   late TextEditingController _imageUrlController;
@@ -29,7 +30,7 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
 
   int _correctOptionIndex = 0;
   bool _isSubmitting = false;
-
+  late bool _isEditing;
   final List<Map<FormLocale, TextEditingController>> _optionControllers =
       List.generate(
           4,
@@ -127,19 +128,157 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
         left: 16,
         right: 16,
       ),
-      child:Form(
+      child: Form(
         key: _formKey,
-        child:const SingleChildScrollView(
+        child: SingleChildScrollView(
           child: Column(
-            mainAxisSize:MainAxisSize.min
-            ,children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [Text(_isEditing? 'Edit Question':'Add Question', style:Theme.of(context).textTheme.titleLarge)],),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(_isEditing ? 'Edit Question' : 'Add Question',
+                      style: Theme.of(context).textTheme.titleLarge)
+                ],
+              ),
+              SegmentedButton<FormLocale>(
+                  segments: const [
+                    ButtonSegment(value: FormLocale.en, label: Text('English')),
+                    ButtonSegment(value: FormLocale.ar, label: Text('Arabic')),
+                  ],
+                  selected: {
+                    _activeLocale
+                  },
+                  onSelectionChanged: (Set<FormLocale> selection) {
+                    setState(() => _activeLocale = selection.first);
+                  }),
+              CustomTextField(
+                controller: _imageUrlController,
+                labelText: _activeLocale == FormLocale.en
+                    ? 'Image URL (Optional)'
+                    : 'رابط الصورة (اختياري)',
+              ),
+              const SizedBox(height: 12),
+              // Question Text Field
+              TextFormField(
+                controller: _questionControllers[_activeLocale],
+                textDirection: _activeLocale == FormLocale.ar
+                    ? TextDirection.rtl
+                    : TextDirection.ltr,
+                decoration: InputDecoration(
+                  labelText: _activeLocale == FormLocale.ar
+                      ? 'نص السؤال (بالعربية)'
+                      : 'Question Text (EN)',
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return _activeLocale == FormLocale.ar
+                        ? 'يرجى إدخال نص السؤال باللغة العربية'
+                        : 'Please enter question text in English';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
 
-              
-            ],)
-        )
-      )
+              // Options Section Header
+              Align(
+                alignment: _activeLocale == FormLocale.ar
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Text(
+                  _activeLocale == FormLocale.ar ? 'الخيارات:' : 'Options:',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Options Cards List
+              ...List.generate(4, (index) {
+                final isCorrect = _correctOptionIndex == index;
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          textDirection: _activeLocale == FormLocale.ar
+                              ? TextDirection.rtl
+                              : TextDirection.ltr,
+                          children: [
+                            Radio<int>(
+                              value: index,
+                              groupValue: _correctOptionIndex,
+                              onChanged: (val) =>
+                                  setState(() => _correctOptionIndex = val!),
+                            ),
+                            Text(
+                              _activeLocale == FormLocale.ar
+                                  ? 'الخيار ${_identifiers[index]} (${isCorrect ? "صحيح" : "غير صحيح"})'
+                                  : 'Option ${_identifiers[index]} (${isCorrect ? "Correct" : "Incorrect"})',
+                              style: TextStyle(
+                                fontWeight: isCorrect
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: isCorrect ? Colors.green : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        TextFormField(
+                          controller: _optionControllers[index][_activeLocale],
+                          textDirection: _activeLocale == FormLocale.ar
+                              ? TextDirection.rtl
+                              : TextDirection.ltr,
+                          decoration: InputDecoration(
+                            labelText: _activeLocale == FormLocale.ar
+                                ? 'الخيار ${_identifiers[index]} (بالعربية)'
+                                : 'Option ${_identifiers[index]} (EN)',
+                          ),
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) {
+                              return _activeLocale == FormLocale.ar
+                                  ? 'مطلوب'
+                                  : 'Required';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+
+              const SizedBox(height: 16),
+
+              // Submit Button
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submit,
+                  child: _isSubmitting
+                      ? const CircularProgressIndicator()
+                      : Text(
+                          _isEditing
+                              ? (_activeLocale == FormLocale.ar
+                                  ? 'تحديث السؤال'
+                                  : 'Update Question')
+                              : (_activeLocale == FormLocale.ar
+                                  ? 'حفظ السؤال'
+                                  : 'Save Question'),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
