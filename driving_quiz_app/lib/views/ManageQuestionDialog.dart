@@ -1,6 +1,10 @@
-import 'package:driving_quiz_app/services/QuestionService.dart';
-import 'package:driving_quiz_app/widgets/CustomTExtField.dart';
 import 'package:flutter/material.dart';
+import 'package:driving_quiz_app/services/QuestionService.dart';
+import 'package:driving_quiz_app/views/CategoriesScreen.dart';
+import 'package:driving_quiz_app/widgets/AppColors.dart';
+import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
+import 'package:driving_quiz_app/widgets/CustomTextField.dart';
+import 'package:driving_quiz_app/widgets/breakpoint.dart';
 
 class ManageQuestionDialog extends StatefulWidget {
   final String levelId;
@@ -21,13 +25,13 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
   final QuestionService _questionService = QuestionService();
 
   late TextEditingController _imageUrlController;
-  late TextEditingController _questionController;
 
   final Map<FormLocale, TextEditingController> _questionControllers = {
     FormLocale.ar: TextEditingController(),
     FormLocale.en: TextEditingController(),
   };
 
+  bool _isLoading = false;
   int _correctOptionIndex = 0;
   bool _isSubmitting = false;
   late bool _isEditing;
@@ -121,169 +125,221 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-        color: Colors.transparent,
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            top: 24,
-            left: 16,
-            right: 16,
-          ),
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(_isEditing ? 'Edit Question' : 'Add Question',
-                          style: Theme.of(context).textTheme.titleLarge)
-                    ],
-                  ),
-                  SegmentedButton<FormLocale>(
-                      segments: const [
-                        ButtonSegment(
-                            value: FormLocale.en, label: Text('English')),
-                        ButtonSegment(
-                            value: FormLocale.ar, label: Text('Arabic')),
-                      ],
-                      selected: {
-                        _activeLocale
-                      },
-                      onSelectionChanged: (Set<FormLocale> selection) {
-                        setState(() => _activeLocale = selection.first);
-                      }),
-                  CustomTextField(
-                    controller: _imageUrlController,
-                    labelText: _activeLocale == FormLocale.en
-                        ? 'Image URL (Optional)'
-                        : 'رابط الصورة (اختياري)',
-                  ),
-                  const SizedBox(height: 12),
-                  // Question Text Field
-                  TextFormField(
-                    controller: _questionControllers[_activeLocale],
-                    textDirection: _activeLocale == FormLocale.ar
-                        ? TextDirection.rtl
-                        : TextDirection.ltr,
-                    decoration: InputDecoration(
-                      labelText: _activeLocale == FormLocale.ar
-                          ? 'نص السؤال (بالعربية)'
-                          : 'Question Text (EN)',
-                      border: const OutlineInputBorder(),
-                    ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return _activeLocale == FormLocale.ar
-                            ? 'يرجى إدخال نص السؤال باللغة العربية'
-                            : 'Please enter question text in English';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
+    return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: const CustomResponsiveNavbar(),
+            endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
+                ? buildMobileDrawer()
+                : null,
+            body: LayoutBuilder(builder: (context, constraints) {
+              final isDesktop = BreakPoint.isDesktop(constraints.maxWidth);
+              final isTablet = BreakPoint.isTablet(constraints.maxWidth);
+              final isWideScreen = isDesktop || isTablet;
 
-                  // Options Section Header
-                  Align(
-                    alignment: _activeLocale == FormLocale.ar
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
-                    child: Text(
-                      _activeLocale == FormLocale.ar ? 'الخيارات:' : 'Options:',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Options Cards List
-                  ...List.generate(4, (index) {
-                    final isCorrect = _correctOptionIndex == index;
-
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: [
-                            Row(
-                              textDirection: _activeLocale == FormLocale.ar
-                                  ? TextDirection.rtl
-                                  : TextDirection.ltr,
+              return Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                        maxWidth: 1000), // Max content width for desktop
+                    child: Padding(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                          top: 24,
+                          left: isWideScreen ? 32 : 16,
+                          right: isWideScreen ? 32 : 16,
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Radio<int>(
-                                  value: index,
-                                  groupValue: _correctOptionIndex,
-                                  onChanged: (val) => setState(
-                                      () => _correctOptionIndex = val!),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                        _isEditing
+                                            ? 'Edit Question'
+                                            : 'Add Question',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge)
+                                  ],
                                 ),
-                                Text(
-                                  _activeLocale == FormLocale.ar
-                                      ? 'الخيار ${_identifiers[index]} (${isCorrect ? "صحيح" : "غير صحيح"})'
-                                      : 'Option ${_identifiers[index]} (${isCorrect ? "Correct" : "Incorrect"})',
-                                  style: TextStyle(
-                                    fontWeight: isCorrect
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                    color: isCorrect ? Colors.green : null,
+                                SegmentedButton<FormLocale>(
+                                    segments: const [
+                                      ButtonSegment(
+                                          value: FormLocale.en,
+                                          label: Text('English')),
+                                      ButtonSegment(
+                                          value: FormLocale.ar,
+                                          label: Text('Arabic')),
+                                    ],
+                                    selected: {
+                                      _activeLocale
+                                    },
+                                    onSelectionChanged:
+                                        (Set<FormLocale> selection) {
+                                      setState(() =>
+                                          _activeLocale = selection.first);
+                                    }),
+                                CustomTextField(
+                                  controller: _imageUrlController,
+                                  labelText: _activeLocale == FormLocale.en
+                                      ? 'Image URL (Optional)'
+                                      : 'رابط الصورة (اختياري)',
+                                ),
+                                const SizedBox(height: 12),
+                                CustomTextField(
+                                  controller:
+                                      _questionControllers[_activeLocale]!,
+                                  textDirection: _activeLocale == FormLocale.ar
+                                      ? TextDirection.rtl
+                                      : TextDirection.ltr,
+                                  labelText: _activeLocale == FormLocale.ar
+                                      ? 'نص السؤال (بالعربية)'
+                                      : 'Question Text (EN)',
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty) {
+                                      return _activeLocale == FormLocale.ar
+                                          ? 'يرجى إدخال نص السؤال باللغة العربية'
+                                          : 'Please enter question text in English';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Options Section Header
+                                Align(
+                                  alignment: _activeLocale == FormLocale.ar
+                                      ? Alignment.centerRight
+                                      : Alignment.centerLeft,
+                                  child: Text(
+                                    _activeLocale == FormLocale.ar
+                                        ? 'الخيارات:'
+                                        : 'Options:',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
+                                const SizedBox(height: 8),
+
+                                // Options Cards List
+                                ...List.generate(4, (index) {
+                                  final isCorrect =
+                                      _correctOptionIndex == index;
+
+                                  return Card(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            textDirection:
+                                                _activeLocale == FormLocale.ar
+                                                    ? TextDirection.rtl
+                                                    : TextDirection.ltr,
+                                            children: [
+                                              Radio<int>(
+                                                value: index,
+                                                groupValue: _correctOptionIndex,
+                                                onChanged: (val) => setState(
+                                                    () => _correctOptionIndex =
+                                                        val!),
+                                              ),
+                                              Text(
+                                                _activeLocale == FormLocale.ar
+                                                    ? 'الخيار ${_identifiers[index]} (${isCorrect ? "صحيح" : "غير صحيح"})'
+                                                    : 'Option ${_identifiers[index]} (${isCorrect ? "Correct" : "Incorrect"})',
+                                                style: TextStyle(
+                                                  fontWeight: isCorrect
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                                  color: isCorrect
+                                                      ? Colors.green
+                                                      : null,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          CustomTextField(
+                                            controller:
+                                                _optionControllers[index]
+                                                    [_activeLocale]!,
+                                            textDirection:
+                                                _activeLocale == FormLocale.ar
+                                                    ? TextDirection.rtl
+                                                    : TextDirection.ltr,
+                                            labelText: _activeLocale ==
+                                                    FormLocale.ar
+                                                ? 'الخيار ${_identifiers[index]} (بالعربية)'
+                                                : 'Option ${_identifiers[index]} (EN)',
+                                            validator: (v) {
+                                              if (v == null ||
+                                                  v.trim().isEmpty) {
+                                                return _activeLocale ==
+                                                        FormLocale.ar
+                                                    ? 'مطلوب'
+                                                    : 'Required';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }),
+
+                                const SizedBox(height: 16),
+
+                                // Submit Button
+                                const SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                ),
+                                ElevatedButton(
+                                  onPressed: _isSubmitting ? null : _submit,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryGreen,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 24),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  child: _isSubmitting
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 40,
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2),
+                                        )
+                                      : Text(
+                                          _isEditing
+                                              ? (_activeLocale == FormLocale.ar
+                                                  ? 'تحديث السؤال'
+                                                  : 'Update Question')
+                                              : (_activeLocale == FormLocale.ar
+                                                  ? 'حفظ وإدراج السؤال'
+                                                  : 'Save and Publish'),
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                ),
+                                const SizedBox(height: 16),
                               ],
                             ),
-                            TextFormField(
-                              controller: _optionControllers[index]
-                                  [_activeLocale],
-                              textDirection: _activeLocale == FormLocale.ar
-                                  ? TextDirection.rtl
-                                  : TextDirection.ltr,
-                              decoration: InputDecoration(
-                                labelText: _activeLocale == FormLocale.ar
-                                    ? 'الخيار ${_identifiers[index]} (بالعربية)'
-                                    : 'Option ${_identifiers[index]} (EN)',
-                              ),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return _activeLocale == FormLocale.ar
-                                      ? 'مطلوب'
-                                      : 'Required';
-                                }
-                                return null;
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-
-                  const SizedBox(height: 16),
-
-                  // Submit Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _isSubmitting ? null : _submit,
-                      child: _isSubmitting
-                          ? const CircularProgressIndicator()
-                          : Text(
-                              _isEditing
-                                  ? (_activeLocale == FormLocale.ar
-                                      ? 'تحديث السؤال'
-                                      : 'Update Question')
-                                  : (_activeLocale == FormLocale.ar
-                                      ? 'حفظ السؤال'
-                                      : 'Save Question'),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
-          ),
-        ));
+                          ),
+                        )),
+                  ));
+            })));
   }
 }
