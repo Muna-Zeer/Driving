@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\QuestionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Models\MediaLibrary;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,4 +55,30 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // Public routes (Guests can see categories)
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('questions', QuestionController::class);
+});
+
+
+// Fetch all images for the Flutter library picker
+Route::get('/media-library', function () {
+    return response()->json(MediaLibrary::all());
+});
+
+// Upload a new image to storage and save URL in MySQL
+Route::post('/media-library/upload', function (Request $request) {
+    $request->validate([
+        'title' => 'required|string',
+        'image' => 'required|image|mimes:jpeg,png,jpg,svg|max:2048',
+    ]);
+
+    // Stores image in 'storage/app/public/media'
+    $path = $request->file('image')->store('media', 'public');
+    $url = asset('storage/' . $path);
+
+    $media = MediaLibrary::create([
+        'title' => $request->title,
+        'category' => $request->category ?? 'General',
+        'image_url' => $url,
+    ]);
+
+    return response()->json($media, 201);
 });
