@@ -4,9 +4,11 @@ import 'package:driving_quiz_app/services/APIService.dart';
 import 'package:http/http.dart' as http;
 
 class MediaService {
-  final baseUrl = APIService.getBaseUrl();
-  Future<List<dynamic>> fetchMediaLibrary() async {
-    final response = await http.get(Uri.parse('$baseUrl/media-library'));
+  static String get _baseUrl => APIService.getBaseUrl();
+
+  static Future<List<dynamic>> fetchMediaLibrary() async {
+    final response = await http.get(Uri.parse('$_baseUrl/media-library'));
+
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -14,15 +16,16 @@ class MediaService {
     }
   }
 
-  Future<Map<String, dynamic>> uploadImage({
+  static Future<Map<String, dynamic>> uploadImage({
     required File imageFile,
     required String imageName,
     String category = 'default',
   }) async {
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('$baseUrl/upload-image'),
+      Uri.parse('$_baseUrl/media-library/upload'),
     );
+
     request.fields['title'] = imageName;
     request.fields['category'] = category;
     request.files.add(
@@ -31,14 +34,14 @@ class MediaService {
         imageFile.path,
       ),
     );
-    final streamedResponse = await request.send();
-    
 
+    final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
+
     if (response.statusCode == 201) {
-      return json.decode(await response.body);
+      return json.decode(response.body);
     } else {
-      throw Exception('Failed to upload image');
+      throw Exception('Failed to upload image: ${response.statusCode}');
     }
   }
 }
