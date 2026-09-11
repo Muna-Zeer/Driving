@@ -1,3 +1,5 @@
+import 'package:driving_quiz_app/services/APIService.dart';
+import 'package:driving_quiz_app/widgets/ImageLibraryPicker.dart';
 import 'package:flutter/material.dart';
 import 'package:driving_quiz_app/services/QuestionService.dart';
 import 'package:driving_quiz_app/views/CategoriesScreen.dart';
@@ -18,6 +20,8 @@ class ManageQuestionDialog extends StatefulWidget {
 }
 
 enum FormLocale { ar, en }
+
+final baseUrl = APIService.getBaseUrl();
 
 class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
   final _formKey = GlobalKey<FormState>();
@@ -54,6 +58,9 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
     if (_isEditing) {
       _populateFormForEdit();
     }
+    _imageUrlController.addListener(() {
+      setState(() => {});
+    });
   }
 
   void _populateFormForEdit() {
@@ -186,12 +193,96 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
                                       setState(() =>
                                           _activeLocale = selection.first);
                                     }),
-                                CustomTextField(
-                                  controller: _imageUrlController,
-                                  labelText: _activeLocale == FormLocale.en
-                                      ? 'Image URL (Optional)'
-                                      : 'رابط الصورة (اختياري)',
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _imageUrlController,
+                                        decoration: InputDecoration(
+                                          labelText:
+                                              _activeLocale == FormLocale.en
+                                                  ? 'Image URL (Optional)'
+                                                  : 'رابط الصورة (اختياري)',
+                                        ),
+                                        onChanged: (val) => setState(() {}),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+
+                                    // Show Clear/Cancel button only if an image is selected/typed
+                                    if (_imageUrlController
+                                        .text.isNotEmpty) ...[
+                                      IconButton(
+                                        icon: const Icon(Icons.clear,
+                                            color: Colors.red),
+                                        tooltip: _activeLocale == FormLocale.en
+                                            ? 'Remove Image'
+                                            : 'إزالة الصورة',
+                                        onPressed: () {
+                                          setState(() {
+                                            _imageUrlController
+                                                .clear(); // Clears the text field & URL
+                                          });
+                                        },
+                                      ),
+                                      const SizedBox(width: 4),
+                                    ],
+
+                                    // Library Picker Button
+                                    IconButton.filledTonal(
+                                      icon: const Icon(Icons.photo_library,
+                                          color: AppColors.primaryGreen),
+                                      tooltip: _activeLocale == FormLocale.en
+                                          ? 'Select from Library'
+                                          : 'اختر من المكتبة',
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) =>
+                                              ImageLibraryDialog(
+                                            onImageSelected:
+                                                (String selectedUrl) {
+                                              setState(() {
+                                                _imageUrlController.text =
+                                                    selectedUrl;
+                                              });
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
+                                const SizedBox(height: 12),
+
+// Optional: Live preview thumbnail underneath
+                                if (_imageUrlController.text.isNotEmpty) ...[
+                                  Container(
+                                    height: 100,
+                                    width: 100,
+                                    decoration: BoxDecoration(
+                                      border:
+                                          Border.all(color: AppColors.border),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        _imageUrlController.text
+                                                .startsWith(baseUrl)
+                                            ? _imageUrlController.text
+                                            : 'http://127.0.0.1:8000${_imageUrlController.text}',
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Center(
+                                          child: Icon(Icons.broken_image,
+                                              color: Colors.red),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
                                 const SizedBox(height: 12),
                                 CustomTextField(
                                   controller:
@@ -228,7 +319,6 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
                                 ),
                                 const SizedBox(height: 8),
 
-                                // Options Cards List
                                 ...List.generate(4, (index) {
                                   final isCorrect =
                                       _correctOptionIndex == index;

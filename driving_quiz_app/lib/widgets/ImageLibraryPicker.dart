@@ -1,7 +1,6 @@
 import 'package:driving_quiz_app/services/MediaService.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
 
 class ImageLibraryDialog extends StatefulWidget {
   final Function(String selectedUrl) onImageSelected;
@@ -28,7 +27,16 @@ class _ImageLibraryDialogState extends State<ImageLibraryDialog> {
     });
   }
 
-  // Handle uploading a new image directly from the app
+  Future<void> _deleteMedia(String id) async {
+    try {
+      await MediaService.deleteMedia(id);
+      _refreshLibrary();
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to delete media: $e')));
+    }
+  }
+
   Future<void> _pickAndUploadImage() async {
     final picker = ImagePicker();
     final XFile? pickedFile =
@@ -44,7 +52,7 @@ class _ImageLibraryDialogState extends State<ImageLibraryDialog> {
       );
 
       await MediaService.uploadImage(
-        imageFile: File(pickedFile.path),
+        pickedFile: pickedFile,
         imageName: 'New Sign ${DateTime.now().millisecondsSinceEpoch}',
       );
 

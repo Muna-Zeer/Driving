@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:driving_quiz_app/services/APIService.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 class MediaService {
   static String get _baseUrl => APIService.getBaseUrl();
@@ -15,9 +15,11 @@ class MediaService {
       throw Exception('Failed to fetch media library');
     }
   }
+  
 
   static Future<Map<String, dynamic>> uploadImage({
-    required File imageFile,
+    required XFile
+        pickedFile, // Changed from File to XFile for Web compatibility
     required String imageName,
     String category = 'default',
   }) async {
@@ -28,10 +30,14 @@ class MediaService {
 
     request.fields['title'] = imageName;
     request.fields['category'] = category;
+
+    final bytes = await pickedFile.readAsBytes();
+
     request.files.add(
-      await http.MultipartFile.fromPath(
+      http.MultipartFile.fromBytes(
         'image',
-        imageFile.path,
+        bytes,
+        filename: pickedFile.name,
       ),
     );
 
@@ -44,4 +50,12 @@ class MediaService {
       throw Exception('Failed to upload image: ${response.statusCode}');
     }
   }
+  static Future<void> deleteMedia(String id) async{
+    final response = await http.delete(Uri.parse('$_baseUrl/media-library/$id'));
+    if(response.statusCode !=200){
+      throw Exception("Failed to delete media:${response.statusCode}");
+    }
+  }
+ 
 }
+

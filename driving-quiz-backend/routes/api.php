@@ -5,8 +5,10 @@ use App\Http\Controllers\Api\LevelController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\QuestionController;
 use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Route;
 use App\Models\MediaLibrary;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,23 +58,35 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('questions', QuestionController::class);
 });
-
-
-// Fetch all images for the Flutter library picker
 Route::get('/media-library', function () {
-    return response()->json(MediaLibrary::all());
+    return response()->json(MediaLibrary::all(), 200);
 });
 
-// Upload a new image to storage and save URL in MySQL
+// 2. Stream individual images with explicit CORS headers
+Route::get('/media-library/{filename}', function ($filename) {
+    $path = storage_path('app/public/media/' . $filename);
+
+    if (!file_exists($path)) {
+        return response()->json(['message' => 'Image not found'], 404);
+    }
+
+    $file = file_get_contents($path);
+    return response($file, 200)
+        ->header('Content-Type', mime_content_type($path))
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+});
+
+// 3. Upload a new image and save its custom stream URL in MySQL
 Route::post('/media-library/upload', function (Request $request) {
     $request->validate([
         'title' => 'required|string',
         'image' => 'required|image|mimes:jpeg,png,jpg,svg|max:2048',
     ]);
 
-    // Stores image in 'storage/app/public/media'
     $path = $request->file('image')->store('media', 'public');
-    $url = asset('storage/' . $path);
+    $filename = basename($path);
+    $url = url('/api/media-library/' . $filename);
 
     $media = MediaLibrary::create([
         'title' => $request->title,
@@ -81,4 +95,22 @@ Route::post('/media-library/upload', function (Request $request) {
     ]);
 
     return response()->json($media, 201);
+});
+Route::delete('/media-library/{id}', function ($id) {
+    $media = MediaLibrary::find($id);
+
+    if (!$media) {
+        return response()->json(['message' => 'Media not found'], 404);
+    }
+
+    $filename = basename($media->image_url);
+    $path = 'media/' . $filename;
+
+    if (Storage::disk('public')->exists($path)) {
+        Storage::disk('public')->delete($path);
+    }
+
+    $media->delete();
+
+    return response()->json(['message' => 'Media deleted successfully'], 200);
 });
