@@ -27,7 +27,7 @@ class _ImageLibraryDialogState extends State<ImageLibraryDialog> {
     });
   }
 
-  Future<void> _deleteMedia(String id) async {
+  Future<void> _deleteMedia(int id) async {
     try {
       await MediaService.deleteMedia(id);
       _refreshLibrary();
@@ -110,20 +110,32 @@ class _ImageLibraryDialogState extends State<ImageLibraryDialog> {
                 final url = item['image_url'] ?? '';
 
                 return InkWell(
-                  onTap: () {
-                    widget.onImageSelected(url);
-                    Navigator.pop(context);
-                  },
-                  child: Card(
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.network(
-                      url,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          const Icon(Icons.broken_image),
-                    ),
-                  ),
-                );
+                    onTap: () {
+                      widget.onImageSelected(url);
+                      Navigator.pop(context);
+                    },
+                    child: Card(
+                        clipBehavior: Clip.antiAlias,
+                        child: Stack(fit: StackFit.expand, children: [
+                          Image.network(
+                            url,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                const Icon(Icons.broken_image),
+                          ),
+                          Positioned(
+                              top: 4,
+                              right: 6,
+                              child: CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: Colors.red,
+                                  child: IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          size: 16, color: Colors.white),
+                                      onPressed: () {
+                                        _deleteMedia(item['id']);
+                                      })))
+                        ])));
               },
             );
           },

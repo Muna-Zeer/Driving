@@ -50,7 +50,7 @@ class MediaService {
       throw Exception('Failed to upload image: ${response.statusCode}');
     }
   }
-  static Future<void> deleteMedia(String id) async{
+  static Future<void> deleteMedia(int id) async{
     final response = await http.delete(Uri.parse('$_baseUrl/media-library/$id'));
     if(response.statusCode !=200){
       throw Exception("Failed to delete media:${response.statusCode}");
