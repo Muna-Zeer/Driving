@@ -111,8 +111,8 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
           'identifier': _identifiers[i],
           'is_correct': i == _correctOptionIndex,
           'translations': {
-            'en': _questionControllers[FormLocale.en]!.text.trim(),
-            'ar': _questionControllers[FormLocale.ar]!.text.trim(),
+            'en': _optionControllers[i][FormLocale.en]!.text.trim(),
+            'ar': _optionControllers[i][FormLocale.ar]!.text.trim(),
           },
         };
       })

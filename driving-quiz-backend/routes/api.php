@@ -40,12 +40,15 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
 
 // Protected routes for question processes(Only Admins can modify)
-    Route::get('categories/{id}/levels', [LevelController::class, 'index']);
-
+Route::get('categories/{id}/levels', [LevelController::class, 'index']);
+Route::get('questions', [QuestionController::class, 'index']);
 Route::middleware(['auth:sanctum'])->group(function () {
 
     // Questions routes
-    Route::get('questions', [QuestionController::class, 'index']);
+
+    Route::post('question', [QuestionController::class, 'store']);
+    Route::put('question/{id}', [QuestionController::class, 'update']);
+    Route::delete('question/{id}', [QuestionController::class, 'destroy']);
     Route::get('levels/{level_id}/questions', [QuestionController::class, 'getQuestionByLevel']);
 
     // Level management routes
