@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:driving_quiz_app/models/question_model.dart';
 import 'package:driving_quiz_app/services/APIService.dart';
+import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 // Import your model file here
@@ -51,5 +52,68 @@ class _QuizScreenState extends State<QuizScreen> {
       });
     }
   }
-  
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (questions.isEmpty) {
+      return Scaffold(
+          appBar: AppBar(
+            title: const Text("Quiz"),
+          ),
+          body: const Center(child: Text("No Questions available")));
+    }
+    final currentQuestion = questions[currentIndex];
+    return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+            backgroundColor: AppColors.surface,
+            elevation: 1,
+            title: Text('Level ${widget.levelId}',
+                style: const TextStyle(color: AppColors.textPrimary))),
+        body: Column(children: [
+          Container(
+              height: 55,
+              color: AppColors.textSecondary,
+              child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true,
+                  itemCount: questions.length,
+                  itemBuilder: (context, index) {
+                    bool isSelected = index == currentIndex;
+                    return GestureDetector(
+                        onTap: () {
+                          setState(
+                            () {
+                              currentIndex = index;
+                              selectedOptionId = null;
+                              isAnswerChecked = false;
+                            },
+                          );
+                        },
+                        child: Container(
+                            width: 50,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.grey[600]
+                                  : Colors.grey[800],
+                              border: Border(
+                                  left: BorderSide(color: Colors.grey[700]!)),
+                            ),
+                            child: Text(
+                              '${questions[index].order}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                fontSize: 16,
+                              ),
+                            )));
+                  }))
+        ]));
+  }
 }
