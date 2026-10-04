@@ -1,3 +1,4 @@
+import 'package:driving_quiz_app/models/question_model.dart';
 import 'package:driving_quiz_app/services/APIService.dart';
 import 'package:driving_quiz_app/widgets/ImageLibraryPicker.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,7 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
   int _correctOptionIndex = 0;
   bool _isSubmitting = false;
   late bool _isEditing;
+  final TextEditingController _orderController = TextEditingController();
   final List<Map<FormLocale, TextEditingController>> _optionControllers =
       List.generate(
           4,
@@ -97,33 +99,45 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
     setState(() {
       _isSubmitting = true;
     });
-    final payload = {
-      'level_id': widget.levelId,
-      'image_url': _imageUrlController.text.trim().isEmpty
+
+    final questionModel = QuestionModel(
+      levelId: widget.levelId,
+      order: int.tryParse(_orderController.text.trim()) ?? 1,
+      imageUrl: _imageUrlController.text.trim().isEmpty
           ? null
           : _imageUrlController.text.trim(),
-      'question_text': {
-        'en': _questionControllers[FormLocale.en]!.text.trim(),
-        'ar': _questionControllers[FormLocale.ar]!.text.trim(),
-      },
-      'options': List.generate(4, (i) {
-        return {
-          'identifier': _identifiers[i],
-          'is_correct': i == _correctOptionIndex,
-          'translations': {
-            'en': _optionControllers[i][FormLocale.en]!.text.trim(),
-            'ar': _optionControllers[i][FormLocale.ar]!.text.trim(),
-          },
-        };
-      })
-    };
+      translations: [
+        QuestionTranslation(
+            locale: 'en',
+            text: _questionControllers[FormLocale.en]!.text.trim()),
+        QuestionTranslation(
+            locale: 'ar',
+            text: _questionControllers[FormLocale.ar]!.text.trim()),
+      ],
+      options: List.generate(4, (i) {
+        return OptionModel(
+          identifier: _identifiers[i],
+          isCorrect: i == _correctOptionIndex,
+          translations: [
+            OptionTranslation(
+                locale: 'en',
+                text: _optionControllers[i][FormLocale.en]!.text.trim()),
+            OptionTranslation(
+                locale: 'ar',
+                text: _optionControllers[i][FormLocale.ar]!.text.trim()),
+          ],
+        );
+      }),
+    );
+
     bool success;
     if (_isEditing) {
       success = await _questionService.updateQuestion(
-          widget.question!['id'], payload);
+          widget.question!['id'].toString(), questionModel.toJson());
     } else {
-      success = await _questionService.createQuestion(payload);
+      success = await _questionService.createQuestion(questionModel.toJson());
     }
+
     setState(() => _isSubmitting = false);
     if (success && mounted) {
       Navigator.of(context).pop(true);
@@ -148,8 +162,7 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
               return Align(
                   alignment: Alignment.topCenter,
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                        maxWidth: 1000), // Max content width for desktop
+                    constraints: const BoxConstraints(maxWidth: 1000),
                     child: Padding(
                         padding: EdgeInsets.only(
                           bottom: MediaQuery.of(context).viewInsets.bottom + 24,

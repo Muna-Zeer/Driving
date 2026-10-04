@@ -33,7 +33,8 @@ class QuestionService {
     return response.statusCode == 201 || response.statusCode == 200;
   }
 
-  Future<bool> updateQuestion(String questionId, Map<String,dynamic>payload)async{
+  Future<bool> updateQuestion(
+      String questionId, Map<String, dynamic> payload) async {
     final accessToken = await _storage.read(key: 'auth_token');
     final response = await http.put(
       Uri.parse('$baseUrl/question/$questionId'),
@@ -44,11 +45,12 @@ class QuestionService {
       },
       body: jsonEncode(payload),
     );
-    return  response.statusCode == 200;
+    print('DEBUG PAYLOAD: ${jsonEncode(payload)}');
+    return response.statusCode == 200;
   }
 
-  Future <bool> deleteQuestion( String questionId)async{
-   final token = await _storage.read(key: 'auth_token');
+  Future<bool> deleteQuestion(String questionId) async {
+    final token = await _storage.read(key: 'auth_token');
     final response = await http.delete(
       Uri.parse('$baseUrl/question/$questionId'),
       headers: {
@@ -57,6 +59,5 @@ class QuestionService {
       },
     );
     return response.statusCode == 200;
-    
   }
 }

@@ -101,10 +101,12 @@ class QuestionController extends Controller
 
             if ($request->has('question_text')) {
                 foreach ($request->question_text as $locale => $text) {
-                    $question->translations()->create([
-                        'locale' => $locale,
-                        'text'   => $text
-                    ]);
+                    if (!empty(trim($text))) {
+                        $question->translations()->create([
+                            'locale' => $locale,
+                            'text'   => $text
+                        ]);
+                    }
                 }
             }
 
@@ -116,10 +118,12 @@ class QuestionController extends Controller
                     ]);
 
                     foreach ($optionData['translations'] as $locale => $text) {
-                        $option->translations()->create([
-                            'locale' => $locale,
-                            'text'   => $text
-                        ]);
+                        if (!empty(trim($text))) {
+                            $option->translations()->create([
+                                'locale' => $locale,
+                                'text'   => $text
+                            ]);
+                        }
                     }
                 }
             }

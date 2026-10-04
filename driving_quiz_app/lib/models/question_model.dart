@@ -66,25 +66,30 @@ class OptionModel {
     );
   }
 
+  String getText(String locale) {
+    final translation = translations.firstWhere(
+      (t) => t.locale == locale,
+      orElse: () => translations.isNotEmpty
+          ? translations.first
+          : OptionTranslation(locale: '', text: ''),
+    );
+    return translation.text;
+  }
+
   Map<String, dynamic> toJson() {
-
-    final Map<String, dynamic> translationMap = {};
-    for (var t in translations) {
-      translationMap[t.locale] = t.text;
-    }
-
     return {
       'identifier': identifier,
       'is_correct': isCorrect,
-      'translations': translationMap,
+      'translations': translations.map((t) => t.toJson()).toList(),
     };
   }
 }
 
 class QuestionModel {
   final int? id;
-  final int levelId;
+  final String levelId;
   final String? imageUrl;
+  final int order;
   final List<QuestionTranslation> translations;
   final List<OptionModel> options;
 
@@ -92,6 +97,7 @@ class QuestionModel {
     this.id,
     required this.levelId,
     this.imageUrl,
+    required this.order,
     required this.translations,
     required this.options,
   });
@@ -107,25 +113,30 @@ class QuestionModel {
 
     return QuestionModel(
       id: json['id'],
-      levelId: json['level_id'] is int 
-          ? json['level_id'] 
-          : int.parse(json['level_id'].toString()),
+      levelId: json['level_id']?.toString() ?? '',
       imageUrl: json['image_url'],
+      order: json['order'] ?? 1, 
       translations: parsedQTrans,
       options: parsedOptions,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> qTransMap = {};
-    for (var t in translations) {
-      qTransMap[t.locale] = t.text;
-    }
+  String getTitle(String locale) {
+    final translation = translations.firstWhere(
+      (t) => t.locale == locale,
+      orElse: () => translations.isNotEmpty
+          ? translations.first
+          : QuestionTranslation(locale: '', text: ''),
+    );
+    return translation.text;
+  }
 
+  Map<String, dynamic> toJson() {
     return {
       'level_id': levelId,
       'image_url': imageUrl,
-      'question_text': qTransMap,
+      'order': order,
+      'translations': translations.map((t) => t.toJson()).toList(),
       'options': options.map((o) => o.toJson()).toList(),
     };
   }

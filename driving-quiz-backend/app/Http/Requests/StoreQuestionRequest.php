@@ -19,16 +19,21 @@ class StoreQuestionRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
-    {
-        return [
-            'level_id'=>'required|string',
-            'image_url'=>'nullable|string',
-            'question_translations'=>'required|array',
-            'options'=>'required|array|size:4',
-            'options.*.identifier'=>'required|string|max:1',
-            'options.*.is_correct'=>'required|boolean',
-            'options.*.translations'=>'required|array'
-        ];
-    }
+public function rules(): array
+{
+    return [
+        'level_id' => 'required',
+        'image_url' => 'nullable|string',
+        'question_text' => 'required|array',
+        'question_text.en' => 'nullable|string',
+        'question_text.ar' => 'nullable|string',
+        
+        'options' => 'required|array|size:4',
+        'options.*.identifier' => 'required|string|max:1',
+        'options.*.is_correct' => 'required|boolean',
+        'options.*.translations' => 'required|array',
+        'options.*.translations.en' => 'nullable|string',
+        'options.*.translations.ar' => 'nullable|string',
+    ];
+}
 }
