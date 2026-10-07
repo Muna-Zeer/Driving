@@ -6,6 +6,7 @@ import 'package:driving_quiz_app/services/LevelService.dart';
 import 'package:driving_quiz_app/views/CategoriesScreen.dart';
 import 'package:driving_quiz_app/views/ManageLevelScreen.dart';
 import 'package:driving_quiz_app/views/ManageQuestionDialog.dart';
+import 'package:driving_quiz_app/views/QuizScreen.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
@@ -171,19 +172,25 @@ class _CategoryLevelsDashboardScreenState
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (context) =>
-                                                            ManageQuestionDialog(
+                                                            // ManageQuestionDialog(
+                                                            //     levelId: level
+                                                            //         .id
+                                                            //         .toString()),
+                                                            QuizScreen(
                                                                 levelId: level
-                                                                    .id
-                                                                    .toString()),
+                                                                        .id),
                                                       ),
                                                     );
                                                   } else {
-                                                    // Navigator.push(
-                                                    //   context,
-                                                    //   MaterialPageRoute(
-                                                    //     builder: (context) => UserQuizScreen(levelId: level.id.toString()),
-                                                    //   ),
-                                                    // );
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            QuizScreen(
+                                                                levelId: level
+                                                                        .id),
+                                                      ),
+                                                    );
                                                   }
                                                 },
                                                 child: Container(
