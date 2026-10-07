@@ -113,7 +113,61 @@ class _QuizScreenState extends State<QuizScreen> {
                                 fontSize: 16,
                               ),
                             )));
-                  }))
+                  })),
+          //Display option area for options
+          Expanded(
+            child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (currentQuestion.imageUrl != null)
+                      Container(
+                          height: 160,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(8),
+                              image: DecorationImage(
+                                  image:
+                                      NetworkImage(currentQuestion.imageUrl!),
+                                  fit: BoxFit.contain))),
+                    Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Text(
+                            '${currentQuestion.order} - ${currentQuestion.getTitle(currentLocale)}',
+                            textAlign: TextAlign.right,
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold))),
+                    const SizedBox(height: 16),
+                    ...currentQuestion.options.asMap().entries.map((entry) {
+                      int idx = entry.key;
+                      var option = entry.value;
+                      String optionLetter = ['أ', 'ب', 'ج', 'د'][idx % 4];
+                      bool isSelected = selectedOptionId == option.id;
+                      Color bgColor = Colors.white;
+                      Color borderColor = Colors.grey.shade300;
+                      if (isAnswerChecked) {
+                        if (option.isCorrect) {
+                          bgColor = Colors.green.shade100;
+                          borderColor = Colors.green;
+                        } else if (isSelected && !option.isCorrect) {
+                          bgColor = Colors.red.shade100;
+                          borderColor = Colors.red;
+                        }
+                      } else if (isSelected) {
+                        bgColor = Colors.blue.shade50;
+                        borderColor = Colors.blue;
+                      }
+                  })
+                  ],
+                ))
+          )
         ]));
   }
 }
