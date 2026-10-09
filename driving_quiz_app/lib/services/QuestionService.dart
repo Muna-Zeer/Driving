@@ -8,9 +8,10 @@ class QuestionService {
   final _storage = const FlutterSecureStorage();
 
   Future<List<dynamic>> fetchQuestionForLevel(String levelId) async {
+    final accessToken = await _storage.read(key: 'auth_token');
     final response = await http.get(
       Uri.parse('$baseUrl/levels/$levelId/questions'),
-      headers: {'Accept': 'application/json'},
+      headers: {'Accept': 'application/json','Authorization': 'Bearer $accessToken',},
     );
     if (response.statusCode == 200) {
       final decoded = json.decode(response.body);

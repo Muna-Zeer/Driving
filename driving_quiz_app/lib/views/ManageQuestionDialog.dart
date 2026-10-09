@@ -150,7 +150,12 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
         textDirection: TextDirection.rtl,
         child: Scaffold(
             backgroundColor: AppColors.background,
-            appBar: const CustomResponsiveNavbar(),
+            appBar: AppBar(
+              title: const CustomResponsiveNavbar(),
+              backgroundColor: AppColors.surface,
+              foregroundColor: AppColors.deepForest,
+              elevation: 1,
+            ),
             endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
                 ? buildMobileDrawer()
                 : null,

@@ -50,25 +50,37 @@ class QuestionController extends Controller
     /**
      * Mobile app dedicated fetch to load a level's complete sequential quiz grid.
      */
-    public function getQuestionByLevel($levelId): JsonResponse
-    {
+   public function getQuestionByLevel($levelId): JsonResponse
+{
+    try {
+        // Safely attempt to decode the ID
         $realLevelId = $this->decodeId($levelId);
-
-        if (!$realLevelId) {
-            return response()->json(['status' => false, 'message' => 'Invalid Level ID'], 400);
-        }
-
-        // CRITICAL: Force load options cleanly and safely
-        $questions = Question::with(['translations', 'options', 'options.translations'])
-            ->where('level_id', $realLevelId)
-            ->orderBy('order', 'asc')
-            ->get();
-
+    } catch (\Exception $e) {
+        // If decoding throws an error (e.g. invalid hash format), catch it gracefully
         return response()->json([
-            'status' => true,
-            'data'   => QuestionResource::collection($questions)
-        ]);
+            'status' => false,
+            'message' => 'Invalid Level ID format'
+        ], 400);
     }
+
+    if (!$realLevelId) {
+        return response()->json([
+            'status' => false, 
+            'message' => 'Invalid Level ID'
+        ], 400);
+    }
+
+    // Fetch questions using the resolved level ID
+    $questions = Question::with(['translations', 'options', 'options.translations'])
+        ->where('level_id', $realLevelId)
+        ->orderBy('order', 'asc')
+        ->get();
+
+    return response()->json([
+        'status' => true,
+        'data'   => QuestionResource::collection($questions)
+    ]);
+}
     /**
      * Store a newly created resource in storage (Admin Only).
      */
@@ -101,10 +113,13 @@ class QuestionController extends Controller
 
             if ($request->has('question_text')) {
                 foreach ($request->question_text as $locale => $text) {
-                    if (!empty(trim($text))) {
+                    // Handle case where text might be an array or string
+                    $textValue = is_array($text) ? ($text['text'] ?? '') : $text;
+
+                    if (!empty(trim((string)$textValue))) {
                         $question->translations()->create([
                             'locale' => $locale,
-                            'text'   => $text
+                            'text'   => $textValue
                         ]);
                     }
                 }
@@ -117,17 +132,20 @@ class QuestionController extends Controller
                         'is_correct' => (bool)$optionData['is_correct']
                     ]);
 
-                    foreach ($optionData['translations'] as $locale => $text) {
-                        if (!empty(trim($text))) {
-                            $option->translations()->create([
-                                'locale' => $locale,
-                                'text'   => $text
-                            ]);
+                    if (isset($optionData['translations'])) {
+                        foreach ($optionData['translations'] as $locale => $text) {
+                            $textValue = is_array($text) ? ($text['text'] ?? '') : $text;
+
+                            if (!empty(trim((string)$textValue))) {
+                                $option->translations()->create([
+                                    'locale' => $locale,
+                                    'text'   => $textValue
+                                ]);
+                            }
                         }
                     }
                 }
             }
-
             return response()->json([
                 'status'  => true,
                 'message' => 'Question and options created successfully.',

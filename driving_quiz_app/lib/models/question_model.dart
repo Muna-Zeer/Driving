@@ -41,25 +41,23 @@ class OptionTranslation {
 }
 
 class OptionModel {
-  final int? id;
-  final String identifier;
+  final String identifier; // Uses A, B, C, D as the unique identifier
   final bool isCorrect;
   final List<OptionTranslation> translations;
 
   OptionModel({
-    this.id,
     required this.identifier,
     required this.isCorrect,
     required this.translations,
   });
 
   factory OptionModel.fromJson(Map<String, dynamic> json) {
-    var translationList = json['translations'] as List? ?? [];
+    // Updated to match your API key 'all_option_translations'
+    var translationList = json['all_option_translations'] as List? ?? [];
     List<OptionTranslation> parsedTranslations =
         translationList.map((t) => OptionTranslation.fromJson(t)).toList();
 
     return OptionModel(
-      id: json['id'],
       identifier: json['identifier'] ?? '',
       isCorrect: json['is_correct'] == 1 || json['is_correct'] == true,
       translations: parsedTranslations,
@@ -86,7 +84,7 @@ class OptionModel {
 }
 
 class QuestionModel {
-  final int? id;
+  final String? id; // Changed to String? to handle string/hashed IDs like "oyqY"
   final String levelId;
   final String? imageUrl;
   final int order;
@@ -103,7 +101,8 @@ class QuestionModel {
   });
 
   factory QuestionModel.fromJson(Map<String, dynamic> json) {
-    var qTransList = json['translations'] as List? ?? [];
+    // Updated to match your API key 'all_question_translations'
+    var qTransList = json['all_question_translations'] as List? ?? [];
     List<QuestionTranslation> parsedQTrans =
         qTransList.map((t) => QuestionTranslation.fromJson(t)).toList();
 
@@ -112,7 +111,7 @@ class QuestionModel {
         optList.map((o) => OptionModel.fromJson(o)).toList();
 
     return QuestionModel(
-      id: json['id'],
+      id: json['id']?.toString(),
       levelId: json['level_id']?.toString() ?? '',
       imageUrl: json['image_url'],
       order: json['order'] ?? 1, 
