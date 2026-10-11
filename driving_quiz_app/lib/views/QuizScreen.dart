@@ -2,16 +2,16 @@ import 'dart:convert';
 import 'package:driving_quiz_app/models/question_model.dart';
 import 'package:driving_quiz_app/services/APIService.dart';
 import 'package:driving_quiz_app/services/AdminService.dart';
-import 'package:driving_quiz_app/views/CategoriesScreen.dart';
+import 'package:driving_quiz_app/services/QuestionService.dart';
 import 'package:driving_quiz_app/views/ManageQuestionDialog.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
-import 'package:driving_quiz_app/widgets/breakpoint.dart';
+import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-// Import your model file here
 
+// Import your model file here
 class QuizScreen extends StatefulWidget {
   final String levelId;
 
@@ -23,19 +23,21 @@ class QuizScreen extends StatefulWidget {
 
 class _QuizScreenState extends State<QuizScreen> {
   final baseUrl = APIService.getBaseUrl();
+  QuestionService _apiService = QuestionService();
   List<QuestionModel> questions = [];
   bool _isLoading = true;
   int currentIndex = 0;
-String? selectedOptionId;
+  String? selectedOptionId;
   bool isAnswerChecked = false;
   String currentLocale = "ar";
   final AdminService _authService = AdminService();
+  bool _isAdmin = false;
   final _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,
     ),
   );
-  bool _isAdmin = false;
+
   @override
   void initState() {
     super.initState();
@@ -86,13 +88,70 @@ String? selectedOptionId;
     }
   }
 
+  void handleDeleteQuestion(BuildContext context, String hashedId) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    bool confirmDelete = await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(isArabic ? 'تأكيد الحذف' : 'Confirm Delete'),
+            content: Text(isArabic
+                ? 'هل أنت متأكد من حذف هذا السؤال نهائياً؟ سيتم إعادة ترتيب باقي الأسئلة تلقائياً.'
+                : 'Are you sure you want to delete this Question?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(
+                  isArabic ? 'حذف' : 'Delete',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmDelete) return;
+
+    try {
+      final success = await _apiService.deleteQuestion(hashedId);
+
+      if (!context.mounted) return;
+
+      if (success) {
+        AppAlerts.showAlert(
+          context,
+          isArabic ? 'تم حذف السؤال بنجاح' : 'Question deleted successfully',
+        );
+        fetchQuestions();
+      } else {
+        AppAlerts.showError(
+          context,
+          isArabic ? 'فشل في حذف السؤال' : 'Failed to delete Question',
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      AppAlerts.showError(
+        context,
+        isArabic ? 'خطأ في الاتصال بالشبكة: $e' : 'Network Error: $e',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const CustomResponsiveNavbar(),
+        body: const Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7CB342)),
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
         ),
       );
@@ -102,365 +161,445 @@ String? selectedOptionId;
       return Scaffold(
         backgroundColor: AppColors.background,
         appBar: const CustomResponsiveNavbar(),
-        floatingActionButton: _isAdmin
-            ? FloatingActionButton.extended(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          ManageQuestionDialog(levelId: widget.levelId),
-                    ),
-                  );
-                },
-                backgroundColor: AppColors.primaryGreen,
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('إضافة سؤال جديد',
-                    style: TextStyle(color: Colors.white)),
-              )
-            : null,
-        endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
-            ? buildMobileDrawer()
-            : null,
         body: Center(
-          child: Text(
-            currentLocale == "ar"
-                ? "لا توجد أسئلة متاحة"
-                : "No Questions available",
-            style:
-                const TextStyle(fontSize: 16, color: AppColors.textSecondary),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.quiz_outlined,
+                  size: 64, color: AppColors.textSecondary),
+              const SizedBox(height: 16),
+              Text(
+                currentLocale == "ar"
+                    ? "لا توجد أسئلة متاحة"
+                    : "No Questions available",
+                style: const TextStyle(
+                    fontSize: 18,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600),
+              ),
+              if (_isAdmin) ...[
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    foregroundColor: AppColors.textLight,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ManageQuestionDialog(levelId: widget.levelId),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('إضافة سؤال جديد'),
+                ),
+              ]
+            ],
           ),
         ),
       );
     }
 
     final currentQuestion = questions[currentIndex];
+
     return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.surface,
-          elevation: 1,
-          title: Text('Level ${widget.levelId}',
-              style: const TextStyle(color: AppColors.textPrimary)),
-          actions: [
-            if (_isAdmin)
-              IconButton(
-                icon: const Icon(Icons.add_circle, color: Colors.green),
-                tooltip: 'Add Question',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          ManageQuestionDialog(levelId: widget.levelId),
-                    ),
-                  );
-                },
-              ),
-          ],
-        ),
-        body: Column(children: [
-          if (_isAdmin)
-            Container(
-              color: Colors.amber.withOpacity(0.2),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Admin Mode: Question Controls',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        tooltip: 'Edit Question',
-                        onPressed: () {
-                          final currentQuestion = questions[currentIndex];
-                          // TODO: Navigate to Edit Question Screen/Dialog
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        tooltip: 'Delete Question',
-                        onPressed: () {
-                          final currentQuestion = questions[currentIndex];
-                          // _deleteQuestion(currentQuestion.id.toString());
-                        },
+      backgroundColor: AppColors.background,
+      appBar: const CustomResponsiveNavbar(),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Main Centered Quiz Card
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-          Container(
-            height: 55,
-            color: AppColors.textSecondary,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              reverse: true,
-              itemCount: questions.length,
-              itemBuilder: (context, index) {
-                bool isSelected = index == currentIndex;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      currentIndex = index;
-                      selectedOptionId = null;
-                      isAnswerChecked = false;
-                    });
-                  },
-                  child: Container(
-                    width: 50,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.grey[600] : Colors.grey[800],
-                      border: Border(
-                        left: BorderSide(color: Colors.grey[700]!),
-                      ),
-                    ),
-                    child: Text(
-                      '${questions[index].order}',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          Column(children: [
-            if (_isAdmin)
-              Container(
-                color: Colors.amber.withOpacity(0.2),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Admin Mode: Question Controls',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Row(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
-                          tooltip: 'Edit Question',
-                          onPressed: () {
-                            final currentQuestion = questions[currentIndex];
-                          },
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.secondarySage.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                'السؤال ${currentQuestion.order} من ${questions.length}',
+                                style: const TextStyle(
+                                  color: AppColors.primaryGreen,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            if (_isAdmin)
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined,
+                                        color: AppColors.primaryGreen,
+                                        size: 20),
+                                    tooltip: 'تعديل السؤال',
+                                    onPressed: () {},
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline,
+                                        color: AppColors.error, size: 20),
+                                    tooltip: 'حذف السؤال',
+                                    onPressed: () => handleDeleteQuestion(
+                                        context,
+                                        questions[currentIndex].toString()),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primaryGreen,
+                                      foregroundColor: AppColors.textLight,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8)),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ManageQuestionDialog(
+                                                  levelId: widget.levelId),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.add, size: 16),
+                                    label: const Text('إضافة سؤال',
+                                        style: TextStyle(fontSize: 12)),
+                                  ),
+                                ],
+                              ),
+                          ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          tooltip: 'Delete Question',
-                          onPressed: () {
-                            final currentQuestion = questions[currentIndex];
-                            // _deleteQuestion(currentQuestion.id.toString());
-                          },
+                        const SizedBox(height: 20),
+
+                        // Image Container (if available)
+                        if (currentQuestion.imageUrl != null) ...[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              height: 200,
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Image.network(
+                                currentQuestion.imageUrl!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Center(
+                                  child: Icon(Icons.broken_image,
+                                      color: AppColors.textSecondary, size: 48),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+
+                        // Question Title
+                        Text(
+                          currentQuestion.getTitle(currentLocale),
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                            height: 1.4,
+                          ),
                         ),
+                        const SizedBox(height: 24),
+                        const Divider(color: AppColors.border, height: 1),
+                        const SizedBox(height: 24),
+
+                        // Options Area
+                        ...currentQuestion.options.asMap().entries.map((entry) {
+                          int idx = entry.key;
+                          var option = entry.value;
+                          String optionLetter = ['أ', 'ب', 'ج', 'د'][idx % 4];
+                          bool isSelected =
+                              selectedOptionId == option.identifier;
+
+                          Color bgColor = AppColors.surface;
+                          Color borderColor = AppColors.border;
+                          Color textColor = AppColors.textPrimary;
+
+                          if (isAnswerChecked) {
+                            if (option.isCorrect) {
+                              bgColor = AppColors.success.withOpacity(0.15);
+                              borderColor = AppColors.success;
+                              textColor = AppColors.success;
+                            } else if (isSelected && !option.isCorrect) {
+                              bgColor = AppColors.error.withOpacity(0.15);
+                              borderColor = AppColors.error;
+                              textColor = AppColors.error;
+                            }
+                          } else if (isSelected) {
+                            bgColor = AppColors.primaryGreen.withOpacity(0.1);
+                            borderColor = AppColors.primaryGreen;
+                          }
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                if (!isAnswerChecked) {
+                                  setState(() =>
+                                      selectedOptionId = option.identifier);
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: bgColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                      color: borderColor, width: 1.5),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        option.getText(currentLocale),
+                                        textAlign: TextAlign.right,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: textColor,
+                                          fontWeight: isSelected ||
+                                                  (isAnswerChecked &&
+                                                      option.isCorrect)
+                                              ? FontWeight.w600
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Row(
+                                      children: [
+                                        if (_isAdmin) ...[
+                                          IconButton(
+                                            icon: const Icon(Icons.edit,
+                                                size: 16,
+                                                color: AppColors.textSecondary),
+                                            tooltip: 'تعديل الخيار',
+                                            constraints: const BoxConstraints(),
+                                            padding: const EdgeInsets.all(4),
+                                            onPressed: () {
+                                              // Implement option update action here
+                                            },
+                                          ),
+                                          const SizedBox(width: 8),
+                                        ],
+                                        Container(
+                                          width: 32,
+                                          height: 32,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? AppColors.primaryGreen
+                                                : AppColors.background,
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                            border:
+                                                Border.all(color: borderColor),
+                                          ),
+                                          child: Text(
+                                            optionLetter,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: isSelected
+                                                  ? AppColors.textLight
+                                                  : AppColors.textPrimary,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-
-            Container(
-                height: 55,
-                color: AppColors.textSecondary,
-                child: ListView.builder(
+                const SizedBox(height: 24),
+                Container(
+                  height: 50,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     reverse: true,
                     itemCount: questions.length,
                     itemBuilder: (context, index) {
                       bool isSelected = index == currentIndex;
                       return GestureDetector(
-                          onTap: () {
-                            setState(
-                              () {
-                                currentIndex = index;
-                                selectedOptionId = null;
-                                isAnswerChecked = false;
-                              },
-                            );
-                          },
-                          child: Container(
-                              width: 50,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Colors.grey[600]
-                                    : Colors.grey[800],
-                                border: Border(
-                                    left: BorderSide(color: Colors.grey[700]!)),
-                              ),
-                              child: Text(
-                                '${questions[index].order}',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  fontSize: 16,
-                                ),
-                              )));
-                    })),
-            //Display option area for options
-            Expanded(
-                child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (currentQuestion.imageUrl != null)
-                            Container(
-                                height: 160,
-                                margin: const EdgeInsets.only(bottom: 16),
-                                decoration: BoxDecoration(
-                                    color: AppColors.surface,
-                                    borderRadius: BorderRadius.circular(8),
-                                    image: DecorationImage(
-                                        image: NetworkImage(
-                                            currentQuestion.imageUrl!),
-                                        fit: BoxFit.contain))),
-                          Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: Text(
-                                  '${currentQuestion.order} - ${currentQuestion.getTitle(currentLocale)}',
-                                  textAlign: TextAlign.right,
-                                  style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold))),
-                          const SizedBox(height: 16),
-                          ...currentQuestion.options
-                              .asMap()
-                              .entries
-                              .map((entry) {
-                            int idx = entry.key;
-                            var option = entry.value;
-                            String optionLetter = ['أ', 'ب', 'ج', 'د'][idx % 4];
-                            bool isSelected = selectedOptionId == option.identifier;
-                            Color bgColor = Colors.white;
-                            Color borderColor = Colors.grey.shade300;
-                            if (isAnswerChecked) {
-                              if (option.isCorrect) {
-                                bgColor = Colors.green.shade100;
-                                borderColor = Colors.green;
-                              } else if (isSelected && !option.isCorrect) {
-                                bgColor = Colors.red.shade100;
-                                borderColor = Colors.red;
-                              }
-                            } else if (isSelected) {
-                              bgColor = Colors.blue.shade50;
-                              borderColor = Colors.blue;
-                            }
-                            return GestureDetector(
-                                onTap: () {
-                                  if (!isAnswerChecked) {
-                                    setState(
-                                        () => selectedOptionId = option.identifier);
-                                  }
-                                },
-                                child: Container(
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 14),
-                                    decoration: BoxDecoration(
-                                      color: bgColor,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                          color: borderColor, width: 1.5),
-                                    ),
-                                    child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                              child: Text(
-                                                  option.getText(currentLocale),
-                                                  textAlign: TextAlign.right,
-                                                  style:
-                                                      TextStyle(fontSize: 16))),
-                                          const SizedBox(width: 12),
-                                          Container(
-                                            width: 30,
-                                            height: 30,
-                                            alignment: Alignment.center,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[200],
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                            child: Text(optionLetter,
-                                                style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                          ),
-                                        ])));
-                          }).toList(),
-                        ]))),
-
-            Container(
-              padding: const EdgeInsets.all(12),
-              color: Colors.white,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey),
-                      onPressed: currentIndex > 0
-                          ? () => setState(() {
-                                currentIndex--;
-                                selectedOptionId = null;
-                                isAnswerChecked = false;
-                              })
-                          : null,
-                      child: const Text('السابق',
-                          style: TextStyle(color: Colors.white)),
-                    ),
+                        onTap: () {
+                          setState(() {
+                            currentIndex = index;
+                            selectedOptionId = null;
+                            isAnswerChecked = false;
+                          });
+                        },
+                        child: Container(
+                          width: 46,
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.primaryGreen
+                                : AppColors.surface,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.primaryGreen
+                                  : AppColors.border,
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              if (isSelected)
+                                BoxShadow(
+                                  color:
+                                      AppColors.primaryGreen.withOpacity(0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                )
+                            ],
+                          ),
+                          child: Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              color: isSelected
+                                  ? AppColors.textLight
+                                  : AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
+                ),
+
+                // Bottom Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.surface,
+                          foregroundColor: AppColors.textPrimary,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: const BorderSide(color: AppColors.border),
+                          ),
+                        ),
+                        onPressed: currentIndex > 0
+                            ? () => setState(() {
+                                  currentIndex--;
+                                  selectedOptionId = null;
+                                  isAnswerChecked = false;
+                                })
+                            : null,
+                        child: const Text('السابق',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.cyan),
-                          onPressed: selectedOptionId != null
-                              ? () => setState(() => isAnswerChecked = true)
-                              : null,
-                          child: const Text('تحقق من الإجابة',
-                              style: TextStyle(color: AppColors.background)))),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green),
-                      onPressed: currentIndex < questions.length - 1
-                          ? () => setState(() {
-                                currentIndex++;
-                                selectedOptionId = null;
-                                isAnswerChecked = false;
-                              })
-                          : null,
-                      child: const Text('التالي',
-                          style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          foregroundColor: AppColors.textLight,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: selectedOptionId != null && !isAnswerChecked
+                            ? () => setState(() => isAnswerChecked = true)
+                            : null,
+                        child: const Text('تحقق من الإجابة',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.surface,
+                          foregroundColor: AppColors.textPrimary,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: const BorderSide(color: AppColors.border),
+                          ),
+                        ),
+                        onPressed: currentIndex < questions.length - 1
+                            ? () => setState(() {
+                                  currentIndex++;
+                                  selectedOptionId = null;
+                                  isAnswerChecked = false;
+                                })
+                            : null,
+                        child: const Text('التالي',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ])
-        ]));
+          ),
+        ),
+      ),
+    );
   }
 }

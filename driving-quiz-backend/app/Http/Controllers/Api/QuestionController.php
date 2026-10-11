@@ -65,7 +65,7 @@ class QuestionController extends Controller
 
     if (!$realLevelId) {
         return response()->json([
-            'status' => false, 
+            'status' => false,
             'message' => 'Invalid Level ID'
         ], 400);
     }
@@ -224,14 +224,37 @@ class QuestionController extends Controller
     /**
      * Remove the specified resource from storage (Admin Only).
      */
-    public function destroy($id): JsonResponse
-    {
-        $question = Question::findOrFail($this->decodeId($id));
-        $question->delete();
+     public function destroy(String $id): JsonResponse
+    { {
+            $decodedArray = Hashids::decode($id);
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'Question deleted successfully'
-        ]);
+            if (empty($decodedArray)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Laravel failed to decode the Hash ID: '$id'"
+                ], 404);
+            }
+
+            $realId = $decodedArray[0];
+
+            $question = \App\Models\Question::find($realId);
+
+            if (!$question) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Decoded ID is $realId, but no question exists with this ID in database."
+                ], 404);
+            }
+
+            $deletedOrder = $question->order;
+            $question->delete();
+
+            \App\Models\Question::where('order', '>', $deletedOrder)->decrement('order');
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Deleted and reordered successfully'
+            ]);
+        }
     }
 }

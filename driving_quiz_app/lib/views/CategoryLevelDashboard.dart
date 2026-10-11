@@ -257,6 +257,7 @@ class _CategoryLevelsDashboardScreenState
                                                                     _openLevelForm(
                                                                         level),
                                                               ),
+                                                              
                                                               IconButton(
                                                                 icon: const Icon(
                                                                     Icons
