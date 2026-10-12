@@ -273,7 +273,6 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
                                 ),
                                 const SizedBox(height: 12),
 
-// Optional: Live preview thumbnail underneath
                                 if (_imageUrlController.text.isNotEmpty) ...[
                                   Container(
                                     height: 100,

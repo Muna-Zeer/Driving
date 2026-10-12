@@ -67,15 +67,22 @@ class _QuizScreenState extends State<QuizScreen> {
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
         final list = decoded['data'] as List? ?? [];
-        print('Response status: ${response.statusCode}');
-        print('Response body: ${response.body}');
+
+        List<QuestionModel> parsedQuestions =
+            list.map((q) => QuestionModel.fromJson(q)).toList();
+        parsedQuestions.sort((a, b) => a.order.compareTo(b.order));
+
+        if (parsedQuestions.isEmpty) {
+          currentIndex = 0;
+        } else if (currentIndex >= parsedQuestions.length) {
+          currentIndex = parsedQuestions.length - 1;
+        }
+
         setState(() {
-          questions = list.map((e) => QuestionModel.fromJson(e)).toList();
+          questions = parsedQuestions;
           _isLoading = false;
         });
       } else {
-        print(
-            'Failed with status: ${response.statusCode}, body:${response.body}');
         setState(() {
           _isLoading = false;
         });
@@ -88,36 +95,48 @@ class _QuizScreenState extends State<QuizScreen> {
     }
   }
 
-  void handleDeleteQuestion(BuildContext context, String hashedId) async {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
-    bool confirmDelete = await showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(isArabic ? 'تأكيد الحذف' : 'Confirm Delete'),
-            content: Text(isArabic
-                ? 'هل أنت متأكد من حذف هذا السؤال نهائياً؟ سيتم إعادة ترتيب باقي الأسئلة تلقائياً.'
-                : 'Are you sure you want to delete this Question?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(isArabic ? 'إلغاء' : 'Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text(
-                  isArabic ? 'حذف' : 'Delete',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-
-    if (!confirmDelete) return;
-
+  void handleDeleteQuestion(BuildContext context, String? hashedId) async {
     try {
+      if (hashedId == null || hashedId.isEmpty) {
+        print('Error: Question ID is null or empty!');
+        return;
+      }
+
+      bool isArabic = false;
+      try {
+        isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      } catch (_) {
+        isArabic = false;
+      }
+
+      if (!context.mounted) return;
+
+      bool confirmDelete = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(isArabic ? 'تأكيد الحذف' : 'Confirm Delete'),
+              content: Text(isArabic
+                  ? 'هل أنت متأكد من حذف هذا السؤال نهائياً؟ سيتم إعادة ترتيب باقي الأسئلة تلقائياً.'
+                  : 'Are you sure you want to delete this Question?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(
+                    isArabic ? 'حذف' : 'Delete',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+          ) ??
+          false;
+
+      if (!confirmDelete) return;
+
       final success = await _apiService.deleteQuestion(hashedId);
 
       if (!context.mounted) return;
@@ -127,18 +146,22 @@ class _QuizScreenState extends State<QuizScreen> {
           context,
           isArabic ? 'تم حذف السؤال بنجاح' : 'Question deleted successfully',
         );
-        fetchQuestions();
+
+        await fetchQuestions();
       } else {
         AppAlerts.showError(
           context,
           isArabic ? 'فشل في حذف السؤال' : 'Failed to delete Question',
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('Exception caught in handleDeleteQuestion: $e');
+      print(stackTrace);
+
       if (!context.mounted) return;
       AppAlerts.showError(
         context,
-        isArabic ? 'خطأ في الاتصال بالشبكة: $e' : 'Network Error: $e',
+        'Error: $e',
       );
     }
   }
@@ -188,14 +211,18 @@ class _QuizScreenState extends State<QuizScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
                             ManageQuestionDialog(levelId: widget.levelId),
                       ),
                     );
+
+                    if (result == true) {
+                      fetchQuestions();
+                    }
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('إضافة سؤال جديد'),
@@ -273,8 +300,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                         color: AppColors.error, size: 20),
                                     tooltip: 'حذف السؤال',
                                     onPressed: () => handleDeleteQuestion(
-                                        context,
-                                        questions[currentIndex].toString()),
+                                        context, questions[currentIndex].id),
                                   ),
                                   const SizedBox(width: 8),
                                   ElevatedButton.icon(
@@ -351,7 +377,10 @@ class _QuizScreenState extends State<QuizScreen> {
                         ...currentQuestion.options.asMap().entries.map((entry) {
                           int idx = entry.key;
                           var option = entry.value;
-                          String optionLetter = ['أ', 'ب', 'ج', 'د'][idx % 4];
+                          String optionLetter =
+                              idx < currentQuestion.options.length && idx < 4
+                                  ? ['أ', 'ب', 'ج', 'د'][idx]
+                                  : '${idx + 1}';
                           bool isSelected =
                               selectedOptionId == option.identifier;
 
@@ -472,7 +501,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     reverse: true,
                     itemCount: questions.length,
                     itemBuilder: (context, index) {
-                      bool isSelected = index == currentIndex;
+                      final bool isSelected = selectedOptionId == index;
                       return GestureDetector(
                         onTap: () {
                           setState(() {
