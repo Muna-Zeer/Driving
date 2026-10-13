@@ -72,14 +72,17 @@ class _QuizScreenState extends State<QuizScreen> {
             list.map((q) => QuestionModel.fromJson(q)).toList();
         parsedQuestions.sort((a, b) => a.order.compareTo(b.order));
 
+        int newIndex = currentIndex;
         if (parsedQuestions.isEmpty) {
-          currentIndex = 0;
-        } else if (currentIndex >= parsedQuestions.length) {
-          currentIndex = parsedQuestions.length - 1;
+          newIndex = 0;
+        } else if (newIndex >= parsedQuestions.length) {
+          newIndex = parsedQuestions.length - 1;
         }
 
         setState(() {
-          questions = parsedQuestions;
+          // so Flutter's state engine definitely triggers a rebuild.
+          questions = List.from(parsedQuestions);
+          currentIndex = newIndex;
           _isLoading = false;
         });
       } else {
@@ -211,18 +214,18 @@ class _QuizScreenState extends State<QuizScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
-                  onPressed: () async {
-                    final result = await Navigator.push(
+                  onPressed: () {
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            ManageQuestionDialog(levelId: widget.levelId),
+                        builder: (context) => ManageQuestionDialog(
+                          levelId: widget.levelId,
+                          onQuestionSaved: () {
+                            fetchQuestions();
+                          },
+                        ),
                       ),
                     );
-
-                    if (result == true) {
-                      fetchQuestions();
-                    }
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('إضافة سؤال جديد'),
@@ -269,6 +272,7 @@ class _QuizScreenState extends State<QuizScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            // Left side: Question counter indicator
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 6),
@@ -285,56 +289,86 @@ class _QuizScreenState extends State<QuizScreen> {
                                 ),
                               ),
                             ),
+
+                            // Right side: Admin Actions
                             if (_isAdmin)
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit_outlined,
-                                        color: AppColors.primaryGreen,
-                                        size: 20),
-                                    tooltip: 'تعديل السؤال',
-                                    onPressed: () {},
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete_outline,
-                                        color: AppColors.error, size: 20),
-                                    tooltip: 'حذف السؤال',
-                                    onPressed: () => handleDeleteQuestion(
-                                        context, questions[currentIndex].id),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primaryGreen,
-                                      foregroundColor: AppColors.textLight,
-                                      elevation: 0,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 8),
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8)),
+                              Flexible(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_outlined,
+                                          color: AppColors.primaryGreen,
+                                          size: 20),
+                                      tooltip: 'تعديل السؤال',
+                                      onPressed: () {
+                                        try {
+                                          print('Edit button clicked!');
+                                          final questionData =
+                                              currentQuestion.toJson();
+                                          print(
+                                              'Question data mapped successfully: $questionData');
+
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ManageQuestionDialog(
+                                                levelId: widget.levelId,
+                                                question: questionData,
+                                                onQuestionSaved: () {
+                                                  fetchQuestions();
+                                                },
+                                              ),
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          print(
+                                              'Error in edit button onPressed: $e');
+                                        }
+                                      },
                                     ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ManageQuestionDialog(
-                                                  levelId: widget.levelId),
-                                        ),
-                                      );
-                                    },
-                                    icon: const Icon(Icons.add, size: 16),
-                                    label: const Text('إضافة سؤال',
-                                        style: TextStyle(fontSize: 12)),
-                                  ),
-                                ],
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline,
+                                          color: Colors.red, size: 20),
+                                      tooltip: 'حذف السؤال',
+                                      onPressed: () => handleDeleteQuestion(
+                                          context, questions[currentIndex].id),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primaryGreen,
+                                        foregroundColor: AppColors.textLight,
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 8),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ManageQuestionDialog(
+                                                    levelId: widget.levelId),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.add, size: 16),
+                                      label: const Text('إضافة',
+                                          style: TextStyle(fontSize: 12)),
+                                    ),
+                                  ],
+                                ),
                               ),
                           ],
                         ),
                         const SizedBox(height: 20),
 
-                        // Image Container (if available)
                         if (currentQuestion.imageUrl != null) ...[
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
@@ -451,9 +485,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                             tooltip: 'تعديل الخيار',
                                             constraints: const BoxConstraints(),
                                             padding: const EdgeInsets.all(4),
-                                            onPressed: () {
-                                              // Implement option update action here
-                                            },
+                                            onPressed: () {},
                                           ),
                                           const SizedBox(width: 8),
                                         ],

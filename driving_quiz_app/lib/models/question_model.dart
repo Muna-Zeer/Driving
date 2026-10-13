@@ -84,7 +84,8 @@ class OptionModel {
 }
 
 class QuestionModel {
-  final String? id; // Changed to String? to handle string/hashed IDs like "oyqY"
+  final String?
+      id; // Changed to String? to handle string/hashed IDs like "oyqY"
   final String levelId;
   final String? imageUrl;
   final int order;
@@ -101,25 +102,30 @@ class QuestionModel {
   });
 
   factory QuestionModel.fromJson(Map<String, dynamic> json) {
-    // Updated to match your API key 'all_question_translations'
-    var qTransList = json['all_question_translations'] as List? ?? [];
-    List<QuestionTranslation> parsedQTrans =
-        qTransList.map((t) => QuestionTranslation.fromJson(t)).toList();
-
-    var optList = json['options'] as List? ?? [];
-    List<OptionModel> parsedOptions =
-        optList.map((o) => OptionModel.fromJson(o)).toList();
+    var transList =
+        json['all_question_translations'] ?? json['translations'] ?? [];
+    var optionsList = json['options'] as List? ?? [];
 
     return QuestionModel(
       id: json['id']?.toString(),
-      levelId: json['level_id']?.toString() ?? '',
+      levelId: json['level_id'].toString(),
       imageUrl: json['image_url'],
-      order: json['order'] ?? 1, 
-      translations: parsedQTrans,
-      options: parsedOptions,
+      order: json['order'] ?? 1,
+      translations: (transList as List)
+          .map((t) => QuestionTranslation.fromJson(t))
+          .toList(),
+      options: optionsList.map((o) {
+        var optTrans = o['all_option_translations'] ?? o['translations'] ?? [];
+        return OptionModel(
+          identifier: o['identifier'],
+          isCorrect: o['is_correct'] ?? false,
+          translations: (optTrans as List)
+              .map((ot) => OptionTranslation.fromJson(ot))
+              .toList(),
+        );
+      }).toList(),
     );
   }
-
   String getTitle(String locale) {
     final translation = translations.firstWhere(
       (t) => t.locale == locale,
@@ -131,11 +137,21 @@ class QuestionModel {
   }
 
   Map<String, dynamic> toJson() {
+    final enTrans = translations.firstWhere(
+      (t) => t.locale == 'en',
+      orElse: () => QuestionTranslation(locale: 'en', text: ''),
+    );
+    final arTrans = translations.firstWhere((t) => t.locale == 'ar',
+        orElse: () => QuestionTranslation(locale: 'ar', text: ''));
     return {
+      'id': id,
       'level_id': levelId,
-      'image_url': imageUrl,
       'order': order,
-      'translations': translations.map((t) => t.toJson()).toList(),
+      'image_url': imageUrl,
+      'question_text': {
+        'en': enTrans.text,
+        'ar': arTrans.text,
+      },
       'options': options.map((o) => o.toJson()).toList(),
     };
   }

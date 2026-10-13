@@ -94,7 +94,7 @@ class _ManageLevelScreenState extends State<ManageLevelScreen>
 
       final controller = TextEditingController(text: initialName);
       controller.addListener(
-          _updateGroupKey); // Dynamic group key listener for ALL languages
+          _updateGroupKey); 
       _nameControllers[langCode] = controller;
     }
 

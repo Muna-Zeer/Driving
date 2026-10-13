@@ -12,8 +12,9 @@ import 'package:driving_quiz_app/widgets/breakpoint.dart';
 class ManageQuestionDialog extends StatefulWidget {
   final String levelId;
   final Map<String, dynamic>? question;
+  final VoidCallback? onQuestionSaved;
 
-  const ManageQuestionDialog({Key? key, required this.levelId, this.question})
+  const ManageQuestionDialog({Key? key, required this.levelId, this.question,this.onQuestionSaved,})
       : super(key: key);
 
   @override
@@ -53,7 +54,7 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
   @override
   void initState() {
     super.initState();
-    _isEditing = widget.question != null; // Detect Edit Mode
+    _isEditing = widget.question != null; 
     _imageUrlController =
         TextEditingController(text: widget.question?['image_url'] ?? '');
 
@@ -140,6 +141,7 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
 
     setState(() => _isSubmitting = false);
     if (success && mounted) {
+      widget.onQuestionSaved?.call();
       Navigator.of(context).pop(true);
     }
   }
