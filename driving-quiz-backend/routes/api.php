@@ -47,7 +47,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Questions routes
 
     Route::post('question', [QuestionController::class, 'store']);
-    Route::put('question/{id}', [QuestionController::class, 'update']);
+    Route::patch('/question/{id}', [QuestionController::class, 'update']);
+    Route::match(['put', 'patch'], '/question/{id}', [QuestionController::class, 'update']);
     Route::delete('question/{id}', [QuestionController::class, 'destroy']);
     Route::get('levels/{level_id}/questions', [QuestionController::class, 'getQuestionByLevel']);
 

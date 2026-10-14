@@ -12,7 +12,7 @@ class QuestionTranslation {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    return <String, dynamic>{
       'locale': locale,
       'text': text,
     };
@@ -33,7 +33,7 @@ class OptionTranslation {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    return <String, dynamic>{
       'locale': locale,
       'text': text,
     };
@@ -52,7 +52,6 @@ class OptionModel {
   });
 
   factory OptionModel.fromJson(Map<String, dynamic> json) {
-    // Updated to match your API key 'all_option_translations'
     var translationList = json['all_option_translations'] as List? ?? [];
     List<OptionTranslation> parsedTranslations =
         translationList.map((t) => OptionTranslation.fromJson(t)).toList();
@@ -75,7 +74,7 @@ class OptionModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    return <String, dynamic>{
       'identifier': identifier,
       'is_correct': isCorrect,
       'translations': translations.map((t) => t.toJson()).toList(),
@@ -84,8 +83,7 @@ class OptionModel {
 }
 
 class QuestionModel {
-  final String?
-      id; // Changed to String? to handle string/hashed IDs like "oyqY"
+  final String? id; // Changed to String? to handle string/hashed IDs like "oyqY"
   final String levelId;
   final String? imageUrl;
   final int order;
@@ -126,6 +124,7 @@ class QuestionModel {
       }).toList(),
     );
   }
+
   String getTitle(String locale) {
     final translation = translations.firstWhere(
       (t) => t.locale == locale,
@@ -141,14 +140,18 @@ class QuestionModel {
       (t) => t.locale == 'en',
       orElse: () => QuestionTranslation(locale: 'en', text: ''),
     );
-    final arTrans = translations.firstWhere((t) => t.locale == 'ar',
-        orElse: () => QuestionTranslation(locale: 'ar', text: ''));
-    return {
+    
+    final arTrans = translations.firstWhere(
+      (t) => t.locale == 'ar',
+      orElse: () => QuestionTranslation(locale: 'ar', text: ''),
+    );
+
+    return <String, dynamic>{
       'id': id,
       'level_id': levelId,
       'order': order,
       'image_url': imageUrl,
-      'question_text': {
+      'question_text': <String, dynamic>{
         'en': enTrans.text,
         'ar': arTrans.text,
       },

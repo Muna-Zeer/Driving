@@ -37,7 +37,7 @@ class QuestionService {
   Future<bool> updateQuestion(
       String questionId, Map<String, dynamic> payload) async {
     final accessToken = await _storage.read(key: 'auth_token');
-    final response = await http.put(
+    final response = await http.patch(
       Uri.parse('$baseUrl/question/$questionId'),
       headers: {
         'Content-Type': 'application/json',

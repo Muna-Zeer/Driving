@@ -14,8 +14,12 @@ class ManageQuestionDialog extends StatefulWidget {
   final Map<String, dynamic>? question;
   final VoidCallback? onQuestionSaved;
 
-  const ManageQuestionDialog({Key? key, required this.levelId, this.question,this.onQuestionSaved,})
-      : super(key: key);
+  const ManageQuestionDialog({
+    Key? key,
+    required this.levelId,
+    this.question,
+    this.onQuestionSaved,
+  }) : super(key: key);
 
   @override
   State<ManageQuestionDialog> createState() => _ManageQuestionDialogState();
@@ -54,7 +58,7 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
   @override
   void initState() {
     super.initState();
-    _isEditing = widget.question != null; 
+    _isEditing = widget.question != null;
     _imageUrlController =
         TextEditingController(text: widget.question?['image_url'] ?? '');
 
@@ -67,31 +71,77 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
   }
 
   void _populateFormForEdit() {
-    final qTranslations = widget.question?['translations'] ?? [];
-    _questionControllers[FormLocale.en]!.text = qTranslations
-            .firstWhere((t) => t['locale'] == 'en', orElse: () => {})['text'] ??
-        '';
-    _questionControllers[FormLocale.ar]!.text = qTranslations
-            .firstWhere((t) => t['locale'] == 'ar', orElse: () => {})['text'] ??
-        '';
+    final questionData = widget.question;
+    if (questionData == null) return;
 
-    if (widget.question?['options'] != null) {
-      final options = widget.question!['options'] as List;
-      for (int i = 0; i < options.length && i < 4; i++) {
-        if (options[i]['is_correct'] == true || options[i]['is_correct'] == 1) {
-          _correctOptionIndex = i;
-        }
+    // 1. Populate Order and Image URL if they exist
+    if (questionData['order'] != null) {
+      _orderController.text = questionData['order'].toString();
+    }
+    if (questionData['image_url'] != null) {
+      _imageUrlController.text = questionData['image_url'].toString();
+    }
 
-        final optTranslations = options[i]['translations'] as List ?? [];
-        _optionControllers[i][FormLocale.en]!.text = optTranslations.firstWhere(
-                (t) => t['locale'] == 'en',
-                orElse: () => {})['text'] ??
-            '';
-        _optionControllers[i][FormLocale.ar]!.text = optTranslations.firstWhere(
-                (t) => t['locale'] == 'ar',
-                orElse: () => {})['text'] ??
-            '';
+    // 2. Safely extract Question Translations from any possible format
+    List qTranslations = [];
+    if (questionData['translations'] is List) {
+      qTranslations = questionData['translations'];
+    } else if (questionData['all_question_translations'] is List) {
+      qTranslations = questionData['all_question_translations'];
+    } else if (questionData['question_text'] is Map) {
+      final qTextMap = questionData['question_text'] as Map;
+      _questionControllers[FormLocale.en]!.text =
+          qTextMap['en']?.toString() ?? '';
+      _questionControllers[FormLocale.ar]!.text =
+          qTextMap['ar']?.toString() ?? '';
+    }
+
+    // If translations came as a list, populate them
+    if (qTranslations.isNotEmpty) {
+      final enEntry = qTranslations.firstWhere(
+        (t) => t['locale'] == 'en',
+        orElse: () => <String, dynamic>{},
+      );
+      final arEntry = qTranslations.firstWhere(
+        (t) => t['locale'] == 'ar',
+        orElse: () => <String, dynamic>{},
+      );
+
+      _questionControllers[FormLocale.en]!.text =
+          enEntry['text']?.toString() ?? '';
+      _questionControllers[FormLocale.ar]!.text =
+          arEntry['text']?.toString() ?? '';
+    }
+
+    // 3. Safely extract Options and their translations
+    final optionsList = questionData['options'] as List? ?? [];
+    for (int i = 0; i < optionsList.length && i < 4; i++) {
+      final opt = optionsList[i];
+
+      // Check if option is correct
+      if (opt['is_correct'] == true ||
+          opt['is_correct'] == 1 ||
+          opt['is_correct'] == '1') {
+        _correctOptionIndex = i;
       }
+
+      final optTranslations =
+          (opt['translations'] ?? opt['all_option_translations']) as List? ??
+              [];
+
+      final enOpt = optTranslations.firstWhere(
+        (t) => t['locale'] == 'en',
+        orElse: () => <String, dynamic>{},
+      );
+      final arOpt = optTranslations.firstWhere(
+        (t) => t['locale'] == 'ar',
+        orElse: () => <String, dynamic>{},
+      );
+
+      _optionControllers[i][FormLocale.en]!.text =
+          enOpt['text']?.toString() ?? '';
+      _optionControllers[i][FormLocale.ar]!.text =
+          arOpt['text']?.toString() ?? '';
     }
   }
 
