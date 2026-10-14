@@ -80,7 +80,6 @@ class _QuizScreenState extends State<QuizScreen> {
         }
 
         setState(() {
-          // so Flutter's state engine definitely triggers a rebuild.
           questions = List.from(parsedQuestions);
           currentIndex = newIndex;
           _isLoading = false;
