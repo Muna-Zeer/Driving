@@ -22,15 +22,17 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  final baseUrl = APIService.getBaseUrl();
-  QuestionService _apiService = QuestionService();
+  final QuestionService _apiService = QuestionService();
+  AdminService _authService = AdminService();
   List<QuestionModel> questions = [];
   bool _isLoading = true;
+  bool _isFetching = false;
+
   int currentIndex = 0;
   String? selectedOptionId;
   bool isAnswerChecked = false;
+
   String currentLocale = "ar";
-  final AdminService _authService = AdminService();
   bool _isAdmin = false;
   final _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(
@@ -52,9 +54,28 @@ class _QuizScreenState extends State<QuizScreen> {
     });
   }
 
-  Future<void> fetchQuestions() async {
+  Future<void> fetchQuestions({bool showLoading = false}) async {
+    if (_isFetching) return;
+
+    _isFetching = true;
+
+    final previousQuestionId = questions.isNotEmpty &&
+            currentIndex >= 0 &&
+            currentIndex < questions.length
+        ? questions[currentIndex].id
+        : null;
+
+    if (showLoading && mounted) {
+      setState(() => _isLoading = true);
+    }
+
     try {
       final accessToken = await _storage.read(key: 'auth_token');
+
+      if (accessToken == null || accessToken.isEmpty) {
+        debugPrint('Cannot fetch questions: auth token is missing.');
+        return;
+      }
 
       final response = await http.get(
         Uri.parse('$baseUrl/levels/${widget.levelId}/questions'),
@@ -64,37 +85,99 @@ class _QuizScreenState extends State<QuizScreen> {
         },
       );
 
-      if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-        final list = decoded['data'] as List? ?? [];
+      if (!mounted) return;
 
-        List<QuestionModel> parsedQuestions =
-            list.map((q) => QuestionModel.fromJson(q)).toList();
-        parsedQuestions.sort((a, b) => a.order.compareTo(b.order));
+      if (response.statusCode != 200) {
+        debugPrint(
+          'Failed to fetch questions: ${response.statusCode}',
+        );
+        debugPrint('Response: ${response.body}');
+        return;
+      }
 
-        int newIndex = currentIndex;
-        if (parsedQuestions.isEmpty) {
-          newIndex = 0;
-        } else if (newIndex >= parsedQuestions.length) {
-          newIndex = parsedQuestions.length - 1;
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is! Map<String, dynamic>) {
+        debugPrint('Invalid questions response format.');
+        return;
+      }
+
+      final rawData = decoded['data'];
+
+      if (rawData is! List) {
+        debugPrint('Questions response does not contain a data list.');
+        return;
+      }
+
+      final refreshedQuestions = rawData
+          .map(
+            (item) => QuestionModel.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList();
+
+      refreshedQuestions.sort(
+        (a, b) => a.order.compareTo(b.order),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        questions = refreshedQuestions;
+
+        if (questions.isEmpty) {
+          currentIndex = 0;
+        } else {
+          // Keep the same question selected after editing/deleting.
+          final previousIndex = previousQuestionId == null
+              ? -1
+              : questions.indexWhere(
+                  (question) => question.id == previousQuestionId,
+                );
+
+          if (previousIndex >= 0) {
+            currentIndex = previousIndex;
+          } else {
+            currentIndex = currentIndex.clamp(0, questions.length - 1);
+          }
         }
 
-        setState(() {
-          questions = List.from(parsedQuestions);
-          currentIndex = newIndex;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Network or parsing error: $e');
-      setState(() {
-        _isLoading = false;
+        selectedOptionId = null;
+        isAnswerChecked = false;
       });
+
+      debugPrint('Questions refreshed: ${questions.length}');
+    } catch (e, stackTrace) {
+      debugPrint('Error fetching questions: $e');
+      debugPrintStack(stackTrace: stackTrace);
+    } finally {
+      _isFetching = false;
+
+      if (mounted && _isLoading) {
+        setState(() => _isLoading = false);
+      }
     }
+  }
+
+  Future<void> _openQuestionForm({
+    QuestionModel? question,
+  }) async {
+    if (!_isAdmin) return;
+
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ManageQuestionDialog(
+          levelId: widget.levelId,
+          question: question?.toJson(),
+        ),
+      ),
+    );
+
+    if (!mounted || result != true) return;
+
+    await fetchQuestions();
   }
 
   void handleDeleteQuestion(BuildContext context, String? hashedId) async {
@@ -213,22 +296,27 @@ class _QuizScreenState extends State<QuizScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    final result = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
                         builder: (context) => ManageQuestionDialog(
                           levelId: widget.levelId,
-                          onQuestionSaved: () {
-                            fetchQuestions();
-                          },
+                          question: null,
+                          onQuestionSaved: () {},
                         ),
                       ),
                     );
+
+                    if (!mounted) return;
+
+                    if (result == true) {
+                      await fetchQuestions();
+                    }
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('إضافة سؤال جديد'),
-                ),
+                )
               ]
             ],
           ),
@@ -297,34 +385,39 @@ class _QuizScreenState extends State<QuizScreen> {
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.edit_outlined,
-                                          color: AppColors.primaryGreen,
-                                          size: 20),
+                                      icon: const Icon(
+                                        Icons.edit_outlined,
+                                        color: AppColors.primaryGreen,
+                                        size: 20,
+                                      ),
                                       tooltip: 'تعديل السؤال',
-                                      onPressed: () {
-                                        try {
-                                          print('Edit button clicked!');
-                                          final questionData =
-                                              currentQuestion.toJson();
-                                          print(
-                                              'Question data mapped successfully: $questionData');
+                                      onPressed: () async {
+                                        debugPrint('Edit button clicked');
 
-                                          Navigator.push(
+                                        try {
+                                          final result =
+                                              await Navigator.push<bool>(
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
                                                   ManageQuestionDialog(
                                                 levelId: widget.levelId,
-                                                question: questionData,
-                                                onQuestionSaved: () {
-                                                  fetchQuestions();
-                                                },
+                                                question:
+                                                    currentQuestion.toJson(),
                                               ),
                                             ),
                                           );
-                                        } catch (e) {
-                                          print(
-                                              'Error in edit button onPressed: $e');
+
+                                          if (!mounted) return;
+
+                                          if (result == true) {
+                                            await fetchQuestions();
+                                          }
+                                        } catch (e, stackTrace) {
+                                          debugPrint(
+                                              'Error opening edit page: $e');
+                                          debugPrintStack(
+                                              stackTrace: stackTrace);
                                         }
                                       },
                                     ),
@@ -342,24 +435,22 @@ class _QuizScreenState extends State<QuizScreen> {
                                         foregroundColor: AppColors.textLight,
                                         elevation: 0,
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 8),
+                                          horizontal: 10,
+                                          vertical: 8,
+                                        ),
                                         shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8)),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
                                       ),
                                       onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                ManageQuestionDialog(
-                                                    levelId: widget.levelId),
-                                          ),
-                                        );
+                                        _openQuestionForm();
                                       },
                                       icon: const Icon(Icons.add, size: 16),
-                                      label: const Text('إضافة',
-                                          style: TextStyle(fontSize: 12)),
+                                      label: const Text(
+                                        'إضافة',
+                                        style: TextStyle(fontSize: 12),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -532,7 +623,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     reverse: true,
                     itemCount: questions.length,
                     itemBuilder: (context, index) {
-                      final bool isSelected = selectedOptionId == index;
+                      final bool isSelected = currentIndex == index;
                       return GestureDetector(
                         onTap: () {
                           setState(() {
