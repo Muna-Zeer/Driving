@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:driving_quiz_app/models/question_model.dart';
-import 'package:driving_quiz_app/services/APIService.dart';
 import 'package:driving_quiz_app/services/AdminService.dart';
 import 'package:driving_quiz_app/services/QuestionService.dart';
 import 'package:driving_quiz_app/views/ManageQuestionDialog.dart';
@@ -254,10 +253,10 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: AppColors.background,
-        appBar: const CustomResponsiveNavbar(),
-        body: const Center(
+        appBar: CustomResponsiveNavbar(),
+        body: Center(
           child: CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
@@ -357,26 +356,40 @@ class _QuizScreenState extends State<QuizScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment
+                              .end, // Aligned nicely (change to start if preferred)
                           children: [
-                            // Left side: Question counter indicator
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: AppColors.secondarySage.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(20),
+                            TextButton.icon(
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.primaryGreen,
+                                backgroundColor:
+                                    AppColors.secondarySage.withOpacity(0.1),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20)),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
                               ),
-                              child: Text(
-                                'السؤال ${currentQuestion.order} من ${questions.length}',
+                              onPressed: () {
+                                setState(() {
+                                  currentLocale =
+                                      currentLocale == "ar" ? "en" : "ar";
+                                });
+                              },
+                              icon: const Icon(Icons.language, size: 16),
+                              label: Text(
+                                currentLocale == "ar"
+                                    ? "English (EN)"
+                                    : "العربية (AR)",
                                 style: const TextStyle(
-                                  color: AppColors.primaryGreen,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
+                                    fontWeight: FontWeight.bold, fontSize: 12),
                               ),
                             ),
-
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             // Right side: Admin Actions
                             if (_isAdmin)
                               Flexible(
@@ -448,7 +461,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                       },
                                       icon: const Icon(Icons.add, size: 16),
                                       label: const Text(
-                                        'إضافة',
+                                        '  إضافة سؤال  ',
                                         style: TextStyle(fontSize: 12),
                                       ),
                                     ),
@@ -503,7 +516,7 @@ class _QuizScreenState extends State<QuizScreen> {
                           var option = entry.value;
                           String optionLetter =
                               idx < currentQuestion.options.length && idx < 4
-                                  ? ['أ', 'ب', 'ج', 'د'][idx]
+                                  ? ['A', 'B', 'C', 'D'][idx]
                                   : '${idx + 1}';
                           bool isSelected =
                               selectedOptionId == option.identifier;
@@ -526,7 +539,7 @@ class _QuizScreenState extends State<QuizScreen> {
                             bgColor = AppColors.primaryGreen.withOpacity(0.1);
                             borderColor = AppColors.primaryGreen;
                           }
-
+                          final String optionImageUrl = option.imageUrl ?? '';
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12.0),
                             child: GestureDetector(
@@ -569,15 +582,36 @@ class _QuizScreenState extends State<QuizScreen> {
                                       children: [
                                         if (_isAdmin) ...[
                                           IconButton(
-                                            icon: const Icon(Icons.edit,
+                                            icon: const Icon(
+                                                Icons
+                                                    .add_photo_alternate_outlined,
                                                 size: 16,
                                                 color: AppColors.textSecondary),
-                                            tooltip: 'تعديل الخيار',
+                                            tooltip: 'اضافة صورة ',
                                             constraints: const BoxConstraints(),
                                             padding: const EdgeInsets.all(4),
-                                            onPressed: () {},
+                                            onPressed: () {
+                                             
+                                            },
                                           ),
                                           const SizedBox(width: 8),
+                                        ],
+                                        if (optionImageUrl.isNotEmpty) ...[
+                                          ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                            child: Image.network(
+                                              optionImageUrl,
+                                              width: 48,
+                                              height: 48,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error,
+                                                      stackTrace) =>
+                                                  const Icon(Icons.broken_image,
+                                                      color: AppColors
+                                                          .textSecondary),
+                                            ),
+                                          ),
                                         ],
                                         Container(
                                           width: 32,

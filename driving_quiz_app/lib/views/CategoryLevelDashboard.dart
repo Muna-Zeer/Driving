@@ -5,7 +5,6 @@ import 'package:driving_quiz_app/services/AdminService.dart';
 import 'package:driving_quiz_app/services/LevelService.dart';
 import 'package:driving_quiz_app/views/CategoriesScreen.dart';
 import 'package:driving_quiz_app/views/ManageLevelScreen.dart';
-import 'package:driving_quiz_app/views/ManageQuestionDialog.dart';
 import 'package:driving_quiz_app/views/QuizScreen.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
@@ -177,8 +176,8 @@ class _CategoryLevelsDashboardScreenState
                                                             //         .id
                                                             //         .toString()),
                                                             QuizScreen(
-                                                                levelId: level
-                                                                        .id),
+                                                                levelId:
+                                                                    level.id),
                                                       ),
                                                     );
                                                   } else {
@@ -187,10 +186,12 @@ class _CategoryLevelsDashboardScreenState
                                                       MaterialPageRoute(
                                                         builder: (context) =>
                                                             QuizScreen(
-                                                                levelId: level
-                                                                        .id),
+                                                          levelId: level.id
+                                                              .toString(), 
+                                                        ),
                                                       ),
                                                     );
+                                                    ;
                                                   }
                                                 },
                                                 child: Container(
@@ -257,7 +258,6 @@ class _CategoryLevelsDashboardScreenState
                                                                     _openLevelForm(
                                                                         level),
                                                               ),
-                                                              
                                                               IconButton(
                                                                 icon: const Icon(
                                                                     Icons

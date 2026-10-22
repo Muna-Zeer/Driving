@@ -44,11 +44,13 @@ class OptionModel {
   final String identifier; // Uses A, B, C, D as the unique identifier
   final bool isCorrect;
   final List<OptionTranslation> translations;
+  final String? imageUrl;
 
   OptionModel({
     required this.identifier,
     required this.isCorrect,
     required this.translations,
+    this.imageUrl,
   });
 
   factory OptionModel.fromJson(Map<String, dynamic> json) {
@@ -58,6 +60,7 @@ class OptionModel {
 
     return OptionModel(
       identifier: json['identifier'] ?? '',
+      imageUrl: json['image_url'],
       isCorrect: json['is_correct'] == 1 || json['is_correct'] == true,
       translations: parsedTranslations,
     );
@@ -77,13 +80,14 @@ class OptionModel {
     return <String, dynamic>{
       'identifier': identifier,
       'is_correct': isCorrect,
+      'image_url': imageUrl,
       'translations': translations.map((t) => t.toJson()).toList(),
     };
   }
 }
 
 class QuestionModel {
-  final String? id; // Changed to String? to handle string/hashed IDs like "oyqY"
+  final String? id; 
   final String levelId;
   final String? imageUrl;
   final int order;

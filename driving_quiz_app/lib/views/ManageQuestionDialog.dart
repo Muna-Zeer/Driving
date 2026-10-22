@@ -46,6 +46,7 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
   bool _isSubmitting = false;
   late bool _isEditing;
   final TextEditingController _orderController = TextEditingController();
+  late List<TextEditingController> _optionImageControllers;
   final List<Map<FormLocale, TextEditingController>> _optionControllers =
       List.generate(
           4,
@@ -60,6 +61,7 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
     super.initState();
 
     _isEditing = widget.question != null;
+    _optionImageControllers = List.generate(4, (_) => TextEditingController());
 
     _imageUrlController = TextEditingController(
       text: widget.question?['image_url']?.toString() ?? '',
@@ -87,67 +89,74 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
   }
 
   void _populateFormForEdit() {
-    final data = widget.question;
-    if (data == null) return;
+    final questionData = widget.question;
+    if (questionData == null) return;
 
-    _orderController.text = data['order']?.toString() ?? '';
+    if (questionData['order'] != null) {
+      _orderController.text = questionData['order'].toString();
+    }
+    if (questionData['image_url'] != null) {
+      _imageUrlController.text = questionData['image_url'].toString();
+    }
 
-    final translations = data['translations'];
-    if (translations is List) {
-      for (final item in translations) {
-        if (item is! Map) continue;
-
-        final locale = _normalizeLocale(item['locale']);
-        final text = item['text']?.toString() ?? '';
-
-        if (locale == 'en') {
-          _questionControllers[FormLocale.en]!.text = text;
-        } else if (locale == 'ar') {
-          _questionControllers[FormLocale.ar]!.text = text;
-        }
+    final qTranslations = questionData['translations'] as List? ?? [];
+    for (var t in qTranslations) {
+      if (t['locale'] == 'en') {
+        _questionControllers[FormLocale.en]!.text = t['text']?.toString() ?? '';
+      } else if (t['locale'] == 'ar') {
+        _questionControllers[FormLocale.ar]!.text = t['text']?.toString() ?? '';
       }
     }
 
-    // Support APIs that return question_text as a translation map.
-    final questionText = data['question_text'];
-
-    if (questionText is Map) {
-      if (_questionControllers[FormLocale.en]!.text.isEmpty) {
-        _questionControllers[FormLocale.en]!.text =
-            questionText['en']?.toString() ?? '';
-      }
-
-      if (_questionControllers[FormLocale.ar]!.text.isEmpty) {
-        _questionControllers[FormLocale.ar]!.text =
-            questionText['ar']?.toString() ?? '';
-      }
+    if (_questionControllers[FormLocale.en]!.text.isEmpty &&
+        questionData['question_text'] is Map) {
+      final qMap = questionData['question_text'] as Map;
+      _questionControllers[FormLocale.en]!.text = qMap['en']?.toString() ?? '';
+      _questionControllers[FormLocale.ar]!.text = qMap['ar']?.toString() ?? '';
     }
 
-    final options = data['options'];
+    if (questionData['options'] != null) {
+      final options = questionData['options'] as List;
 
-    if (options is List) {
+      // Iterate by index to safely match options even if backend identifiers differ
       for (int i = 0; i < options.length && i < 4; i++) {
-        final option = options[i];
-        if (option is! Map) continue;
+        final opt = options[i];
+        final identifier = opt['identifier']?.toString();
 
-        if (_isTrue(option['is_correct'])) {
-          _correctOptionIndex = i;
+        int index = _identifiers.indexOf(identifier ?? '');
+        if (index == -1) {
+          index =
+              i; // Fallback to list position index if identifier string doesn't match
         }
 
-        final optionTranslations =
-            option['translations'] ?? option['all_option_translations'];
+        if (index >= 0 && index < 4) {
+          // Check if this option is correct
+          if (opt['is_correct'] == true ||
+              opt['is_correct'] == 1 ||
+              opt['is_correct'] == '1') {
+            setState(() {
+              _correctOptionIndex = index;
+            });
+          }
 
-        if (optionTranslations is List) {
-          for (final translation in optionTranslations) {
-            if (translation is! Map) continue;
+          // Populate option image if available
+          if (opt['image_url'] != null &&
+              _optionImageControllers.length > index) {
+            _optionImageControllers[index].text = opt['image_url'].toString();
+          }
 
-            final locale = _normalizeLocale(translation['locale']);
-            final text = translation['text']?.toString() ?? '';
+          // Get option translations list
+          final optTranslations = (opt['translations'] ??
+                  opt['all_option_translations']) as List? ??
+              [];
 
-            if (locale == 'en') {
-              _optionControllers[i][FormLocale.en]!.text = text;
-            } else if (locale == 'ar') {
-              _optionControllers[i][FormLocale.ar]!.text = text;
+          for (var ot in optTranslations) {
+            if (ot['locale'] == 'en') {
+              _optionControllers[index][FormLocale.en]!.text =
+                  ot['text']?.toString() ?? '';
+            } else if (ot['locale'] == 'ar') {
+              _optionControllers[index][FormLocale.ar]!.text =
+                  ot['text']?.toString() ?? '';
             }
           }
         }
@@ -269,6 +278,9 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
     _imageUrlController.dispose();
     _orderController.dispose();
 
+    for (var controller in _optionImageControllers) {
+      controller.dispose();
+    }
     for (final controller in _questionControllers.values) {
       controller.dispose();
     }
@@ -514,6 +526,10 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
                                     ...List.generate(4, (index) {
                                       final isCorrect =
                                           _correctOptionIndex == index;
+                                      final hasOptionImage =
+                                          _optionImageControllers[index]!
+                                              .text
+                                              .isNotEmpty;
 
                                       return Card(
                                         margin:
@@ -576,6 +592,127 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
                                                   return null;
                                                 },
                                               ),
+                                              const SizedBox(height: 12),
+                                              // Option Image URL Field & Library Picker Button Row
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: TextFormField(
+                                                      controller:
+                                                          _optionImageControllers[
+                                                              index],
+                                                      decoration:
+                                                          InputDecoration(
+                                                        labelText: _activeLocale ==
+                                                                FormLocale.en
+                                                            ? 'Option ${_identifiers[index]}: Image Url (Optional)'
+                                                            : 'رابط الصورة للخيار ${_identifiers[index]} (اختياري)',
+                                                        prefixIcon: const Icon(
+                                                            Icons
+                                                                .image_outlined,
+                                                            size: 20),
+                                                        border:
+                                                            const OutlineInputBorder(),
+                                                        isDense: true,
+                                                      ),
+                                                      onChanged: (val) =>
+                                                          setState(() {}),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+
+                                                  // Library Picker Button
+                                                  IconButton.filledTonal(
+                                                    icon: const Icon(
+                                                        Icons.photo_library,
+                                                        color: AppColors
+                                                            .primaryGreen,
+                                                        size: 20),
+                                                    tooltip: _activeLocale ==
+                                                            FormLocale.en
+                                                        ? 'Select from Library'
+                                                        : 'اختر من المكتبة',
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            ImageLibraryDialog(
+                                                          onImageSelected:
+                                                              (String
+                                                                  selectedUrl) {
+                                                            setState(() {
+                                                              _optionImageControllers[
+                                                                          index]
+                                                                      .text =
+                                                                  selectedUrl;
+                                                            });
+                                                          },
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+
+                                                  // Clear Button (Shown only if text is not empty)
+                                                  if (_optionImageControllers[
+                                                          index]
+                                                      .text
+                                                      .isNotEmpty) ...[
+                                                    const SizedBox(width: 4),
+                                                    IconButton(
+                                                      icon: const Icon(
+                                                          Icons.clear,
+                                                          color: Colors.red,
+                                                          size: 20),
+                                                      tooltip: _activeLocale ==
+                                                              FormLocale.en
+                                                          ? 'Remove Image'
+                                                          : 'إزالة الصورة',
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          _optionImageControllers[
+                                                                  index]
+                                                              .clear();
+                                                        });
+                                                      },
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+
+// Thumbnail Preview (Shown below input if URL is present)
+                                              if (_optionImageControllers[index]
+                                                  .text
+                                                  .isNotEmpty) ...[
+                                                const SizedBox(height: 8),
+                                                ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                  child: Container(
+                                                    height: 80,
+                                                    width: 80,
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(
+                                                          color: Colors
+                                                              .grey.shade300),
+                                                    ),
+                                                    child: Image.network(
+                                                      _optionImageControllers[
+                                                              index]
+                                                          .text
+                                                          .trim(),
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (context,
+                                                              error,
+                                                              stackTrace) =>
+                                                          const Center(
+                                                        child: Icon(
+                                                            Icons.broken_image,
+                                                            color: Colors.grey),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ],
                                           ),
                                         ),
