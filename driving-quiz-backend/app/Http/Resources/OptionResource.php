@@ -19,6 +19,8 @@ class OptionResource extends JsonResource
             'identifier' => $this->identifier,
             'is_correct' => (bool) $this->is_correct,
             'text'       => $localizedText,
+            'image_url'  => $this->image_url ? url($this->image_url) : null,
+
 
             // FIXED: Map directly to an array instead of calling an external Resource class
             'all_option_translations' => $this->translations->map(function ($translation) {
