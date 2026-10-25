@@ -221,6 +221,11 @@ class QuestionController extends Controller
                                 'is_correct' => (bool)$optionData['is_correct']
                             ]);
                         }
+                        if(array_key_exists('image_url',$optionData)){
+                            $option->update([
+                                'image_url'=> $optionData['image_url']
+                            ]);
+                        }
 
                         // Update option translations if provided
                         if (isset($optionData['translations'])) {
