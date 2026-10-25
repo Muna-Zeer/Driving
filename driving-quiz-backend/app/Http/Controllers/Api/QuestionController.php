@@ -129,7 +129,8 @@ class QuestionController extends Controller
                 foreach ($request->options as $optionData) {
                     $option = $question->options()->create([
                         'identifier' => $optionData['identifier'],
-                        'is_correct' => (bool)$optionData['is_correct']
+                        'is_correct' => (bool)$optionData['is_correct'],
+                        'image_url'=>$optionData['image_url'] ?? null,
                     ]);
 
                     if (isset($optionData['translations'])) {

@@ -87,7 +87,7 @@ class OptionModel {
 }
 
 class QuestionModel {
-  final String? id; 
+  final String? id;
   final String levelId;
   final String? imageUrl;
   final int order;
@@ -121,6 +121,7 @@ class QuestionModel {
         return OptionModel(
           identifier: o['identifier'],
           isCorrect: o['is_correct'] ?? false,
+          imageUrl: o['image_url'],
           translations: (optTrans as List)
               .map((ot) => OptionTranslation.fromJson(ot))
               .toList(),
@@ -144,7 +145,7 @@ class QuestionModel {
       (t) => t.locale == 'en',
       orElse: () => QuestionTranslation(locale: 'en', text: ''),
     );
-    
+
     final arTrans = translations.firstWhere(
       (t) => t.locale == 'ar',
       orElse: () => QuestionTranslation(locale: 'ar', text: ''),

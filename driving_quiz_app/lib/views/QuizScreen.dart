@@ -42,6 +42,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
+    
     fetchQuestions();
     _initAdminRole();
   }
@@ -539,7 +540,10 @@ class _QuizScreenState extends State<QuizScreen> {
                             bgColor = AppColors.primaryGreen.withOpacity(0.1);
                             borderColor = AppColors.primaryGreen;
                           }
+
+                          // 👈 Extract option image url safely from the option model
                           final String optionImageUrl = option.imageUrl ?? '';
+
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12.0),
                             child: GestureDetector(
@@ -563,56 +567,51 @@ class _QuizScreenState extends State<QuizScreen> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
-                                      child: Text(
-                                        option.getText(currentLocale),
-                                        textAlign: TextAlign.right,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: textColor,
-                                          fontWeight: isSelected ||
-                                                  (isAnswerChecked &&
-                                                      option.isCorrect)
-                                              ? FontWeight.w600
-                                              : FontWeight.normal,
-                                        ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            option.getText(currentLocale),
+                                            textAlign: TextAlign.right,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: textColor,
+                                              fontWeight: isSelected ||
+                                                      (isAnswerChecked &&
+                                                          option.isCorrect)
+                                                  ? FontWeight.w600
+                                                  : FontWeight.normal,
+                                            ),
+                                          ),
+
+                                          // 👈 Display option image underneath the text if it exists
+                                          if (optionImageUrl.isNotEmpty) ...[
+                                            const SizedBox(height: 8),
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              child: Image.network(
+                                                optionImageUrl,
+                                                width: 80,
+                                                height: 80,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error,
+                                                        stackTrace) =>
+                                                    const Icon(
+                                                        Icons.broken_image,
+                                                        color: AppColors
+                                                            .textSecondary,
+                                                        size: 32),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
                                     const SizedBox(width: 16),
                                     Row(
                                       children: [
-                                        if (_isAdmin) ...[
-                                          IconButton(
-                                            icon: const Icon(
-                                                Icons
-                                                    .add_photo_alternate_outlined,
-                                                size: 16,
-                                                color: AppColors.textSecondary),
-                                            tooltip: 'اضافة صورة ',
-                                            constraints: const BoxConstraints(),
-                                            padding: const EdgeInsets.all(4),
-                                            onPressed: () {
-                                             
-                                            },
-                                          ),
-                                          const SizedBox(width: 8),
-                                        ],
-                                        if (optionImageUrl.isNotEmpty) ...[
-                                          ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(6),
-                                            child: Image.network(
-                                              optionImageUrl,
-                                              width: 48,
-                                              height: 48,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error,
-                                                      stackTrace) =>
-                                                  const Icon(Icons.broken_image,
-                                                      color: AppColors
-                                                          .textSecondary),
-                                            ),
-                                          ),
-                                        ],
                                         Container(
                                           width: 32,
                                           height: 32,

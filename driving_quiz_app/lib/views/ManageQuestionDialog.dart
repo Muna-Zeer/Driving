@@ -61,7 +61,10 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
     super.initState();
 
     _isEditing = widget.question != null;
-    _optionImageControllers = List.generate(4, (_) => TextEditingController());
+    _optionImageControllers = List.generate(
+      4,
+      (_) => TextEditingController()..addListener(_onOptionImageChanged),
+    );
 
     _imageUrlController = TextEditingController(
       text: widget.question?['image_url']?.toString() ?? '',
@@ -71,6 +74,12 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
 
     if (_isEditing) {
       _populateFormForEdit();
+    }
+  }
+
+  void _onOptionImageChanged() {
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -92,76 +101,75 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
     final questionData = widget.question;
     if (questionData == null) return;
 
-    if (questionData['order'] != null) {
-      _orderController.text = questionData['order'].toString();
-    }
-    if (questionData['image_url'] != null) {
-      _imageUrlController.text = questionData['image_url'].toString();
-    }
-
-    final qTranslations = questionData['translations'] as List? ?? [];
-    for (var t in qTranslations) {
-      if (t['locale'] == 'en') {
-        _questionControllers[FormLocale.en]!.text = t['text']?.toString() ?? '';
-      } else if (t['locale'] == 'ar') {
-        _questionControllers[FormLocale.ar]!.text = t['text']?.toString() ?? '';
+    setState(() {
+      if (questionData['order'] != null) {
+        _orderController.text = questionData['order'].toString();
       }
-    }
+      if (questionData['image_url'] != null) {
+        _imageUrlController.text = questionData['image_url'].toString();
+      }
 
-    if (_questionControllers[FormLocale.en]!.text.isEmpty &&
-        questionData['question_text'] is Map) {
-      final qMap = questionData['question_text'] as Map;
-      _questionControllers[FormLocale.en]!.text = qMap['en']?.toString() ?? '';
-      _questionControllers[FormLocale.ar]!.text = qMap['ar']?.toString() ?? '';
-    }
-
-    if (questionData['options'] != null) {
-      final options = questionData['options'] as List;
-
-      // Iterate by index to safely match options even if backend identifiers differ
-      for (int i = 0; i < options.length && i < 4; i++) {
-        final opt = options[i];
-        final identifier = opt['identifier']?.toString();
-
-        int index = _identifiers.indexOf(identifier ?? '');
-        if (index == -1) {
-          index =
-              i; // Fallback to list position index if identifier string doesn't match
+      final qTranslations = questionData['translations'] as List? ?? [];
+      for (var t in qTranslations) {
+        if (t['locale'] == 'en') {
+          _questionControllers[FormLocale.en]!.text =
+              t['text']?.toString() ?? '';
+        } else if (t['locale'] == 'ar') {
+          _questionControllers[FormLocale.ar]!.text =
+              t['text']?.toString() ?? '';
         }
+      }
 
-        if (index >= 0 && index < 4) {
-          // Check if this option is correct
-          if (opt['is_correct'] == true ||
-              opt['is_correct'] == 1 ||
-              opt['is_correct'] == '1') {
-            setState(() {
+      if (_questionControllers[FormLocale.en]!.text.isEmpty &&
+          questionData['question_text'] is Map) {
+        final qMap = questionData['question_text'] as Map;
+        _questionControllers[FormLocale.en]!.text =
+            qMap['en']?.toString() ?? '';
+        _questionControllers[FormLocale.ar]!.text =
+            qMap['ar']?.toString() ?? '';
+      }
+
+      if (questionData['options'] != null) {
+        final options = questionData['options'] as List;
+
+        for (int i = 0; i < options.length && i < 4; i++) {
+          final opt = options[i];
+          final identifier = opt['identifier']?.toString();
+
+          int index = _identifiers.indexOf(identifier ?? '');
+          if (index == -1) {
+            index = i;
+          }
+
+          if (index >= 0 && index < 4) {
+            if (opt['is_correct'] == true ||
+                opt['is_correct'] == 1 ||
+                opt['is_correct'] == '1') {
               _correctOptionIndex = index;
-            });
-          }
+            }
 
-          // Populate option image if available
-          if (opt['image_url'] != null &&
-              _optionImageControllers.length > index) {
-            _optionImageControllers[index].text = opt['image_url'].toString();
-          }
+            if (opt['image_url'] != null &&
+                _optionImageControllers.length > index) {
+              _optionImageControllers[index].text = opt['image_url'].toString();
+            }
 
-          // Get option translations list
-          final optTranslations = (opt['translations'] ??
-                  opt['all_option_translations']) as List? ??
-              [];
+            final optTranslations = (opt['translations'] ??
+                    opt['all_option_translations']) as List? ??
+                [];
 
-          for (var ot in optTranslations) {
-            if (ot['locale'] == 'en') {
-              _optionControllers[index][FormLocale.en]!.text =
-                  ot['text']?.toString() ?? '';
-            } else if (ot['locale'] == 'ar') {
-              _optionControllers[index][FormLocale.ar]!.text =
-                  ot['text']?.toString() ?? '';
+            for (var ot in optTranslations) {
+              if (ot['locale'] == 'en') {
+                _optionControllers[index][FormLocale.en]!.text =
+                    ot['text']?.toString() ?? '';
+              } else if (ot['locale'] == 'ar') {
+                _optionControllers[index][FormLocale.ar]!.text =
+                    ot['text']?.toString() ?? '';
+              }
             }
           }
         }
       }
-    }
+    });
   }
 
   Future<void> _submit() async {
@@ -216,6 +224,9 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
           return OptionModel(
             identifier: _identifiers[i],
             isCorrect: i == _correctOptionIndex,
+            imageUrl: _optionImageControllers[i].text.trim().isEmpty
+                ? null
+                : _optionImageControllers[i].text.trim(),
             translations: [
               OptionTranslation(
                 locale: 'en',
