@@ -130,7 +130,7 @@ class QuestionController extends Controller
                     $option = $question->options()->create([
                         'identifier' => $optionData['identifier'],
                         'is_correct' => (bool)$optionData['is_correct'],
-                        'image_url'=>$optionData['image_url'] ?? null,
+                        'image_url' => $optionData['image_url'] ?? null,
                     ]);
 
                     if (isset($optionData['translations'])) {
@@ -171,7 +171,7 @@ class QuestionController extends Controller
     /**
      * Update the specified resource in storage (Admin Only).
      */
-   public function update(Request $request, $id): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
         $realId = $this->decodeId($id);
         $question = Question::findOrFail($realId);
@@ -186,16 +186,15 @@ class QuestionController extends Controller
             }
             $question->save();
 
-            // 2. Partially update question translations (safely skips empty text)
-            if ($request->has('question_text')) {
-                $qText = $request->question_text;
-                
+            // Change this line in your Laravel controller:
+            if ($request->has('question_text') || $request->has('translations')) {
+                $qText = $request->input('question_text') ?? $request->input('translations');
+
                 $translationsArray = is_array($qText) && array_keys($qText) !== range(0, count($qText) - 1)
-                    ? $qText 
+                    ? $qText
                     : collect($qText)->pluck('text', 'locale')->toArray();
 
                 foreach ($translationsArray as $locale => $text) {
-                    // Only update if text is not empty; otherwise, delete or skip to prevent null errors
                     if (!empty(trim($text))) {
                         $question->translations()->updateOrCreate(
                             ['locale' => $locale],
@@ -206,7 +205,6 @@ class QuestionController extends Controller
                     }
                 }
             }
-
             // 3. Partially update options only if provided in the request
             if ($request->has('options')) {
                 foreach ($request->options as $optionData) {
@@ -221,18 +219,18 @@ class QuestionController extends Controller
                                 'is_correct' => (bool)$optionData['is_correct']
                             ]);
                         }
-                        if(array_key_exists('image_url',$optionData)){
+                        if (array_key_exists('image_url', $optionData)) {
                             $option->update([
-                                'image_url'=> $optionData['image_url']
+                                'image_url' => $optionData['image_url']
                             ]);
                         }
 
                         // Update option translations if provided
                         if (isset($optionData['translations'])) {
                             $optTranslations = $optionData['translations'];
-                            
+
                             $optTransArray = is_array($optTranslations) && array_keys($optTranslations) !== range(0, count($optTranslations) - 1)
-                                ? $optTranslations 
+                                ? $optTranslations
                                 : collect($optTranslations)->pluck('text', 'locale')->toArray();
 
                             foreach ($optTransArray as $locale => $text) {

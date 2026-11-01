@@ -102,6 +102,7 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
     if (questionData == null) return;
 
     setState(() {
+      // 1. Order & Image URL
       if (questionData['order'] != null) {
         _orderController.text = questionData['order'].toString();
       }
@@ -109,19 +110,34 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
         _imageUrlController.text = questionData['image_url'].toString();
       }
 
-      final qTranslations = questionData['translations'] as List? ?? [];
-      for (var t in qTranslations) {
-        if (t['locale'] == 'en') {
-          _questionControllers[FormLocale.en]!.text =
-              t['text']?.toString() ?? '';
-        } else if (t['locale'] == 'ar') {
-          _questionControllers[FormLocale.ar]!.text =
-              t['text']?.toString() ?? '';
+      // 2. Question Translations & Fallbacks
+      final qTranslations = questionData['all_question_translations'] ??
+          questionData['translations'] ??
+          [];
+
+      bool englishFound = false;
+      bool arabicFound = false;
+
+      if (qTranslations is List) {
+        for (var t in qTranslations) {
+          final locale = t['locale']?.toString().toLowerCase();
+          final text = t['text']?.toString() ?? '';
+          if (locale == 'en') {
+            _questionControllers[FormLocale.en]!.text = text;
+            englishFound = true;
+          } else if (locale == 'ar') {
+            _questionControllers[FormLocale.ar]!.text = text;
+            arabicFound = true;
+          }
         }
       }
 
-      if (_questionControllers[FormLocale.en]!.text.isEmpty &&
-          questionData['question_text'] is Map) {
+      // Fallbacks if translations list is empty or doesn't have specific locales
+      if (!englishFound && questionData['question'] != null) {
+        _questionControllers[FormLocale.en]!.text =
+            questionData['question'].toString();
+      }
+      if (!englishFound && questionData['question_text'] is Map) {
         final qMap = questionData['question_text'] as Map;
         _questionControllers[FormLocale.en]!.text =
             qMap['en']?.toString() ?? '';
@@ -129,42 +145,67 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
             qMap['ar']?.toString() ?? '';
       }
 
-      if (questionData['options'] != null) {
+      // 3. Options & Identifiers
+      if (questionData['options'] != null && questionData['options'] is List) {
         final options = questionData['options'] as List;
 
         for (int i = 0; i < options.length && i < 4; i++) {
           final opt = options[i];
-          final identifier = opt['identifier']?.toString();
+          final identifier = opt['identifier']?.toString() ?? _identifiers[i];
 
-          int index = _identifiers.indexOf(identifier ?? '');
+          // Find the correct index in form controllers based on identifier ('A', 'B', 'C', 'D')
+          int index = _identifiers.indexOf(identifier);
           if (index == -1) {
             index = i;
           }
 
           if (index >= 0 && index < 4) {
-            if (opt['is_correct'] == true ||
-                opt['is_correct'] == 1 ||
-                opt['is_correct'] == '1') {
+            // Correct option flag
+            if (_isTrue(opt['is_correct'])) {
               _correctOptionIndex = index;
             }
 
+            // Option Image URL
             if (opt['image_url'] != null &&
                 _optionImageControllers.length > index) {
               _optionImageControllers[index].text = opt['image_url'].toString();
             }
 
-            final optTranslations = (opt['translations'] ??
-                    opt['all_option_translations']) as List? ??
-                [];
+            // Option Translations & Fallbacks
+            // Option Translations & Fallbacks
+            final optTranslations =
+                opt['all_option_translations'] ?? opt['translations'] ?? [];
 
-            for (var ot in optTranslations) {
-              if (ot['locale'] == 'en') {
-                _optionControllers[index][FormLocale.en]!.text =
-                    ot['text']?.toString() ?? '';
-              } else if (ot['locale'] == 'ar') {
-                _optionControllers[index][FormLocale.ar]!.text =
-                    ot['text']?.toString() ?? '';
+            bool optEnFound = false;
+            bool optArFound = false;
+
+            if (optTranslations is List) {
+              for (var ot in optTranslations) {
+                if (ot == null) continue;
+                final locale = ot['locale']?.toString().toLowerCase() ?? '';
+                final text = ot['text']?.toString() ?? '';
+
+                // Map locales (backend sometimes uses '0' or empty for default/English)
+                if (locale == 'en' || locale == '0' || locale.isEmpty) {
+                  _optionControllers[index][FormLocale.en]!.text = text;
+                  optEnFound = true;
+                } else if (locale == 'ar' || locale == '1') {
+                  _optionControllers[index][FormLocale.ar]!.text = text;
+                  optArFound = true;
+                }
               }
+            }
+
+            // Fallback to top-level 'text' field if translations didn't cover English
+            if (!optEnFound && opt['text'] != null) {
+              _optionControllers[index][FormLocale.en]!.text =
+                  opt['text'].toString();
+            }
+
+            // Fallback to top-level text if option translations were missing/empty
+            if (!optEnFound && opt['text'] != null) {
+              _optionControllers[index][FormLocale.en]!.text =
+                  opt['text'].toString();
             }
           }
         }
@@ -179,9 +220,8 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
 
     if (!_formKey.currentState!.validate()) return;
 
-    final orderText = _orderController.text.trim();
     final order = int.tryParse(_orderController.text.trim()) ?? 1;
-    if (order == null || order < 1) {
+    if (order < 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid question order.'),
@@ -243,7 +283,8 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
 
       final payload = questionModel.toJson();
 
-      final bool success = _isEditing
+      // Capture the result as a Map (NOT a bool!)
+      final Map<String, dynamic>? responseMap = _isEditing
           ? await _questionService.updateQuestion(
               widget.question!['id'].toString(),
               payload,
@@ -251,6 +292,9 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
           : await _questionService.createQuestion(payload);
 
       if (!mounted) return;
+
+      // Check if response is null OR status is not true
+      final bool success = responseMap != null && responseMap['status'] == true;
 
       if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -264,9 +308,9 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
         );
         return;
       }
-      widget.onQuestionSaved?.call();
 
-      Navigator.of(context).pop(true);
+      widget.onQuestionSaved?.call();
+      Navigator.of(context).pop(payload);
     } catch (e, stackTrace) {
       debugPrint('Error saving question: $e');
       debugPrintStack(stackTrace: stackTrace);
@@ -285,21 +329,21 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
 
   @override
   void dispose() {
-    _imageUrlController.removeListener(_onImageUrlChanged);
-    _imageUrlController.dispose();
     _orderController.dispose();
+    _imageUrlController.dispose();
+
+    for (var controller in _questionControllers.values) {
+      controller.dispose();
+    }
+
+    for (var optionMap in _optionControllers) {
+      for (var controller in optionMap.values) {
+        controller.dispose();
+      }
+    }
 
     for (var controller in _optionImageControllers) {
       controller.dispose();
-    }
-    for (final controller in _questionControllers.values) {
-      controller.dispose();
-    }
-
-    for (final option in _optionControllers) {
-      for (final controller in option.values) {
-        controller.dispose();
-      }
     }
 
     super.dispose();

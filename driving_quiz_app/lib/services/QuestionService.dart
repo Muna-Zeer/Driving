@@ -11,7 +11,10 @@ class QuestionService {
     final accessToken = await _storage.read(key: 'auth_token');
     final response = await http.get(
       Uri.parse('$baseUrl/levels/$levelId/questions'),
-      headers: {'Accept': 'application/json','Authorization': 'Bearer $accessToken',},
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
     );
     if (response.statusCode == 200) {
       final decoded = json.decode(response.body);
@@ -20,36 +23,42 @@ class QuestionService {
     throw Exception('Failed to load questions for level ');
   }
 
-  Future<bool> createQuestion(Map<String, dynamic> questionData) async {
-    final accessToken = await _storage.read(key: 'auth_token');
-    final response = await http.post(
-      Uri.parse('$baseUrl/question'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $accessToken'
-      },
-      body: jsonEncode(questionData),
-    );
-    return response.statusCode == 201 || response.statusCode == 200;
-  }
+Future createQuestion(Map<String, dynamic> questionData) async {
+  final accessToken = await _storage.read(key: 'auth_token');
+  final response = await http.post(
+    Uri.parse('$baseUrl/question'),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $accessToken',
+    },
+    body: jsonEncode(questionData),
+  );
 
-  Future<bool> updateQuestion(
-      String questionId, Map<String, dynamic> payload) async {
-    final accessToken = await _storage.read(key: 'auth_token');
-    final response = await http.patch(
-      Uri.parse('$baseUrl/question/$questionId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $accessToken'
-      },
-      body: jsonEncode(payload),
-    );
-    print('DEBUG PAYLOAD: ${jsonEncode(payload)}');
-    return response.statusCode == 200;
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    return jsonDecode(response.body) as Map<String, dynamic>?;
   }
+  return null;
+}
 
+Future updateQuestion(
+    String questionId, Map<String, dynamic> payload) async {
+  final accessToken = await _storage.read(key: 'auth_token');
+  final response = await http.patch(
+    Uri.parse('$baseUrl/question/$questionId'),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $accessToken',
+    },
+    body: jsonEncode(payload),
+  );
+
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    return jsonDecode(response.body) as Map<String, dynamic>?;
+  }
+  return null;
+}
   Future<bool> deleteQuestion(String questionId) async {
     final token = await _storage.read(key: 'auth_token');
     final response = await http.delete(

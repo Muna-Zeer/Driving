@@ -102,34 +102,51 @@ class QuestionModel {
     required this.translations,
     required this.options,
   });
-
   factory QuestionModel.fromJson(Map<String, dynamic> json) {
     var transList =
         json['all_question_translations'] ?? json['translations'] ?? [];
     var optionsList = json['options'] as List? ?? [];
 
+    // Fallback: If translations list is empty but 'question' string exists, create a default en translation
+    if ((transList as List).isEmpty && json['question'] != null) {
+      transList = [
+        {'locale': 'en', 'text': json['question'].toString()}
+      ];
+    }
+
     return QuestionModel(
       id: json['id']?.toString(),
-      levelId: json['level_id'].toString(),
+      levelId: json['level_id']?.toString() ?? '',
       imageUrl: json['image_url'],
       order: json['order'] ?? 1,
-      translations: (transList as List)
-          .map((t) => QuestionTranslation.fromJson(t))
+      translations: transList
+          .map(
+              (t) => QuestionTranslation.fromJson(Map<String, dynamic>.from(t)))
           .toList(),
       options: optionsList.map((o) {
         var optTrans = o['all_option_translations'] ?? o['translations'] ?? [];
+
+        // Fallback: If option translations list is empty but 'text' exists, create a default en translation
+        if ((optTrans as List).isEmpty && o['text'] != null) {
+          optTrans = [
+            {'locale': 'en', 'text': o['text'].toString()}
+          ];
+        }
+
         return OptionModel(
-          identifier: o['identifier'],
-          isCorrect: o['is_correct'] ?? false,
+          identifier: o['identifier']?.toString() ?? '',
+          isCorrect: o['is_correct'] == true ||
+              o['is_correct'] == 1 ||
+              o['is_correct'] == '1',
           imageUrl: o['image_url'],
           translations: (optTrans as List)
-              .map((ot) => OptionTranslation.fromJson(ot))
+              .map((ot) =>
+                  OptionTranslation.fromJson(Map<String, dynamic>.from(ot)))
               .toList(),
         );
       }).toList(),
     );
   }
-
   String getTitle(String locale) {
     final translation = translations.firstWhere(
       (t) => t.locale == locale,
@@ -156,9 +173,9 @@ class QuestionModel {
       'level_id': levelId,
       'order': order,
       'image_url': imageUrl,
-      'question_text': <String, dynamic>{
-        'en': enTrans.text,
-        'ar': arTrans.text,
+      'translations': translations.map((t) => t.toJson()).toList(),
+      'question_text': {
+        for (var t in translations) t.locale: t.text,
       },
       'options': options.map((o) => o.toJson()).toList(),
     };

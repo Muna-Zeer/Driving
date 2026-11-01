@@ -42,7 +42,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     fetchQuestions();
     _initAdminRole();
   }
@@ -160,12 +160,13 @@ class _QuizScreenState extends State<QuizScreen> {
     }
   }
 
-  Future<void> _openQuestionForm({
+ Future<void> _openQuestionForm({
     QuestionModel? question,
   }) async {
     if (!_isAdmin) return;
 
-    final result = await Navigator.push<bool>(
+    // Expect a Map instead of a bool since we pop the payload
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => ManageQuestionDialog(
@@ -175,8 +176,10 @@ class _QuizScreenState extends State<QuizScreen> {
       ),
     );
 
-    if (!mounted || result != true) return;
+    // If result is null, the user cancelled or it failed
+    if (!mounted || result == null) return;
 
+    // Refresh the questions list
     await fetchQuestions();
   }
 
