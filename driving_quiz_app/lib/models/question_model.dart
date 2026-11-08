@@ -1,52 +1,82 @@
+
 class QuestionTranslation {
   final String locale;
   final String text;
 
-  QuestionTranslation({required this.locale, required this.text});
+  const QuestionTranslation({
+    required this.locale,
+    required this.text,
+  });
 
   factory QuestionTranslation.fromJson(Map<String, dynamic> json) {
     return QuestionTranslation(
-      locale: json['locale'] ?? '',
-      text: json['text'] ?? '',
+      locale: normalizeLocale(json['locale']),
+      text: json['text']?.toString() ?? '',
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'locale': locale,
-      'text': text,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'locale': locale,
+        'text': text,
+      };
 }
 
-class OptionTranslation {
-  final String locale;
-  final String text;
-
-  OptionTranslation({required this.locale, required this.text});
+class OptionTranslation extends QuestionTranslation {
+  const OptionTranslation({
+    required super.locale,
+    required super.text,
+  });
 
   factory OptionTranslation.fromJson(Map<String, dynamic> json) {
     return OptionTranslation(
-      locale: json['locale'] ?? '',
-      text: json['text'] ?? '',
+      locale: normalizeLocale(json['locale']),
+      text: json['text']?.toString() ?? '',
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'locale': locale,
-      'text': text,
-    };
   }
 }
 
+/// Keep locale normalization consistent with Laravel QuestionResource
+/// and OptionResource.
+String normalizeLocale(dynamic value) {
+  switch (value?.toString().trim().toLowerCase()) {
+    case '0':
+    case 'ar':
+      return 'ar';
+    case '1':
+    case 'en':
+      return 'en';
+    default:
+      return '';
+  }
+}
+
+String localizedText(
+  List<QuestionTranslation> translations,
+  String requestedLocale,
+) {
+  final locale = normalizeLocale(requestedLocale);
+
+  final selected = translations.where(
+    (item) => item.locale == locale && item.text.trim().isNotEmpty,
+  );
+
+  if (selected.isNotEmpty) return selected.first.text;
+
+  // Fallback to the other available language.
+  final fallback = translations.where(
+    (item) => item.text.trim().isNotEmpty,
+  );
+
+  return fallback.isNotEmpty ? fallback.first.text : '';
+}
+
 class OptionModel {
-  final String identifier; // Uses A, B, C, D as the unique identifier
+  final String identifier;
   final bool isCorrect;
   final List<OptionTranslation> translations;
   final String? imageUrl;
 
-  OptionModel({
+  const OptionModel({
     required this.identifier,
     required this.isCorrect,
     required this.translations,
@@ -54,36 +84,60 @@ class OptionModel {
   });
 
   factory OptionModel.fromJson(Map<String, dynamic> json) {
-    var translationList = json['all_option_translations'] as List? ?? [];
-    List<OptionTranslation> parsedTranslations =
-        translationList.map((t) => OptionTranslation.fromJson(t)).toList();
+    final raw = json['all_option_translations'] ??
+        json['translations'] ??
+        [];
+
+    final translations = <OptionTranslation>[];
+
+    if (raw is List) {
+      for (final item in raw) {
+        if (item is Map) {
+          final translation = OptionTranslation.fromJson(
+            Map<String, dynamic>.from(item),
+          );
+
+          if (translation.locale.isNotEmpty) {
+            translations.add(translation);
+          }
+        }
+      }
+    }
+
+    // Legacy response fallback.
+    if (translations.isEmpty &&
+        (json['text']?.toString().trim().isNotEmpty ?? false)) {
+      translations.add(
+        OptionTranslation(
+          locale: 'en',
+          text: json['text'].toString(),
+        ),
+      );
+    }
 
     return OptionModel(
-      identifier: json['identifier'] ?? '',
-      imageUrl: json['image_url'],
-      isCorrect: json['is_correct'] == 1 || json['is_correct'] == true,
-      translations: parsedTranslations,
+      identifier: json['identifier']?.toString() ?? '',
+      isCorrect: json['is_correct'] == true ||
+          json['is_correct'] == 1 ||
+          json['is_correct'] == '1',
+      imageUrl: json['image_url']?.toString(),
+      translations: translations,
     );
   }
 
   String getText(String locale) {
-    final translation = translations.firstWhere(
-      (t) => t.locale == locale,
-      orElse: () => translations.isNotEmpty
-          ? translations.first
-          : OptionTranslation(locale: '', text: ''),
-    );
-    return translation.text;
+    return localizedText(translations, locale);
   }
 
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'identifier': identifier,
-      'is_correct': isCorrect,
-      'image_url': imageUrl,
-      'translations': translations.map((t) => t.toJson()).toList(),
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'identifier': identifier,
+        'is_correct': isCorrect,
+        'image_url': imageUrl,
+        'translations': translations
+            .where((t) => t.text.trim().isNotEmpty)
+            .map((t) => t.toJson())
+            .toList(),
+      };
 }
 
 class QuestionModel {
@@ -94,7 +148,7 @@ class QuestionModel {
   final List<QuestionTranslation> translations;
   final List<OptionModel> options;
 
-  QuestionModel({
+  const QuestionModel({
     this.id,
     required this.levelId,
     this.imageUrl,
@@ -102,82 +156,71 @@ class QuestionModel {
     required this.translations,
     required this.options,
   });
-  factory QuestionModel.fromJson(Map<String, dynamic> json) {
-    var transList =
-        json['all_question_translations'] ?? json['translations'] ?? [];
-    var optionsList = json['options'] as List? ?? [];
 
-    // Fallback: If translations list is empty but 'question' string exists, create a default en translation
-    if ((transList as List).isEmpty && json['question'] != null) {
-      transList = [
-        {'locale': 'en', 'text': json['question'].toString()}
-      ];
+  factory QuestionModel.fromJson(Map<String, dynamic> json) {
+    final rawTranslations = json['all_question_translations'] ??
+        json['translations'] ??
+        [];
+
+    final translations = <QuestionTranslation>[];
+
+    if (rawTranslations is List) {
+      for (final item in rawTranslations) {
+        if (item is Map) {
+          final translation = QuestionTranslation.fromJson(
+            Map<String, dynamic>.from(item),
+          );
+
+          if (translation.locale.isNotEmpty) {
+            translations.add(translation);
+          }
+        }
+      }
     }
+
+    // Legacy response fallback.
+    if (translations.isEmpty &&
+        (json['question']?.toString().trim().isNotEmpty ?? false)) {
+      translations.add(
+        QuestionTranslation(
+          locale: 'en',
+          text: json['question'].toString(),
+        ),
+      );
+    }
+
+    final rawOptions = json['options'] as List? ?? [];
 
     return QuestionModel(
       id: json['id']?.toString(),
       levelId: json['level_id']?.toString() ?? '',
-      imageUrl: json['image_url'],
-      order: json['order'] ?? 1,
-      translations: transList
+      imageUrl: json['image_url']?.toString(),
+      order: int.tryParse(json['order']?.toString() ?? '') ?? 1,
+      translations: translations,
+      options: rawOptions
+          .whereType<Map>()
           .map(
-              (t) => QuestionTranslation.fromJson(Map<String, dynamic>.from(t)))
+            (item) => OptionModel.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
           .toList(),
-      options: optionsList.map((o) {
-        var optTrans = o['all_option_translations'] ?? o['translations'] ?? [];
-
-        // Fallback: If option translations list is empty but 'text' exists, create a default en translation
-        if ((optTrans as List).isEmpty && o['text'] != null) {
-          optTrans = [
-            {'locale': 'en', 'text': o['text'].toString()}
-          ];
-        }
-
-        return OptionModel(
-          identifier: o['identifier']?.toString() ?? '',
-          isCorrect: o['is_correct'] == true ||
-              o['is_correct'] == 1 ||
-              o['is_correct'] == '1',
-          imageUrl: o['image_url'],
-          translations: (optTrans as List)
-              .map((ot) =>
-                  OptionTranslation.fromJson(Map<String, dynamic>.from(ot)))
-              .toList(),
-        );
-      }).toList(),
     );
   }
+
   String getTitle(String locale) {
-    final translation = translations.firstWhere(
-      (t) => t.locale == locale,
-      orElse: () => translations.isNotEmpty
-          ? translations.first
-          : QuestionTranslation(locale: '', text: ''),
-    );
-    return translation.text;
+    return localizedText(translations, locale);
   }
 
-  Map<String, dynamic> toJson() {
-    final enTrans = translations.firstWhere(
-      (t) => t.locale == 'en',
-      orElse: () => QuestionTranslation(locale: 'en', text: ''),
-    );
-
-    final arTrans = translations.firstWhere(
-      (t) => t.locale == 'ar',
-      orElse: () => QuestionTranslation(locale: 'ar', text: ''),
-    );
-
-    return <String, dynamic>{
-      'id': id,
-      'level_id': levelId,
-      'order': order,
-      'image_url': imageUrl,
-      'translations': translations.map((t) => t.toJson()).toList(),
-      'question_text': {
-        for (var t in translations) t.locale: t.text,
-      },
-      'options': options.map((o) => o.toJson()).toList(),
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'level_id': levelId,
+        'order': order,
+        'image_url': imageUrl,
+        'translations': translations
+            .where((t) => t.text.trim().isNotEmpty)
+            .map((t) => t.toJson())
+            .toList(),
+        'options': options.map((o) => o.toJson()).toList(),
+      };
 }

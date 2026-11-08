@@ -11,7 +11,7 @@ class UpdateQuestionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,20 @@ class UpdateQuestionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+           
+'translations' => 'sometimes|required|array|min:1',
+'translations.*.locale' => 'required|in:en,ar',
+'translations.*.text' => 'required|string',
+
+'options' => 'sometimes|required|array|min:1',
+'options.*.identifier' => 'required|in:A,B,C,D',
+'options.*.is_correct' => 'required|boolean',
+'options.*.image_url' => 'sometimes|nullable|string',
+
+'options.*.translations' => 'required|array|min:1',
+'options.*.translations.*.locale' => 'required|in:en,ar',
+'options.*.translations.*.text' => 'required|string',
+
         ];
     }
 }

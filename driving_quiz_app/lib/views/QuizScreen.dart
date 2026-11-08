@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:driving_quiz_app/models/question_model.dart';
+import 'package:driving_quiz_app/services/APIService.dart';
 import 'package:driving_quiz_app/services/AdminService.dart';
 import 'package:driving_quiz_app/services/QuestionService.dart';
 import 'package:driving_quiz_app/views/ManageQuestionDialog.dart';
@@ -22,11 +23,12 @@ class QuizScreen extends StatefulWidget {
 
 class _QuizScreenState extends State<QuizScreen> {
   final QuestionService _apiService = QuestionService();
+  final baseUrl = APIService.getBaseUrl();
   AdminService _authService = AdminService();
   List<QuestionModel> questions = [];
   bool _isLoading = true;
   bool _isFetching = false;
-
+  bool _refreshRequested = false;
   int currentIndex = 0;
   String? selectedOptionId;
   bool isAnswerChecked = false;
@@ -54,133 +56,181 @@ class _QuizScreenState extends State<QuizScreen> {
     });
   }
 
-  Future<void> fetchQuestions({bool showLoading = false}) async {
-    if (_isFetching) return;
+  Future<void> fetchQuestions({
+    bool showLoading = false,
+  }) async {
+    // Never lose a refresh request.
+    if (_isFetching) {
+      _refreshRequested = true;
+
+      if (showLoading && mounted) {
+        setState(() {
+          _isLoading = true;
+        });
+      }
+
+      return;
+    }
 
     _isFetching = true;
 
-    final previousQuestionId = questions.isNotEmpty &&
-            currentIndex >= 0 &&
-            currentIndex < questions.length
-        ? questions[currentIndex].id
-        : null;
-
-    if (showLoading && mounted) {
-      setState(() => _isLoading = true);
-    }
+    bool shouldShowLoading = showLoading;
 
     try {
-      final accessToken = await _storage.read(key: 'auth_token');
+      do {
+        _refreshRequested = false;
 
-      if (accessToken == null || accessToken.isEmpty) {
-        debugPrint('Cannot fetch questions: auth token is missing.');
-        return;
-      }
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/levels/${widget.levelId}/questions'),
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $accessToken',
-        },
-      );
-
-      if (!mounted) return;
-
-      if (response.statusCode != 200) {
-        debugPrint(
-          'Failed to fetch questions: ${response.statusCode}',
-        );
-        debugPrint('Response: ${response.body}');
-        return;
-      }
-
-      final decoded = jsonDecode(response.body);
-
-      if (decoded is! Map<String, dynamic>) {
-        debugPrint('Invalid questions response format.');
-        return;
-      }
-
-      final rawData = decoded['data'];
-
-      if (rawData is! List) {
-        debugPrint('Questions response does not contain a data list.');
-        return;
-      }
-
-      final refreshedQuestions = rawData
-          .map(
-            (item) => QuestionModel.fromJson(
-              Map<String, dynamic>.from(item as Map),
-            ),
-          )
-          .toList();
-
-      refreshedQuestions.sort(
-        (a, b) => a.order.compareTo(b.order),
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        questions = refreshedQuestions;
-
-        if (questions.isEmpty) {
-          currentIndex = 0;
-        } else {
-          // Keep the same question selected after editing/deleting.
-          final previousIndex = previousQuestionId == null
-              ? -1
-              : questions.indexWhere(
-                  (question) => question.id == previousQuestionId,
-                );
-
-          if (previousIndex >= 0) {
-            currentIndex = previousIndex;
-          } else {
-            currentIndex = currentIndex.clamp(0, questions.length - 1);
-          }
+        if (shouldShowLoading && mounted) {
+          setState(() {
+            _isLoading = true;
+          });
         }
 
-        selectedOptionId = null;
-        isAnswerChecked = false;
-      });
+        shouldShowLoading = false;
 
-      debugPrint('Questions refreshed: ${questions.length}');
-    } catch (e, stackTrace) {
-      debugPrint('Error fetching questions: $e');
-      debugPrintStack(stackTrace: stackTrace);
+        if (!mounted) break;
+
+        // Preserve the currently selected question.
+        final String? previousQuestionId = questions.isNotEmpty &&
+                currentIndex >= 0 &&
+                currentIndex < questions.length
+            ? questions[currentIndex].id
+            : null;
+
+        try {
+          final accessToken = await _storage.read(
+            key: 'auth_token',
+          );
+
+          if (accessToken == null || accessToken.isEmpty) {
+            debugPrint('Missing authentication token.');
+            break;
+          }
+
+          final response = await http.get(
+            Uri.parse(
+              '$baseUrl/levels/${widget.levelId}/questions',
+            ),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $accessToken',
+            },
+          );
+
+          if (!mounted) break;
+
+          if (response.statusCode != 200) {
+            debugPrint(
+              'Question fetch failed: ${response.statusCode}',
+            );
+            debugPrint(response.body);
+            break;
+          }
+
+          final decoded = jsonDecode(response.body);
+
+          if (decoded is! Map<String, dynamic>) {
+            debugPrint('Invalid API response.');
+            break;
+          }
+
+          final rawData = decoded['data'];
+
+          if (rawData is! List) {
+            debugPrint('Questions data is not a list.');
+            break;
+          }
+
+          final List<QuestionModel> refreshedQuestions = rawData.map((item) {
+            return QuestionModel.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            );
+          }).toList();
+
+          // Keep questions in their correct order.
+          refreshedQuestions.sort(
+            (a, b) => a.order.compareTo(b.order),
+          );
+
+          if (!mounted) break;
+
+          setState(() {
+            questions = refreshedQuestions;
+
+            if (questions.isEmpty) {
+              currentIndex = 0;
+            } else {
+              // Find the previously selected question.
+              final newIndex = previousQuestionId == null
+                  ? -1
+                  : questions.indexWhere(
+                      (q) => q.id == previousQuestionId,
+                    );
+
+              if (newIndex != -1) {
+                currentIndex = newIndex;
+              } else {
+                currentIndex = currentIndex.clamp(
+                  0,
+                  questions.length - 1,
+                );
+              }
+            }
+
+            // Reset answer state after refreshing.
+            selectedOptionId = null;
+            isAnswerChecked = false;
+          });
+
+          debugPrint(
+            'Questions successfully refreshed: ${questions.length}',
+          );
+        } catch (e, stackTrace) {
+          debugPrint('Fetch questions error: $e');
+          debugPrintStack(stackTrace: stackTrace);
+        }
+
+        // If another refresh was requested during the request,
+        // the loop will fetch the latest data again.
+      } while (_refreshRequested && mounted);
     } finally {
       _isFetching = false;
 
       if (mounted && _isLoading) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
 
- Future<void> _openQuestionForm({
+  Future<void> _openQuestionForm({
     QuestionModel? question,
   }) async {
     if (!_isAdmin) return;
 
-    // Expect a Map instead of a bool since we pop the payload
-    final result = await Navigator.push(
-      context,
+    final bool? result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => ManageQuestionDialog(
+        builder: (context) => ManageQuestionDialog(
           levelId: widget.levelId,
           question: question?.toJson(),
+          key: ValueKey(
+            question == null ? 'create-question' : 'edit-${question.id}',
+          ),
         ),
       ),
     );
 
-    // If result is null, the user cancelled or it failed
-    if (!mounted || result == null) return;
+    if (!mounted) return;
 
-    // Refresh the questions list
-    await fetchQuestions();
+    // Refresh ONLY after a successful create/update.
+    if (result == true) {
+      debugPrint(
+        'Question saved successfully. Refreshing QuizScreen...',
+      );
+
+      await fetchQuestions();
+    }
   }
 
   void handleDeleteQuestion(BuildContext context, String? hashedId) async {
@@ -300,22 +350,7 @@ class _QuizScreenState extends State<QuizScreen> {
                         borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () async {
-                    final result = await Navigator.push<bool>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ManageQuestionDialog(
-                          levelId: widget.levelId,
-                          question: null,
-                          onQuestionSaved: () {},
-                        ),
-                      ),
-                    );
-
-                    if (!mounted) return;
-
-                    if (result == true) {
-                      await fetchQuestions();
-                    }
+                    _openQuestionForm();
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('إضافة سؤال جديد'),
@@ -359,37 +394,6 @@ class _QuizScreenState extends State<QuizScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment
-                              .end, // Aligned nicely (change to start if preferred)
-                          children: [
-                            TextButton.icon(
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppColors.primaryGreen,
-                                backgroundColor:
-                                    AppColors.secondarySage.withOpacity(0.1),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20)),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  currentLocale =
-                                      currentLocale == "ar" ? "en" : "ar";
-                                });
-                              },
-                              icon: const Icon(Icons.language, size: 16),
-                              label: Text(
-                                currentLocale == "ar"
-                                    ? "English (EN)"
-                                    : "العربية (AR)",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 12),
-                              ),
-                            ),
-                          ],
-                        ),
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -405,37 +409,12 @@ class _QuizScreenState extends State<QuizScreen> {
                                       icon: const Icon(
                                         Icons.edit_outlined,
                                         color: AppColors.primaryGreen,
-                                        size: 20,
                                       ),
-                                      tooltip: 'تعديل السؤال',
+                                      tooltip: 'Edit question',
                                       onPressed: () async {
-                                        debugPrint('Edit button clicked');
-
-                                        try {
-                                          final result =
-                                              await Navigator.push<bool>(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  ManageQuestionDialog(
-                                                levelId: widget.levelId,
-                                                question:
-                                                    currentQuestion.toJson(),
-                                              ),
-                                            ),
-                                          );
-
-                                          if (!mounted) return;
-
-                                          if (result == true) {
-                                            await fetchQuestions();
-                                          }
-                                        } catch (e, stackTrace) {
-                                          debugPrint(
-                                              'Error opening edit page: $e');
-                                          debugPrintStack(
-                                              stackTrace: stackTrace);
-                                        }
+                                        await _openQuestionForm(
+                                          question: currentQuestion,
+                                        );
                                       },
                                     ),
                                     IconButton(

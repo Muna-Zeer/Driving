@@ -1,13 +1,21 @@
+import 'package:flutter/material.dart';
+
 import 'package:driving_quiz_app/models/question_model.dart';
 import 'package:driving_quiz_app/services/APIService.dart';
-import 'package:driving_quiz_app/widgets/ImageLibraryPicker.dart';
-import 'package:flutter/material.dart';
 import 'package:driving_quiz_app/services/QuestionService.dart';
-import 'package:driving_quiz_app/views/CategoriesScreen.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
-import 'package:driving_quiz_app/widgets/CustomTextField.dart';
+import 'package:driving_quiz_app/widgets/ImageLibraryPicker.dart';
 import 'package:driving_quiz_app/widgets/breakpoint.dart';
+
+enum FormLocale { en, ar }
+
+extension FormLocaleX on FormLocale {
+  String get code => this == FormLocale.en ? 'en' : 'ar';
+  String get label => this == FormLocale.en ? 'English' : 'العربية';
+  TextDirection get direction =>
+      this == FormLocale.ar ? TextDirection.rtl : TextDirection.ltr;
+}
 
 class ManageQuestionDialog extends StatefulWidget {
   final String levelId;
@@ -15,202 +23,257 @@ class ManageQuestionDialog extends StatefulWidget {
   final VoidCallback? onQuestionSaved;
 
   const ManageQuestionDialog({
-    Key? key,
+    super.key,
     required this.levelId,
     this.question,
     this.onQuestionSaved,
-  }) : super(key: key);
+  });
 
   @override
   State<ManageQuestionDialog> createState() => _ManageQuestionDialogState();
 }
 
-enum FormLocale { ar, en }
-
-final baseUrl = APIService.getBaseUrl();
-
 class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
   final _formKey = GlobalKey<FormState>();
-  FormLocale _activeLocale = FormLocale.en;
   final QuestionService _questionService = QuestionService();
 
-  late TextEditingController _imageUrlController;
+  static const List<String> _identifiers = ['A', 'B', 'C', 'D'];
+
+  late final TextEditingController _orderController;
+  late final TextEditingController _questionImageController;
 
   final Map<FormLocale, TextEditingController> _questionControllers = {
-    FormLocale.ar: TextEditingController(),
     FormLocale.en: TextEditingController(),
+    FormLocale.ar: TextEditingController(),
   };
 
-  bool _isLoading = false;
+  late final List<Map<FormLocale, TextEditingController>> _optionControllers;
+  late final List<TextEditingController> _optionImageControllers;
+
+  final Set<FormLocale> _selectedLocales = {FormLocale.en, FormLocale.ar};
+  FormLocale _activeLocale = FormLocale.en;
+
   int _correctOptionIndex = 0;
   bool _isSubmitting = false;
-  late bool _isEditing;
-  final TextEditingController _orderController = TextEditingController();
-  late List<TextEditingController> _optionImageControllers;
-  final List<Map<FormLocale, TextEditingController>> _optionControllers =
-      List.generate(
-          4,
-          (_) => {
-                FormLocale.en: TextEditingController(),
-                FormLocale.ar: TextEditingController(),
-              });
-  final List<String> _identifiers = ['A', 'B', 'C', 'D'];
+
+  bool get _isEditing => widget.question != null;
+  String get _baseUrl => APIService.getBaseUrl();
 
   @override
   void initState() {
     super.initState();
 
-    _isEditing = widget.question != null;
-    _optionImageControllers = List.generate(
-      4,
-      (_) => TextEditingController()..addListener(_onOptionImageChanged),
+    _orderController = TextEditingController(
+      text: widget.question?['order']?.toString() ?? '',
     );
-
-    _imageUrlController = TextEditingController(
+    _questionImageController = TextEditingController(
       text: widget.question?['image_url']?.toString() ?? '',
     );
 
-    _imageUrlController.addListener(_onImageUrlChanged);
+    _optionControllers = List.generate(
+      4,
+      (_) => {
+        FormLocale.en: TextEditingController(),
+        FormLocale.ar: TextEditingController(),
+      },
+    );
+
+    _optionImageControllers =
+        List.generate(4, (_) => TextEditingController());
 
     if (_isEditing) {
-      _populateFormForEdit();
+      _populateForEdit(widget.question!);
     }
   }
 
-  void _onOptionImageChanged() {
-    if (mounted) {
-      setState(() {});
-    }
+  String _normalizeLocale(dynamic value) {
+    final locale = value?.toString().trim().toLowerCase() ?? '';
+    if (locale == '0') return 'ar';
+    if (locale == '1') return 'en';
+    return locale;
   }
 
-  void _onImageUrlChanged() {
-    if (mounted) {
-      setState(() {});
-    }
-  }
+  Map<String, String> _readTranslations(dynamic raw) {
+    final result = <String, String>{'en': '', 'ar': ''};
 
-  String _normalizeLocale(dynamic locale) {
-    return locale?.toString().toLowerCase() ?? '';
-  }
-
-  bool _isTrue(dynamic value) {
-    return value == true || value == 1 || value == '1';
-  }
-
-  void _populateFormForEdit() {
-    final questionData = widget.question;
-    if (questionData == null) return;
-
-    setState(() {
-      // 1. Order & Image URL
-      if (questionData['order'] != null) {
-        _orderController.text = questionData['order'].toString();
-      }
-      if (questionData['image_url'] != null) {
-        _imageUrlController.text = questionData['image_url'].toString();
-      }
-
-      // 2. Question Translations & Fallbacks
-      final qTranslations = questionData['all_question_translations'] ??
-          questionData['translations'] ??
-          [];
-
-      bool englishFound = false;
-      bool arabicFound = false;
-
-      if (qTranslations is List) {
-        for (var t in qTranslations) {
-          final locale = t['locale']?.toString().toLowerCase();
-          final text = t['text']?.toString() ?? '';
-          if (locale == 'en') {
-            _questionControllers[FormLocale.en]!.text = text;
-            englishFound = true;
-          } else if (locale == 'ar') {
-            _questionControllers[FormLocale.ar]!.text = text;
-            arabicFound = true;
-          }
+    if (raw is List) {
+      for (final item in raw) {
+        if (item is! Map) continue;
+        final locale = _normalizeLocale(item['locale']);
+        if (result.containsKey(locale)) {
+          result[locale] = item['text']?.toString() ?? '';
         }
       }
-
-      // Fallbacks if translations list is empty or doesn't have specific locales
-      if (!englishFound && questionData['question'] != null) {
-        _questionControllers[FormLocale.en]!.text =
-            questionData['question'].toString();
+    } else if (raw is Map) {
+      for (final locale in ['en', 'ar']) {
+        final value = raw[locale];
+        if (value is Map) {
+          result[locale] = value['text']?.toString() ?? '';
+        } else if (value != null) {
+          result[locale] = value.toString();
+        }
       }
-      if (!englishFound && questionData['question_text'] is Map) {
-        final qMap = questionData['question_text'] as Map;
-        _questionControllers[FormLocale.en]!.text =
-            qMap['en']?.toString() ?? '';
-        _questionControllers[FormLocale.ar]!.text =
-            qMap['ar']?.toString() ?? '';
+    }
+
+    return result;
+  }
+
+  bool _isTrue(dynamic value) =>
+      value == true || value == 1 || value?.toString() == '1';
+
+  void _populateForEdit(Map<String, dynamic> data) {
+    final questionTranslations = _readTranslations(
+      data['all_question_translations'] ?? data['translations'],
+    );
+    final legacyQuestionMap = _readTranslations(data['question_text']);
+
+    final englishQuestion = questionTranslations['en']!.isNotEmpty
+        ? questionTranslations['en']!
+        : (legacyQuestionMap['en']!.isNotEmpty
+            ? legacyQuestionMap['en']!
+            : data['question']?.toString() ?? '');
+
+    final arabicQuestion = questionTranslations['ar']!.isNotEmpty
+        ? questionTranslations['ar']!
+        : legacyQuestionMap['ar']!;
+
+    _questionControllers[FormLocale.en]!.text = englishQuestion;
+    _questionControllers[FormLocale.ar]!.text = arabicQuestion;
+
+    final options = data['options'];
+    if (options is List) {
+      for (final rawOption in options) {
+        if (rawOption is! Map) continue;
+
+        final identifier =
+            rawOption['identifier']?.toString().trim().toUpperCase() ?? '';
+        final index = _identifiers.indexOf(identifier);
+        if (index < 0) continue;
+
+        if (_isTrue(rawOption['is_correct'])) {
+          _correctOptionIndex = index;
+        }
+
+        _optionImageControllers[index].text =
+            rawOption['image_url']?.toString() ?? '';
+
+        final translations = _readTranslations(
+          rawOption['all_option_translations'] ?? rawOption['translations'],
+        );
+
+        _optionControllers[index][FormLocale.en]!.text =
+            translations['en']!.isNotEmpty
+                ? translations['en']!
+                : rawOption['text']?.toString() ?? '';
+        _optionControllers[index][FormLocale.ar]!.text = translations['ar']!;
       }
+    }
 
-      // 3. Options & Identifiers
-      if (questionData['options'] != null && questionData['options'] is List) {
-        final options = questionData['options'] as List;
+    // Select the languages already represented by the question or its options.
+    final detected = <FormLocale>{};
+    if (englishQuestion.trim().isNotEmpty) detected.add(FormLocale.en);
+    if (arabicQuestion.trim().isNotEmpty) detected.add(FormLocale.ar);
 
-        for (int i = 0; i < options.length && i < 4; i++) {
-          final opt = options[i];
-          final identifier = opt['identifier']?.toString() ?? _identifiers[i];
+    for (final option in _optionControllers) {
+      if (option[FormLocale.en]!.text.trim().isNotEmpty) {
+        detected.add(FormLocale.en);
+      }
+      if (option[FormLocale.ar]!.text.trim().isNotEmpty) {
+        detected.add(FormLocale.ar);
+      }
+    }
 
-          // Find the correct index in form controllers based on identifier ('A', 'B', 'C', 'D')
-          int index = _identifiers.indexOf(identifier);
-          if (index == -1) {
-            index = i;
-          }
+    _selectedLocales
+      ..clear()
+      ..addAll(detected.isEmpty ? {FormLocale.en} : detected);
+    _activeLocale = _selectedLocales.contains(FormLocale.en)
+        ? FormLocale.en
+        : FormLocale.ar;
+  }
 
-          if (index >= 0 && index < 4) {
-            // Correct option flag
-            if (_isTrue(opt['is_correct'])) {
-              _correctOptionIndex = index;
-            }
+  void _toggleLocale(FormLocale locale, bool selected) {
+    if (!selected && _selectedLocales.length == 1) {
+      _showMessage(_activeLocale == FormLocale.ar
+          ? 'يجب اختيار لغة واحدة على الأقل.'
+          : 'Select at least one language.');
+      return;
+    }
 
-            // Option Image URL
-            if (opt['image_url'] != null &&
-                _optionImageControllers.length > index) {
-              _optionImageControllers[index].text = opt['image_url'].toString();
-            }
-
-            // Option Translations & Fallbacks
-            // Option Translations & Fallbacks
-            final optTranslations =
-                opt['all_option_translations'] ?? opt['translations'] ?? [];
-
-            bool optEnFound = false;
-            bool optArFound = false;
-
-            if (optTranslations is List) {
-              for (var ot in optTranslations) {
-                if (ot == null) continue;
-                final locale = ot['locale']?.toString().toLowerCase() ?? '';
-                final text = ot['text']?.toString() ?? '';
-
-                // Map locales (backend sometimes uses '0' or empty for default/English)
-                if (locale == 'en' || locale == '0' || locale.isEmpty) {
-                  _optionControllers[index][FormLocale.en]!.text = text;
-                  optEnFound = true;
-                } else if (locale == 'ar' || locale == '1') {
-                  _optionControllers[index][FormLocale.ar]!.text = text;
-                  optArFound = true;
-                }
-              }
-            }
-
-            // Fallback to top-level 'text' field if translations didn't cover English
-            if (!optEnFound && opt['text'] != null) {
-              _optionControllers[index][FormLocale.en]!.text =
-                  opt['text'].toString();
-            }
-
-            // Fallback to top-level text if option translations were missing/empty
-            if (!optEnFound && opt['text'] != null) {
-              _optionControllers[index][FormLocale.en]!.text =
-                  opt['text'].toString();
-            }
-          }
+    setState(() {
+      if (selected) {
+        _selectedLocales.add(locale);
+        _activeLocale = locale;
+      } else {
+        _selectedLocales.remove(locale);
+        if (_activeLocale == locale) {
+          _activeLocale = _selectedLocales.first;
         }
       }
     });
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  String? _validateRequiredText(String? value, String locale) {
+    if (!_selectedLocales.any((item) => item.code == locale)) return null;
+    if (value == null || value.trim().isEmpty) {
+      return locale == 'ar' ? 'هذا الحقل مطلوب' : 'This field is required';
+    }
+    return null;
+  }
+
+  bool _validateSelectedTranslations() {
+    for (final locale in _selectedLocales) {
+      final questionText = _questionControllers[locale]!.text.trim();
+      if (questionText.isEmpty) {
+        _activeLocale = locale;
+        setState(() {});
+        _showMessage(locale == FormLocale.ar
+            ? 'يرجى إدخال نص السؤال باللغة العربية.'
+            : 'Please enter the question in English.');
+        return false;
+      }
+
+      for (var i = 0; i < 4; i++) {
+        if (_optionControllers[i][locale]!.text.trim().isEmpty) {
+          _activeLocale = locale;
+          setState(() {});
+          _showMessage(locale == FormLocale.ar
+              ? 'يرجى إدخال جميع الخيارات باللغة العربية.'
+              : 'Please enter all four options in English.');
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  List<QuestionTranslation> _buildQuestionTranslations() {
+    return _selectedLocales
+        .map(
+          (locale) => QuestionTranslation(
+            locale: locale.code,
+            text: _questionControllers[locale]!.text.trim(),
+          ),
+        )
+        .where((translation) => translation.text.isNotEmpty)
+        .toList();
+  }
+
+  List<OptionTranslation> _buildOptionTranslations(int index) {
+    return _selectedLocales
+        .map(
+          (locale) => OptionTranslation(
+            locale: locale.code,
+            text: _optionControllers[index][locale]!.text.trim(),
+          ),
+        )
+        .where((translation) => translation.text.isNotEmpty)
+        .toList();
   }
 
   Future<void> _submit() async {
@@ -218,131 +281,346 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
 
     FocusScope.of(context).unfocus();
 
-    if (!_formKey.currentState!.validate()) return;
-
-    final order = int.tryParse(_orderController.text.trim()) ?? 1;
-    if (order < 1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid question order.'),
-        ),
-      );
+    if (_selectedLocales.isEmpty) {
+      _showMessage('Select at least one language.');
       return;
     }
 
-    if (_isEditing &&
-        (widget.question?['id'] == null ||
-            widget.question!['id'].toString().isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot update this question: its ID is missing.'),
-        ),
-      );
+    if (!_formKey.currentState!.validate()) return;
+    if (!_validateSelectedTranslations()) return;
+
+    final order = int.tryParse(_orderController.text.trim());
+    if (order == null || order < 1) {
+      _showMessage(_activeLocale == FormLocale.ar
+          ? 'أدخل ترتيباً صحيحاً للسؤال.'
+          : 'Enter a valid question order.');
+      return;
+    }
+
+    final questionId = widget.question?['id']?.toString();
+    if (_isEditing && (questionId == null || questionId.isEmpty)) {
+      _showMessage('Cannot update this question: its ID is missing.');
       return;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      final questionModel = QuestionModel(
+      final model = QuestionModel(
+        id: _isEditing ? questionId : null,
         levelId: widget.levelId,
         order: order,
-        imageUrl: _imageUrlController.text.trim().isEmpty
+        imageUrl: _questionImageController.text.trim().isEmpty
             ? null
-            : _imageUrlController.text.trim(),
-        translations: [
-          QuestionTranslation(
-            locale: 'en',
-            text: _questionControllers[FormLocale.en]!.text.trim(),
-          ),
-          QuestionTranslation(
-            locale: 'ar',
-            text: _questionControllers[FormLocale.ar]!.text.trim(),
-          ),
-        ],
-        options: List.generate(4, (i) {
-          return OptionModel(
-            identifier: _identifiers[i],
-            isCorrect: i == _correctOptionIndex,
-            imageUrl: _optionImageControllers[i].text.trim().isEmpty
+            : _questionImageController.text.trim(),
+        translations: _buildQuestionTranslations(),
+        options: List.generate(
+          4,
+          (index) => OptionModel(
+            identifier: _identifiers[index],
+            isCorrect: index == _correctOptionIndex,
+            imageUrl: _optionImageControllers[index].text.trim().isEmpty
                 ? null
-                : _optionImageControllers[i].text.trim(),
-            translations: [
-              OptionTranslation(
-                locale: 'en',
-                text: _optionControllers[i][FormLocale.en]!.text.trim(),
-              ),
-              OptionTranslation(
-                locale: 'ar',
-                text: _optionControllers[i][FormLocale.ar]!.text.trim(),
-              ),
-            ],
-          );
-        }),
+                : _optionImageControllers[index].text.trim(),
+            translations: _buildOptionTranslations(index),
+          ),
+        ),
       );
 
-      final payload = questionModel.toJson();
+      final payload = model.toJson();
 
-      // Capture the result as a Map (NOT a bool!)
-      final Map<String, dynamic>? responseMap = _isEditing
-          ? await _questionService.updateQuestion(
-              widget.question!['id'].toString(),
-              payload,
-            )
+      final Map<String, dynamic>? response = _isEditing
+          ? await _questionService.updateQuestion(questionId!, payload)
           : await _questionService.createQuestion(payload);
 
       if (!mounted) return;
 
-      // Check if response is null OR status is not true
-      final bool success = responseMap != null && responseMap['status'] == true;
-
-      if (!success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isEditing
-                  ? 'Failed to update question.'
-                  : 'Failed to create question.',
-            ),
-          ),
-        );
+      if (response == null || response['status'] != true) {
+        final message = response?['message']?.toString();
+        _showMessage(message?.isNotEmpty == true
+            ? message!
+            : (_isEditing
+                ? 'Failed to update question.'
+                : 'Failed to create question.'));
         return;
       }
 
       widget.onQuestionSaved?.call();
-      Navigator.of(context).pop(payload);
-    } catch (e, stackTrace) {
-      debugPrint('Error saving question: $e');
+      Navigator.of(context).pop(true);
+    } catch (error, stackTrace) {
+      debugPrint('Question save error: $error');
       debugPrintStack(stackTrace: stackTrace);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving question: $e')),
-      );
+      if (mounted) _showMessage('Error saving question: $error');
     } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
+      if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  Future<void> _selectImage(TextEditingController controller) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => ImageLibraryDialog(
+        onImageSelected: (selectedUrl) {
+          controller.text = selectedUrl;
+          setState(() {});
+        },
+      ),
+    );
+  }
+
+  String _imagePreviewUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return '';
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    return '$_baseUrl${trimmed.startsWith('/') ? '' : '/'}$trimmed';
+  }
+
+  Widget _sectionTitle(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.primaryGreen),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _imageField({
+    required String label,
+    required TextEditingController controller,
+  }) {
+    final url = _imagePreviewUrl(controller.text);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Choose from image library',
+                  onPressed: () => _selectImage(controller),
+                  icon: const Icon(
+                    Icons.photo_library_outlined,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
+                if (controller.text.isNotEmpty)
+                  IconButton(
+                    tooltip: 'Clear image',
+                    onPressed: () {
+                      controller.clear();
+                      setState(() {});
+                    },
+                    icon: const Icon(Icons.close, color: Colors.red),
+                  ),
+              ],
+            ),
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        if (url.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              height: 110,
+              width: 140,
+              color: AppColors.background,
+              child: Image.network(
+                url,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Center(
+                  child: Icon(Icons.broken_image_outlined, size: 32),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _languageSettings() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Question languages / لغات السؤال',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 12,
+            runSpacing: 4,
+            children: [
+              FilterChip(
+                label: const Text('English'),
+                selected: _selectedLocales.contains(FormLocale.en),
+                onSelected: (value) => _toggleLocale(FormLocale.en, value),
+              ),
+              FilterChip(
+                label: const Text('العربية'),
+                selected: _selectedLocales.contains(FormLocale.ar),
+                onSelected: (value) => _toggleLocale(FormLocale.ar, value),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<FormLocale>(
+            segments: const [
+              ButtonSegment(
+                value: FormLocale.en,
+                label: Text('English'),
+              ),
+              ButtonSegment(
+                value: FormLocale.ar,
+                label: Text('العربية'),
+              ),
+            ],
+            selected: {_activeLocale},
+            onSelectionChanged: (selection) {
+              setState(() => _activeLocale = selection.first);
+            },
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _activeLocale == FormLocale.ar
+                ? 'أدخل السؤال والخيارات باللغة العربية.'
+                : 'Enter the question and options in English.',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _translationFields() {
+    final locale = _activeLocale;
+    final isArabic = locale == FormLocale.ar;
+
+    return Directionality(
+      textDirection: locale.direction,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            controller: _questionControllers[locale],
+            minLines: 2,
+            maxLines: 4,
+            textDirection: locale.direction,
+            textAlign: isArabic ? TextAlign.right : TextAlign.left,
+            decoration: InputDecoration(
+              labelText: isArabic ? 'نص السؤال' : 'Question text',
+              hintText: isArabic
+                  ? 'اكتب السؤال باللغة العربية'
+                  : 'Write the question in English',
+              border: const OutlineInputBorder(),
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...List.generate(4, (index) {
+            final controller = _optionControllers[index][locale]!;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 54,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _identifiers[index],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: controller,
+                      minLines: 1,
+                      maxLines: 3,
+                      textDirection: locale.direction,
+                      textAlign: isArabic ? TextAlign.right : TextAlign.left,
+                      decoration: InputDecoration(
+                        labelText: isArabic
+                            ? 'الخيار ${_identifiers[index]}'
+                            : 'Option ${_identifiers[index]}',
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  IconButton(
+                    tooltip: isArabic ? 'صورة الخيار' : 'Option image',
+                    onPressed: () => _selectImage(_optionImageControllers[index]),
+                    icon: const Icon(
+                      Icons.image_outlined,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
   }
 
   @override
   void dispose() {
     _orderController.dispose();
-    _imageUrlController.dispose();
+    _questionImageController.dispose();
 
-    for (var controller in _questionControllers.values) {
+    for (final controller in _questionControllers.values) {
       controller.dispose();
     }
-
-    for (var optionMap in _optionControllers) {
-      for (var controller in optionMap.values) {
+    for (final option in _optionControllers) {
+      for (final controller in option.values) {
         controller.dispose();
       }
     }
-
-    for (var controller in _optionImageControllers) {
+    for (final controller in _optionImageControllers) {
       controller.dispose();
     }
 
@@ -351,476 +629,197 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = BreakPoint.isDesktop(MediaQuery.of(context).size.width) ||
+        BreakPoint.isTablet(MediaQuery.of(context).size.width);
+
     return Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-            backgroundColor: AppColors.background,
-            appBar: AppBar(
-              title: const CustomResponsiveNavbar(),
-              backgroundColor: AppColors.surface,
-              foregroundColor: AppColors.deepForest,
-              elevation: 1,
-            ),
-            endDrawer: MediaQuery.of(context).size.width < BreakPoint.tableMax
-                ? buildMobileDrawer()
-                : null,
-            body: LayoutBuilder(builder: (context, constraints) {
-              final isDesktop = BreakPoint.isDesktop(constraints.maxWidth);
-              final isTablet = BreakPoint.isTablet(constraints.maxWidth);
-              final isWideScreen = isDesktop || isTablet;
-
-              return Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 800),
-                      child: Padding(
-                          padding: EdgeInsets.only(
-                            bottom:
-                                MediaQuery.of(context).viewInsets.bottom + 24,
-                            top: 24,
-                            left: isWideScreen ? 32 : 16,
-                            right: isWideScreen ? 32 : 16,
-                          ),
-                          child: Form(
-                            key: _formKey,
-                            child: SingleChildScrollView(
-                                child: Card(
-                              elevation: 2,
-                              color: AppColors.surface,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const CustomResponsiveNavbar(),
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.deepForest,
+          elevation: 1,
+        ),
+        body: SafeArea(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 820),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  isWide ? 28 : 14,
+                  20,
+                  isWide ? 28 : 14,
+                  MediaQuery.of(context).viewInsets.bottom + 28,
+                ),
+                child: Card(
+                  color: AppColors.surface,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(isWide ? 24 : 16),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _isEditing
+                                    ? Icons.edit_note_rounded
+                                    : Icons.add_circle_outline_rounded,
+                                color: AppColors.primaryGreen,
+                                size: 27,
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(20.0),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    // Centered Header with Icon & Dynamic Title
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          _isEditing
-                                              ? Icons.edit_note_rounded
-                                              : Icons
-                                                  .add_circle_outline_rounded,
-                                          color: AppColors.primaryGreen,
-                                          size: 26,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          _isEditing
-                                              ? 'Edit Question'
-                                              : 'Add Question',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleLarge
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.primaryGreen,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 20),
-
-                                    // Language Selector (Centered SegmentedButton)
-                                    Center(
-                                      child: SegmentedButton<FormLocale>(
-                                        segments: const [
-                                          ButtonSegment(
-                                            value: FormLocale.en,
-                                            label: Text('English'),
-                                          ),
-                                          ButtonSegment(
-                                            value: FormLocale.ar,
-                                            label: Text('Arabic'),
-                                          ),
-                                        ],
-                                        selected: {_activeLocale},
-                                        onSelectionChanged:
-                                            (Set<FormLocale> selection) {
-                                          setState(() =>
-                                              _activeLocale = selection.first);
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: TextFormField(
-                                            controller: _imageUrlController,
-                                            decoration: InputDecoration(
-                                              labelText:
-                                                  _activeLocale == FormLocale.en
-                                                      ? 'Image URL (Optional)'
-                                                      : 'رابط الصورة (اختياري)',
-                                            ),
-                                            onChanged: (val) => setState(() {}),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-
-                                        if (_imageUrlController
-                                            .text.isNotEmpty) ...[
-                                          IconButton(
-                                            icon: const Icon(Icons.clear,
-                                                color: Colors.red),
-                                            tooltip:
-                                                _activeLocale == FormLocale.en
-                                                    ? 'Remove Image'
-                                                    : 'إزالة الصورة',
-                                            onPressed: () {
-                                              setState(() {
-                                                _imageUrlController.clear();
-                                              });
-                                            },
-                                          ),
-                                          const SizedBox(width: 4),
-                                        ],
-
-                                        // Library Picker Button
-                                        IconButton.filledTonal(
-                                          icon: const Icon(Icons.photo_library,
-                                              color: AppColors.primaryGreen),
-                                          tooltip:
-                                              _activeLocale == FormLocale.en
-                                                  ? 'Select from Library'
-                                                  : 'اختر من المكتبة',
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) =>
-                                                  ImageLibraryDialog(
-                                                onImageSelected:
-                                                    (String selectedUrl) {
-                                                  setState(() {
-                                                    _imageUrlController.text =
-                                                        selectedUrl;
-                                                  });
-                                                },
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-
-                                    if (_imageUrlController
-                                        .text.isNotEmpty) ...[
-                                      Container(
-                                        height: 100,
-                                        width: 100,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: AppColors.border),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          child: Image.network(
-                                            _imageUrlController.text
-                                                    .startsWith(baseUrl)
-                                                ? _imageUrlController.text
-                                                : 'http://127.0.0.1:8000${_imageUrlController.text}',
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) =>
-                                                const Center(
-                                              child: Icon(Icons.broken_image,
-                                                  color: Colors.red),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                    ],
-                                    const SizedBox(height: 12),
-                                    CustomTextField(
-                                      controller:
-                                          _questionControllers[_activeLocale]!,
-                                      textDirection:
-                                          _activeLocale == FormLocale.ar
-                                              ? TextDirection.rtl
-                                              : TextDirection.ltr,
-                                      labelText: _activeLocale == FormLocale.ar
-                                          ? 'نص السؤال (بالعربية)'
-                                          : 'Question Text (EN)',
-                                      validator: (v) {
-                                        if (v == null || v.trim().isEmpty) {
-                                          return _activeLocale == FormLocale.ar
-                                              ? 'يرجى إدخال نص السؤال باللغة العربية'
-                                              : 'Please enter question text in English';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    const SizedBox(height: 16),
-
-                                    // Options Section Header
-                                    Align(
-                                      alignment: _activeLocale == FormLocale.ar
-                                          ? Alignment.centerRight
-                                          : Alignment.centerLeft,
-                                      child: Text(
-                                        _activeLocale == FormLocale.ar
-                                            ? 'الخيارات:'
-                                            : 'Options:',
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-
-                                    ...List.generate(4, (index) {
-                                      final isCorrect =
-                                          _correctOptionIndex == index;
-                                      final hasOptionImage =
-                                          _optionImageControllers[index]!
-                                              .text
-                                              .isNotEmpty;
-
-                                      return Card(
-                                        margin:
-                                            const EdgeInsets.only(bottom: 8),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Column(
-                                            children: [
-                                              Row(
-                                                textDirection: _activeLocale ==
-                                                        FormLocale.ar
-                                                    ? TextDirection.rtl
-                                                    : TextDirection.ltr,
-                                                children: [
-                                                  Radio<int>(
-                                                    value: index,
-                                                    groupValue:
-                                                        _correctOptionIndex,
-                                                    onChanged: (val) =>
-                                                        setState(() =>
-                                                            _correctOptionIndex =
-                                                                val!),
-                                                  ),
-                                                  Text(
-                                                    _activeLocale ==
-                                                            FormLocale.ar
-                                                        ? 'الخيار ${_identifiers[index]} (${isCorrect ? "صحيح" : "غير صحيح"})'
-                                                        : 'Option ${_identifiers[index]} (${isCorrect ? "Correct" : "Incorrect"})',
-                                                    style: TextStyle(
-                                                      fontWeight: isCorrect
-                                                          ? FontWeight.bold
-                                                          : FontWeight.normal,
-                                                      color: isCorrect
-                                                          ? Colors.green
-                                                          : null,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              CustomTextField(
-                                                controller:
-                                                    _optionControllers[index]
-                                                        [_activeLocale]!,
-                                                textDirection: _activeLocale ==
-                                                        FormLocale.ar
-                                                    ? TextDirection.rtl
-                                                    : TextDirection.ltr,
-                                                labelText: _activeLocale ==
-                                                        FormLocale.ar
-                                                    ? 'الخيار ${_identifiers[index]} (بالعربية)'
-                                                    : 'Option ${_identifiers[index]} (EN)',
-                                                validator: (v) {
-                                                  if (v == null ||
-                                                      v.trim().isEmpty) {
-                                                    return _activeLocale ==
-                                                            FormLocale.ar
-                                                        ? 'مطلوب'
-                                                        : 'Required';
-                                                  }
-                                                  return null;
-                                                },
-                                              ),
-                                              const SizedBox(height: 12),
-                                              // Option Image URL Field & Library Picker Button Row
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: TextFormField(
-                                                      controller:
-                                                          _optionImageControllers[
-                                                              index],
-                                                      decoration:
-                                                          InputDecoration(
-                                                        labelText: _activeLocale ==
-                                                                FormLocale.en
-                                                            ? 'Option ${_identifiers[index]}: Image Url (Optional)'
-                                                            : 'رابط الصورة للخيار ${_identifiers[index]} (اختياري)',
-                                                        prefixIcon: const Icon(
-                                                            Icons
-                                                                .image_outlined,
-                                                            size: 20),
-                                                        border:
-                                                            const OutlineInputBorder(),
-                                                        isDense: true,
-                                                      ),
-                                                      onChanged: (val) =>
-                                                          setState(() {}),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 8),
-
-                                                  // Library Picker Button
-                                                  IconButton.filledTonal(
-                                                    icon: const Icon(
-                                                        Icons.photo_library,
-                                                        color: AppColors
-                                                            .primaryGreen,
-                                                        size: 20),
-                                                    tooltip: _activeLocale ==
-                                                            FormLocale.en
-                                                        ? 'Select from Library'
-                                                        : 'اختر من المكتبة',
-                                                    onPressed: () {
-                                                      showDialog(
-                                                        context: context,
-                                                        builder: (context) =>
-                                                            ImageLibraryDialog(
-                                                          onImageSelected:
-                                                              (String
-                                                                  selectedUrl) {
-                                                            setState(() {
-                                                              _optionImageControllers[
-                                                                          index]
-                                                                      .text =
-                                                                  selectedUrl;
-                                                            });
-                                                          },
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-
-                                                  // Clear Button (Shown only if text is not empty)
-                                                  if (_optionImageControllers[
-                                                          index]
-                                                      .text
-                                                      .isNotEmpty) ...[
-                                                    const SizedBox(width: 4),
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                          Icons.clear,
-                                                          color: Colors.red,
-                                                          size: 20),
-                                                      tooltip: _activeLocale ==
-                                                              FormLocale.en
-                                                          ? 'Remove Image'
-                                                          : 'إزالة الصورة',
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          _optionImageControllers[
-                                                                  index]
-                                                              .clear();
-                                                        });
-                                                      },
-                                                    ),
-                                                  ],
-                                                ],
-                                              ),
-
-// Thumbnail Preview (Shown below input if URL is present)
-                                              if (_optionImageControllers[index]
-                                                  .text
-                                                  .isNotEmpty) ...[
-                                                const SizedBox(height: 8),
-                                                ClipRRect(
-                                                  borderRadius:
-                                                      BorderRadius.circular(6),
-                                                  child: Container(
-                                                    height: 80,
-                                                    width: 80,
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                          color: Colors
-                                                              .grey.shade300),
-                                                    ),
-                                                    child: Image.network(
-                                                      _optionImageControllers[
-                                                              index]
-                                                          .text
-                                                          .trim(),
-                                                      fit: BoxFit.cover,
-                                                      errorBuilder: (context,
-                                                              error,
-                                                              stackTrace) =>
-                                                          const Center(
-                                                        child: Icon(
-                                                            Icons.broken_image,
-                                                            color: Colors.grey),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }),
-
-                                    const SizedBox(height: 16),
-
-                                    // Submit Button
-                                    const SizedBox(
-                                      width: double.infinity,
-                                      height: 48,
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: _isSubmitting ? null : _submit,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.primaryGreen,
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 24),
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8)),
-                                      ),
-                                      child: _isSubmitting
-                                          ? const SizedBox(
-                                              height: 20,
-                                              width: 40,
-                                              child: CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                  strokeWidth: 2),
-                                            )
-                                          : Text(
-                                              _isEditing
-                                                  ? (_activeLocale ==
-                                                          FormLocale.ar
-                                                      ? 'تحديث السؤال'
-                                                      : 'Update Question')
-                                                  : (_activeLocale ==
-                                                          FormLocale.ar
-                                                      ? 'حفظ وإدراج السؤال'
-                                                      : 'Save and Publish'),
-                                              style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                  ],
+                              const SizedBox(width: 8),
+                              Text(
+                                _isEditing ? 'Edit Question' : 'Add Question',
+                                style: const TextStyle(
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryGreen,
                                 ),
                               ),
-                            )),
-                          ))));
-            })));
+                            ],
+                          ),
+                          const SizedBox(height: 22),
+                          _languageSettings(),
+                          const SizedBox(height: 22),
+                          _sectionTitle(
+                            _activeLocale == FormLocale.ar
+                                ? 'معلومات السؤال'
+                                : 'Question details',
+                            Icons.help_outline,
+                          ),
+                          TextFormField(
+                            controller: _orderController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: _activeLocale == FormLocale.ar
+                                  ? 'ترتيب السؤال'
+                                  : 'Question order',
+                              border: const OutlineInputBorder(),
+                            ),
+                            validator: (value) {
+                              final number = int.tryParse(value?.trim() ?? '');
+                              if (number == null || number < 1) {
+                                return _activeLocale == FormLocale.ar
+                                    ? 'أدخل رقماً صحيحاً'
+                                    : 'Enter a valid positive number';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          _imageField(
+                            label: _activeLocale == FormLocale.ar
+                                ? 'رابط صورة السؤال (اختياري)'
+                                : 'Question image URL (optional)',
+                            controller: _questionImageController,
+                          ),
+                          const SizedBox(height: 22),
+                          _sectionTitle(
+                            _activeLocale == FormLocale.ar
+                                ? 'نص السؤال والخيارات'
+                                : 'Question and answers',
+                            Icons.list_alt,
+                          ),
+                          _translationFields(),
+                          const SizedBox(height: 10),
+                          _sectionTitle(
+                            _activeLocale == FormLocale.ar
+                                ? 'الإجابة الصحيحة'
+                                : 'Correct answer',
+                            Icons.check_circle_outline,
+                          ),
+                          ...List.generate(
+                            4,
+                            (index) => RadioListTile<int>(
+                              value: index,
+                              groupValue: _correctOptionIndex,
+                              activeColor: AppColors.primaryGreen,
+                              title: Text(
+                                '${_identifiers[index]} — ${_optionControllers[index][_activeLocale]!.text}',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() => _correctOptionIndex = value);
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: _isSubmitting
+                                      ? null
+                                      : () => Navigator.of(context).pop(false),
+                                  child: Text(
+                                    _activeLocale == FormLocale.ar
+                                        ? 'إلغاء'
+                                        : 'Cancel',
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: ElevatedButton.icon(
+                                  onPressed: _isSubmitting ? null : _submit,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryGreen,
+                                    foregroundColor: AppColors.textLight,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                  ),
+                                  icon: _isSubmitting
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Icon(Icons.save_outlined),
+                                  label: Text(
+                                    _isSubmitting
+                                        ? (_activeLocale == FormLocale.ar
+                                            ? 'جارٍ الحفظ...'
+                                            : 'Saving...')
+                                        : (_isEditing
+                                            ? (_activeLocale == FormLocale.ar
+                                                ? 'حفظ التعديلات'
+                                                : 'Save changes')
+                                            : (_activeLocale == FormLocale.ar
+                                                ? 'إضافة السؤال'
+                                                : 'Add question')),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

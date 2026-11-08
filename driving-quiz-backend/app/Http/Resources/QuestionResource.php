@@ -8,35 +8,45 @@ use Vinkla\Hashids\Facades\Hashids;
 
 class QuestionResource extends JsonResource
 {
+    private function normalizeLocale($locale): string
+    {
+        return match ((string) $locale) {
+            '0', 'ar' => 'ar',
+            '1', 'en' => 'en',
+            default => '',
+        };
+    }
+
     public function toArray(Request $request): array
     {
+        $translations = $this->translations
+            ->map(function ($translation) {
+                return [
+                    'locale' => $this->normalizeLocale($translation->locale),
+                    'text' => $translation->text,
+                ];
+            })
+            ->filter(fn ($translation) => $translation['locale'] !== '')
+            ->unique('locale')
+            ->values();
+
+        $options = $this->options;
+
         $currentLocale = app()->getLocale();
 
-        // Extract translations cleanly
-        $translationsCollection = collect($this->relations['translations'] ?? $this->translations);
-        $localizedItem = $translationsCollection->firstWhere('locale', $currentLocale)
-            ?? $translationsCollection->first();
-        $localizedQuestion = $localizedItem ? $localizedItem->text : '';
-
-        // Safely extract options array directly
-        $optionsCollection = collect($this->relations['options'] ?? $this->options);
+        $localizedQuestion = $translations
+            ->firstWhere('locale', $currentLocale)['text'] ?? '';
 
         return [
-            'id'         => Hashids::encode($this->id),
-            'level_id'   => Hashids::encode($this->level_id),
-            'image_url'  => $this->image_url ? url($this->image_url) : null,
-            'order'      => (int) $this->order,
-            'question'   => $localizedQuestion,
-
-            // Directly process the collection to eliminate relationship lookup glitches
-            'options'    => OptionResource::collection($optionsCollection),
-
-            'all_question_translations' => $translationsCollection->map(function ($t) {
-                return [
-                    'locale' => $t->locale,
-                    'text'   => $t->text
-                ];
-            })->all(),
+            'id' => Hashids::encode($this->id),
+            'level_id' => Hashids::encode($this->level_id),
+            'image_url' => $this->image_url
+                ? url($this->image_url)
+                : null,
+            'order' => (int) $this->order,
+            'question' => $localizedQuestion,
+            'all_question_translations' => $translations,
+            'options' => OptionResource::collection($options),
         ];
     }
 }

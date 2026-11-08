@@ -111,42 +111,43 @@ class QuestionController extends Controller
                 'order'     => $request->order ?? ($count + 1),
             ]);
 
-            if ($request->has('question_text')) {
-                foreach ($request->question_text as $locale => $text) {
-                    // Handle case where text might be an array or string
-                    $textValue = is_array($text) ? ($text['text'] ?? '') : $text;
+           
+// Save question translations.
+$questionTranslations = $request->input('translations', []);
 
-                    if (!empty(trim((string)$textValue))) {
-                        $question->translations()->create([
-                            'locale' => $locale,
-                            'text'   => $textValue
-                        ]);
-                    }
-                }
-            }
+foreach ($questionTranslations as $translation) {
+    $locale = $translation['locale'] ?? '';
+    $text = trim((string) ($translation['text'] ?? ''));
 
-            if ($request->has('options')) {
-                foreach ($request->options as $optionData) {
-                    $option = $question->options()->create([
-                        'identifier' => $optionData['identifier'],
-                        'is_correct' => (bool)$optionData['is_correct'],
-                        'image_url' => $optionData['image_url'] ?? null,
-                    ]);
+    if (in_array($locale, ['en', 'ar'], true) && $text !== '') {
+        $question->translations()->create([
+            'locale' => $locale,
+            'text' => $text,
+        ]);
+    }
+}
 
-                    if (isset($optionData['translations'])) {
-                        foreach ($optionData['translations'] as $locale => $text) {
-                            $textValue = is_array($text) ? ($text['text'] ?? '') : $text;
+// Save options and their translations.
+foreach ($request->input('options', []) as $optionData) {
+    $option = $question->options()->create([
+        'identifier' => $optionData['identifier'],
+        'is_correct' => (bool) $optionData['is_correct'],
+        'image_url' => $optionData['image_url'] ?? null,
+    ]);
 
-                            if (!empty(trim((string)$textValue))) {
-                                $option->translations()->create([
-                                    'locale' => $locale,
-                                    'text'   => $textValue
-                                ]);
-                            }
-                        }
-                    }
-                }
-            }
+    foreach ($optionData['translations'] ?? [] as $translation) {
+        $locale = $translation['locale'] ?? '';
+        $text = trim((string) ($translation['text'] ?? ''));
+
+        if (in_array($locale, ['en', 'ar'], true) && $text !== '') {
+            $option->translations()->create([
+                'locale' => $locale,
+                'text' => $text,
+            ]);
+        }
+    }
+}
+
             return response()->json([
                 'status'  => true,
                 'message' => 'Question and options created successfully.',
@@ -171,90 +172,144 @@ class QuestionController extends Controller
     /**
      * Update the specified resource in storage (Admin Only).
      */
-    public function update(Request $request, $id): JsonResponse
-    {
-        $realId = $this->decodeId($id);
-        $question = Question::findOrFail($realId);
 
-        return DB::transaction(function () use ($request, $question) {
-            // 1. Partially update basic question fields if present
-            if ($request->has('image_url')) {
-                $question->image_url = $request->image_url;
-            }
-            if ($request->has('order')) {
-                $question->order = $request->order;
-            }
-            $question->save();
+public function update(Request $request, $id): JsonResponse
+{
+    $realId = $this->decodeId($id);
 
-            // Change this line in your Laravel controller:
-            if ($request->has('question_text') || $request->has('translations')) {
-                $qText = $request->input('question_text') ?? $request->input('translations');
+    $question = Question::findOrFail($realId);
 
-                $translationsArray = is_array($qText) && array_keys($qText) !== range(0, count($qText) - 1)
-                    ? $qText
-                    : collect($qText)->pluck('text', 'locale')->toArray();
+    $validated = $request->validate([
+        'order' => 'sometimes|required|integer|min:1',
+        'image_url' => 'sometimes|nullable|string',
 
-                foreach ($translationsArray as $locale => $text) {
-                    if (!empty(trim($text))) {
-                        $question->translations()->updateOrCreate(
-                            ['locale' => $locale],
-                            ['text' => $text]
-                        );
-                    } else {
-                        $question->translations()->where('locale', $locale)->delete();
-                    }
+        'translations' => 'sometimes|required|array|min:2',
+        'translations.*.locale' => 'required|in:en,ar',
+        'translations.*.text' => 'present|nullable|string',
+
+        'options' => 'sometimes|required|array|min:1',
+        'options.*.identifier' => 'required|in:A,B,C,D',
+        'options.*.is_correct' => 'required|boolean',
+        'options.*.image_url' => 'sometimes|nullable|string',
+
+        'options.*.translations' => 'required|array|min:2',
+        'options.*.translations.*.locale' => 'required|in:en,ar',
+        'options.*.translations.*.text' => 'present|nullable|string',
+    ]);
+
+    return DB::transaction(function () use (
+        $validated,
+        $question
+    ) {
+
+        // 1. Update basic question fields.
+        if (array_key_exists('order', $validated)) {
+            $question->order = $validated['order'];
+        }
+
+        if (array_key_exists('image_url', $validated)) {
+            $question->image_url = $validated['image_url'];
+        }
+
+        $question->save();
+
+        // 2. Update question translations.
+        if (array_key_exists('translations', $validated)) {
+
+            $this->saveTranslations(
+                $question->translations(),
+                $validated['translations']
+            );
+        }
+
+        // 3. Update options and their translations.
+        if (array_key_exists('options', $validated)) {
+
+            foreach ($validated['options'] as $optionData) {
+
+                $option = $question->options()
+                    ->where(
+                        'identifier',
+                        $optionData['identifier']
+                    )
+                    ->first();
+
+                if (!$option) {
+                    throw new \RuntimeException(
+                        'Option not found: ' .
+                        $optionData['identifier']
+                    );
                 }
-            }
-            // 3. Partially update options only if provided in the request
-            if ($request->has('options')) {
-                foreach ($request->options as $optionData) {
-                    if (!isset($optionData['identifier'])) continue;
 
-                    $option = $question->options()->where('identifier', $optionData['identifier'])->first();
+                $option->is_correct =
+                    $optionData['is_correct'];
 
-                    if ($option) {
-                        // Update correctness if provided
-                        if (isset($optionData['is_correct'])) {
-                            $option->update([
-                                'is_correct' => (bool)$optionData['is_correct']
-                            ]);
-                        }
-                        if (array_key_exists('image_url', $optionData)) {
-                            $option->update([
-                                'image_url' => $optionData['image_url']
-                            ]);
-                        }
-
-                        // Update option translations if provided
-                        if (isset($optionData['translations'])) {
-                            $optTranslations = $optionData['translations'];
-
-                            $optTransArray = is_array($optTranslations) && array_keys($optTranslations) !== range(0, count($optTranslations) - 1)
-                                ? $optTranslations
-                                : collect($optTranslations)->pluck('text', 'locale')->toArray();
-
-                            foreach ($optTransArray as $locale => $text) {
-                                if (!empty(trim($text))) {
-                                    $option->translations()->updateOrCreate(
-                                        ['locale' => $locale],
-                                        ['text' => $text]
-                                    );
-                                } else {
-                                    $option->translations()->where('locale', $locale)->delete();
-                                }
-                            }
-                        }
-                    }
+                if (array_key_exists('image_url', $optionData)) {
+                    $option->image_url =
+                        $optionData['image_url'];
                 }
-            }
 
-            return response()->json([
-                'status'  => true,
-                'message' => 'Question updated successfully.',
-                'data'    => new QuestionResource($question->load(['translations', 'options.translations']))
+                $option->save();
+
+                $this->saveTranslations(
+                    $option->translations(),
+                    $optionData['translations']
+                );
+            }
+        }
+
+        // 4. Return fresh database values.
+        $question->refresh();
+
+        $question->load([
+            'translations',
+            'options.translations'
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Question updated successfully.',
+            'data' => new QuestionResource($question)
+        ]);
+    });
+}
+
+/**
+ * Save translations using their actual locale.
+ */
+private function saveTranslations($relation, array $translations): void
+{
+    $savedLocales = [];
+
+    foreach ($translations as $translation) {
+
+        $locale = $translation['locale'];
+
+        if (!in_array($locale, ['en', 'ar'], true)) {
+            continue;
+        }
+
+        if (in_array($locale, $savedLocales, true)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'translations' => [
+                    "Duplicate translation locale: {$locale}"
+                ]
             ]);
-        });
+        }
+
+        $savedLocales[] = $locale;
+
+        $relation->updateOrCreate(
+            [
+                'locale' => $locale
+            ],
+            [
+                'text' => $translation['text'] ?? ''
+            ]
+        );
     }
+}
+
     /**
      * Remove the specified resource from storage (Admin Only).
      */
