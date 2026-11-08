@@ -78,8 +78,7 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
       },
     );
 
-    _optionImageControllers =
-        List.generate(4, (_) => TextEditingController());
+    _optionImageControllers = List.generate(4, (_) => TextEditingController());
 
     if (_isEditing) {
       _populateForEdit(widget.question!);
@@ -289,14 +288,6 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
     if (!_formKey.currentState!.validate()) return;
     if (!_validateSelectedTranslations()) return;
 
-    final order = int.tryParse(_orderController.text.trim());
-    if (order == null || order < 1) {
-      _showMessage(_activeLocale == FormLocale.ar
-          ? 'أدخل ترتيباً صحيحاً للسؤال.'
-          : 'Enter a valid question order.');
-      return;
-    }
-
     final questionId = widget.question?['id']?.toString();
     if (_isEditing && (questionId == null || questionId.isEmpty)) {
       _showMessage('Cannot update this question: its ID is missing.');
@@ -309,7 +300,6 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
       final model = QuestionModel(
         id: _isEditing ? questionId : null,
         levelId: widget.levelId,
-        order: order,
         imageUrl: _questionImageController.text.trim().isEmpty
             ? null
             : _questionImageController.text.trim(),
@@ -592,7 +582,8 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
                   const SizedBox(width: 6),
                   IconButton(
                     tooltip: isArabic ? 'صورة الخيار' : 'Option image',
-                    onPressed: () => _selectImage(_optionImageControllers[index]),
+                    onPressed: () =>
+                        _selectImage(_optionImageControllers[index]),
                     icon: const Icon(
                       Icons.image_outlined,
                       color: AppColors.primaryGreen,
@@ -609,7 +600,6 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
 
   @override
   void dispose() {
-    _orderController.dispose();
     _questionImageController.dispose();
 
     for (final controller in _questionControllers.values) {
@@ -696,25 +686,6 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
                                 ? 'معلومات السؤال'
                                 : 'Question details',
                             Icons.help_outline,
-                          ),
-                          TextFormField(
-                            controller: _orderController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: _activeLocale == FormLocale.ar
-                                  ? 'ترتيب السؤال'
-                                  : 'Question order',
-                              border: const OutlineInputBorder(),
-                            ),
-                            validator: (value) {
-                              final number = int.tryParse(value?.trim() ?? '');
-                              if (number == null || number < 1) {
-                                return _activeLocale == FormLocale.ar
-                                    ? 'أدخل رقماً صحيحاً'
-                                    : 'Enter a valid positive number';
-                              }
-                              return null;
-                            },
                           ),
                           const SizedBox(height: 14),
                           _imageField(

@@ -144,7 +144,6 @@ class QuestionModel {
   final String? id;
   final String levelId;
   final String? imageUrl;
-  final int order;
   final List<QuestionTranslation> translations;
   final List<OptionModel> options;
 
@@ -152,7 +151,6 @@ class QuestionModel {
     this.id,
     required this.levelId,
     this.imageUrl,
-    required this.order,
     required this.translations,
     required this.options,
   });
@@ -195,7 +193,6 @@ class QuestionModel {
       id: json['id']?.toString(),
       levelId: json['level_id']?.toString() ?? '',
       imageUrl: json['image_url']?.toString(),
-      order: int.tryParse(json['order']?.toString() ?? '') ?? 1,
       translations: translations,
       options: rawOptions
           .whereType<Map>()
@@ -215,7 +212,7 @@ class QuestionModel {
   Map<String, dynamic> toJson() => {
         'id': id,
         'level_id': levelId,
-        'order': order,
+        
         'image_url': imageUrl,
         'translations': translations
             .where((t) => t.text.trim().isNotEmpty)

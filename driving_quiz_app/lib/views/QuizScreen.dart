@@ -147,11 +147,7 @@ class _QuizScreenState extends State<QuizScreen> {
             );
           }).toList();
 
-          // Keep questions in their correct order.
-          refreshedQuestions.sort(
-            (a, b) => a.order.compareTo(b.order),
-          );
-
+         
           if (!mounted) break;
 
           setState(() {
