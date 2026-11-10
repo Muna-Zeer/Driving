@@ -59,6 +59,13 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
   bool get _isEditing => widget.question != null;
   String get _baseUrl => APIService.getBaseUrl();
 
+  final Map<String, TextEditingController> optionImageControllers = {
+    'A': TextEditingController(),
+    'B': TextEditingController(),
+    'C': TextEditingController(),
+    'D': TextEditingController(),
+  };
+
   @override
   void initState() {
     super.initState();
@@ -153,8 +160,11 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
           _correctOptionIndex = index;
         }
 
-        _optionImageControllers[index].text =
-            rawOption['image_url']?.toString() ?? '';
+        final imageController = optionImageControllers[identifier];
+
+        if (imageController != null) {
+          imageController.text = rawOption['image_url']?.toString() ?? '';
+        }
 
         final translations = _readTranslations(
           rawOption['all_option_translations'] ?? rawOption['translations'],
@@ -309,9 +319,10 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
           (index) => OptionModel(
             identifier: _identifiers[index],
             isCorrect: index == _correctOptionIndex,
-            imageUrl: _optionImageControllers[index].text.trim().isEmpty
-                ? null
-                : _optionImageControllers[index].text.trim(),
+            imageUrl:
+                optionImageControllers[_identifiers[index]]!.text.trim().isEmpty
+                    ? null
+                    : optionImageControllers[_identifiers[index]]!.text.trim(),
             translations: _buildOptionTranslations(index),
           ),
         ),
@@ -524,6 +535,7 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Question Text
           TextFormField(
             controller: _questionControllers[locale],
             minLines: 2,
@@ -539,55 +551,66 @@ class _ManageQuestionDialogState extends State<ManageQuestionDialog> {
               alignLabelWithHint: true,
             ),
           ),
+
           const SizedBox(height: 16),
+
+          // Options A, B, C, D
           ...List.generate(4, (index) {
             final controller = _optionControllers[index][locale]!;
+
             return Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    width: 38,
-                    height: 54,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryGreen.withOpacity(0.10),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _identifiers[index],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryGreen,
+                  // Option Identifier and Text
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 54,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _identifiers[index],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryGreen,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextFormField(
-                      controller: controller,
-                      minLines: 1,
-                      maxLines: 3,
-                      textDirection: locale.direction,
-                      textAlign: isArabic ? TextAlign.right : TextAlign.left,
-                      decoration: InputDecoration(
-                        labelText: isArabic
-                            ? 'الخيار ${_identifiers[index]}'
-                            : 'Option ${_identifiers[index]}',
-                        border: const OutlineInputBorder(),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: controller,
+                          minLines: 1,
+                          maxLines: 3,
+                          textDirection: locale.direction,
+                          textAlign:
+                              isArabic ? TextAlign.right : TextAlign.left,
+                          decoration: InputDecoration(
+                            labelText: isArabic
+                                ? 'الخيار ${_identifiers[index]}'
+                                : 'Option ${_identifiers[index]}',
+                            border: const OutlineInputBorder(),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  IconButton(
-                    tooltip: isArabic ? 'صورة الخيار' : 'Option image',
-                    onPressed: () =>
-                        _selectImage(_optionImageControllers[index]),
-                    icon: const Icon(
-                      Icons.image_outlined,
-                      color: AppColors.primaryGreen,
-                    ),
+
+                  const SizedBox(height: 10),
+
+                  // Option Image Field
+                  _imageField(
+                    label: isArabic
+                        ? 'رابط صورة الخيار ${_identifiers[index]} (اختياري)'
+                        : 'Option ${_identifiers[index]} image URL (optional)',
+                    controller: optionImageControllers[_identifiers[index]]!,
                   ),
                 ],
               ),
