@@ -147,7 +147,6 @@ class _QuizScreenState extends State<QuizScreen> {
             );
           }).toList();
 
-         
           if (!mounted) break;
 
           setState(() {
@@ -626,15 +625,20 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
+
                 Container(
-                  height: 50,
                   margin: const EdgeInsets.only(bottom: 20),
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    reverse: true,
-                    itemCount: questions.length,
-                    itemBuilder: (context, index) {
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 4,
+                  ),
+                  child: Wrap(
+                    textDirection: TextDirection.ltr,
+                    spacing: 5,
+                    runSpacing: 5,
+                    children: List.generate(questions.length, (index) {
                       final bool isSelected = currentIndex == index;
+
                       return GestureDetector(
                         onTap: () {
                           setState(() {
@@ -644,28 +648,28 @@ class _QuizScreenState extends State<QuizScreen> {
                           });
                         },
                         child: Container(
-                          width: 46,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: 48,
+                          height: 48,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primaryGreen
                                 : AppColors.surface,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.primaryGreen
                                   : AppColors.border,
-                              width: 1.5,
+                              width: 1,
                             ),
                             boxShadow: [
                               if (isSelected)
                                 BoxShadow(
                                   color:
-                                      AppColors.primaryGreen.withOpacity(0.3),
-                                  blurRadius: 6,
+                                      AppColors.primaryGreen.withOpacity(0.2),
+                                  blurRadius: 5,
                                   offset: const Offset(0, 2),
-                                )
+                                ),
                             ],
                           ),
                           child: Text(
@@ -675,12 +679,12 @@ class _QuizScreenState extends State<QuizScreen> {
                                   ? AppColors.textLight
                                   : AppColors.textPrimary,
                               fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                              fontSize: 16,
                             ),
                           ),
                         ),
                       );
-                    },
+                    }),
                   ),
                 ),
 
