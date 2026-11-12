@@ -43,21 +43,72 @@ class QuizStatsHeader extends StatelessWidget {
                     return Transform.scale(
                         scale:
                             1.0 + (0.12 * (1 - animationValue - value).abs()),
-                            child:Text(animationValue.round().toString(),
-                            style:TextStyle(fontSize:21,
-                            fontWeight:FontWeight.bold,
-                            color:color,
-                            
+                        child: Text(animationValue.round().toString(),
+                            style: TextStyle(
+                              fontSize: 21,
+                              fontWeight: FontWeight.bold,
+                              color: color,
                             )));
                   }),
-                  const SizedBox(height:3),
-                  Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Colors.black54,
-              )),
+              const SizedBox(height: 3),
+              Text(label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54,
+                  )),
             ])));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(children: [
+          _buildState(
+              icon: Icons.check_circle_rounded,
+              color: Colors.green,
+              label: 'correct',
+              value: correctAnswers),
+          const SizedBox(width: 10),
+          _buildState(
+            icon: Icons.cancel_rounded,
+            color: Colors.red,
+            label: 'Wrong',
+            value: wrongAnswers,
+          ),
+          const SizedBox(width: 10),
+          _buildState(
+              icon: Icons.bolt_rounded,
+              color: Colors.amber,
+              label: 'XP points',
+              value: xpPoints),
+          const SizedBox(height: 8),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            transitionBuilder: (child, animation) {
+              return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.8),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: FadeTransition(opacity: animation, child: child));
+            },
+            child: lastXpEarned > 0
+                ? Text('+${lastXpEarned.toString()} XP',
+                    key: ValueKey(lastXpEarned),
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ))
+                : const SizedBox(
+                    key: ValueKey('no-xp'),
+                    height: 18,
+                  ),
+          ),
+        ])
+      ],
+    );
   }
 }
