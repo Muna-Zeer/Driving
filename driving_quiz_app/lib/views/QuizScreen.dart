@@ -627,7 +627,7 @@ class _QuizScreenState extends State<QuizScreen> {
                 const SizedBox(height: 24),
 
                 Container(
-                  margin: const EdgeInsets.only(bottom: 20),
+                  margin: const EdgeInsets.only(bottom: 24),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 4,
                     vertical: 4,
