@@ -38,17 +38,14 @@ class QuizStatsHeader extends StatelessWidget {
                     end: value.toDouble(),
                   ),
                   duration: const Duration(milliseconds: 450),
-                  curve: Curves.easeOutBack,
+                  curve: Curves.easeOutCubic,
                   builder: (context, animationValue, child) {
-                    return Transform.scale(
-                        scale:
-                            1.0 + (0.12 * (1 - animationValue - value).abs()),
-                        child: Text(animationValue.round().toString(),
-                            style: TextStyle(
-                              fontSize: 21,
-                              fontWeight: FontWeight.bold,
-                              color: color,
-                            )));
+                    return Text(animationValue.round().toString(),
+                        style: TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ));
                   }),
               const SizedBox(height: 3),
               Text(label,

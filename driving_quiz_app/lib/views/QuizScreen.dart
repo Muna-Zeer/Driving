@@ -7,6 +7,7 @@ import 'package:driving_quiz_app/views/ManageQuestionDialog.dart';
 import 'package:driving_quiz_app/widgets/AppColors.dart';
 import 'package:driving_quiz_app/widgets/CustomResponsiveNavbar.dart';
 import 'package:driving_quiz_app/widgets/drivingAlerts.dart';
+import 'package:driving_quiz_app/widgets/quiz_stats_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -35,6 +36,12 @@ class _QuizScreenState extends State<QuizScreen> {
 
   String currentLocale = "ar";
   bool _isAdmin = false;
+  int correctAnswers = 0;
+  int wrongAnswers = 0;
+  int xpPoints = 0;
+  int lastXpEarned = 0;
+  final Set<int> _countedQuestionIndices = {};
+  QuestionModel get currentQuestion => questions[currentIndex];
   final _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,
@@ -299,6 +306,37 @@ class _QuizScreenState extends State<QuizScreen> {
     }
   }
 
+  void _recordAnswers({required bool isCorrect}) {
+    if (_countedQuestionIndices.contains(currentIndex)) {
+      return;
+    }
+    const int xpPerCorrectAnswer = 10;
+    if (isCorrect) {
+      correctAnswers++;
+      lastXpEarned = xpPerCorrectAnswer;
+      xpPoints += xpPerCorrectAnswer;
+    } else {
+      wrongAnswers++;
+      lastXpEarned = 0;
+    }
+  }
+
+  void _checkAnswer() {
+    if (selectedOptionId == null || isAnswerChecked) return;
+
+    final selectedOption = currentQuestion.options.firstWhere(
+      (option) => option.identifier == selectedOptionId,
+    );
+
+    final isCorrect = selectedOption.isCorrect;
+
+    setState(() {
+      isAnswerChecked = true;
+    });
+
+    _recordAnswers(isCorrect: isCorrect);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -394,6 +432,14 @@ class _QuizScreenState extends State<QuizScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             // Right side: Admin Actions
+                            Expanded(
+                              child: QuizStatsHeader(
+                                correctAnswers: correctAnswers,
+                                wrongAnswers: wrongAnswers,
+                                xpPoints: xpPoints,
+                                lastXpEarned: lastXpEarned,
+                              ),
+                            ),
                             if (_isAdmin)
                               Flexible(
                                 child: Row(
@@ -624,8 +670,82 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
 
+                // Bottom Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.surface,
+                          foregroundColor: AppColors.textPrimary,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: const BorderSide(color: AppColors.border),
+                          ),
+                        ),
+                        onPressed: currentIndex > 0
+                            ? () => setState(() {
+                                  currentIndex--;
+                                  selectedOptionId = null;
+                                  isAnswerChecked = false;
+                                })
+                            : null,
+                        child: const Text('السابق',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          foregroundColor: AppColors.textLight,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: selectedOptionId != null && !isAnswerChecked
+                            ? _checkAnswer
+                            : null,
+                        child: const Text('تحقق من الإجابة',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.surface,
+                          foregroundColor: AppColors.textPrimary,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: const BorderSide(color: AppColors.border),
+                          ),
+                        ),
+                        onPressed: currentIndex < questions.length - 1
+                            ? () => setState(() {
+                                  currentIndex++;
+                                  selectedOptionId = null;
+                                  isAnswerChecked = false;
+                                })
+                            : null,
+                        child: const Text('التالي',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
                 Container(
                   margin: const EdgeInsets.only(bottom: 24),
                   padding: const EdgeInsets.symmetric(
@@ -686,80 +806,6 @@ class _QuizScreenState extends State<QuizScreen> {
                       );
                     }),
                   ),
-                ),
-
-                // Bottom Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.surface,
-                          foregroundColor: AppColors.textPrimary,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: const BorderSide(color: AppColors.border),
-                          ),
-                        ),
-                        onPressed: currentIndex > 0
-                            ? () => setState(() {
-                                  currentIndex--;
-                                  selectedOptionId = null;
-                                  isAnswerChecked = false;
-                                })
-                            : null,
-                        child: const Text('السابق',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryGreen,
-                          foregroundColor: AppColors.textLight,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: selectedOptionId != null && !isAnswerChecked
-                            ? () => setState(() => isAnswerChecked = true)
-                            : null,
-                        child: const Text('تحقق من الإجابة',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16)),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.surface,
-                          foregroundColor: AppColors.textPrimary,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: const BorderSide(color: AppColors.border),
-                          ),
-                        ),
-                        onPressed: currentIndex < questions.length - 1
-                            ? () => setState(() {
-                                  currentIndex++;
-                                  selectedOptionId = null;
-                                  isAnswerChecked = false;
-                                })
-                            : null,
-                        child: const Text('التالي',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
