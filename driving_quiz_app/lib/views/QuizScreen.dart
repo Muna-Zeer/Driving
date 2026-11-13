@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
-// Import your model file here
 class QuizScreen extends StatefulWidget {
   final String levelId;
 
@@ -41,6 +40,7 @@ class _QuizScreenState extends State<QuizScreen> {
   int xpPoints = 0;
   int lastXpEarned = 0;
   final Set<int> _countedQuestionIndices = {};
+  final Set<String> _answeredQuestionIds = {};
   QuestionModel get currentQuestion => questions[currentIndex];
   final _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(
@@ -324,6 +324,13 @@ class _QuizScreenState extends State<QuizScreen> {
   void _checkAnswer() {
     if (selectedOptionId == null || isAnswerChecked) return;
 
+    final questionId = currentQuestion.id;
+    if (_answeredQuestionIds.contains(questionId)) {
+      setState(() {
+        isAnswerChecked = true;
+      });
+      return;
+    }
     final selectedOption = currentQuestion.options.firstWhere(
       (option) => option.identifier == selectedOptionId,
     );
@@ -332,6 +339,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
     setState(() {
       isAnswerChecked = true;
+      _answeredQuestionIds.add(questionId.toString());
     });
 
     _recordAnswers(isCorrect: isCorrect);
@@ -704,14 +712,19 @@ class _QuizScreenState extends State<QuizScreen> {
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryGreen,
+                          disabledBackgroundColor: Colors.grey.shade300,
                           foregroundColor: AppColors.textLight,
+                          disabledForegroundColor: Colors.grey.shade600,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        onPressed: selectedOptionId != null && !isAnswerChecked
+                        onPressed: selectedOptionId != null &&
+                                !isAnswerChecked &&
+                                !_answeredQuestionIds
+                                    .contains(currentQuestion.id.toString())
                             ? _checkAnswer
                             : null,
                         child: const Text('تحقق من الإجابة',
