@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\LevelController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\QuestionController;
+use App\Http\Controllers\Api\QuizAttemptController;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Route;
@@ -61,6 +62,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // Public routes (Guests can see categories)
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('questions', QuestionController::class);
+});
+
+
+// API routs for QuizAttempts
+Route::middleware(['auth:sanctum'])->group(function(){
+    Route::post('quiz-attempts/start',[QuizAttemptController::class, 'start']);
+    Route::post('quiz-attempts/{uuid}/submit-answer', [QuizAttemptController::class, 'submitAnswer']);
 });
 Route::get('/media-library', function () {
     return response()->json(MediaLibrary::all(), 200);
