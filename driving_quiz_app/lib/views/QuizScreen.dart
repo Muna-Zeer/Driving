@@ -48,12 +48,30 @@ class _QuizScreenState extends State<QuizScreen> {
     ),
   );
 
+  String? attemptUuid;
+  bool isSubmittingAnswer = false;
+  final Set<String> _answeredQuestions = {};
+  final Map<String, String> _savedAnswers = {};
+  final Map<String, bool> _answerResults = {};
   @override
   void initState() {
     super.initState();
 
-    fetchQuestions();
-    _initAdminRole();
+    _initializeQuiz();
+  }
+
+  Future<void> _initializeQuiz() async {
+    debugPrint('========== INITIALIZING QUIZ ==========');
+
+    await startQuizAttempt();
+
+    debugPrint('Attempt UUID after start: $attemptUuid');
+
+    await fetchQuestions();
+
+    await _initAdminRole();
+
+    debugPrint('========== QUIZ INITIALIZED ==========');
   }
 
   Future<void> _initAdminRole() async {
@@ -66,7 +84,7 @@ class _QuizScreenState extends State<QuizScreen> {
   Future<void> fetchQuestions({
     bool showLoading = false,
   }) async {
-    // Never lose a refresh request.
+    // Prevent overlapping requests.
     if (_isFetching) {
       _refreshRequested = true;
 
@@ -148,6 +166,7 @@ class _QuizScreenState extends State<QuizScreen> {
             break;
           }
 
+          // Convert API response into QuestionModel objects.
           final List<QuestionModel> refreshedQuestions = rawData.map((item) {
             return QuestionModel.fromJson(
               Map<String, dynamic>.from(item as Map),
@@ -156,11 +175,14 @@ class _QuizScreenState extends State<QuizScreen> {
 
           if (!mounted) break;
 
+          // Restore question and answer state.
           setState(() {
             questions = refreshedQuestions;
 
             if (questions.isEmpty) {
               currentIndex = 0;
+              selectedOptionId = null;
+              isAnswerChecked = false;
             } else {
               // Find the previously selected question.
               final newIndex = previousQuestionId == null
@@ -177,23 +199,31 @@ class _QuizScreenState extends State<QuizScreen> {
                   questions.length - 1,
                 );
               }
+
+              // Restore the current question's answer.
+              final questionId = questions[currentIndex].id;
+
+              selectedOptionId = _savedAnswers[questionId];
+
+              isAnswerChecked = _answeredQuestionIds.contains(questionId);
             }
-
-            // Reset answer state after refreshing.
-            selectedOptionId = null;
-            isAnswerChecked = false;
           });
+          await fetchAttemptStats();
 
-          debugPrint(
-            'Questions successfully refreshed: ${questions.length}',
-          );
+          debugPrint('''
+========== FETCH QUESTIONS ==========
+Questions: ${questions.length}
+Current Index: $currentIndex
+Attempt UUID: $attemptUuid
+Current Question: ${questions.isNotEmpty ? questions[currentIndex].id : 'None'}
+Selected Option: $selectedOptionId
+Answer Checked: $isAnswerChecked
+=====================================
+''');
         } catch (e, stackTrace) {
           debugPrint('Fetch questions error: $e');
           debugPrintStack(stackTrace: stackTrace);
         }
-
-        // If another refresh was requested during the request,
-        // the loop will fetch the latest data again.
       } while (_refreshRequested && mounted);
     } finally {
       _isFetching = false;
@@ -306,43 +336,207 @@ class _QuizScreenState extends State<QuizScreen> {
     }
   }
 
-  void _recordAnswers({required bool isCorrect}) {
-    if (_countedQuestionIndices.contains(currentIndex)) {
+  Future<void> _checkAnswer() async {
+    if (selectedOptionId == null ||
+        isAnswerChecked ||
+        isSubmittingAnswer ||
+        attemptUuid == null) {
       return;
     }
-    const int xpPerCorrectAnswer = 10;
-    if (isCorrect) {
-      correctAnswers++;
-      lastXpEarned = xpPerCorrectAnswer;
-      xpPoints += xpPerCorrectAnswer;
-    } else {
-      wrongAnswers++;
-      lastXpEarned = 0;
-    }
-  }
-
-  void _checkAnswer() {
-    if (selectedOptionId == null || isAnswerChecked) return;
 
     final questionId = currentQuestion.id;
+
+    // Prevent duplicate submissions
     if (_answeredQuestionIds.contains(questionId)) {
       setState(() {
         isAnswerChecked = true;
       });
       return;
     }
-    final selectedOption = currentQuestion.options.firstWhere(
-      (option) => option.identifier == selectedOptionId,
-    );
-
-    final isCorrect = selectedOption.isCorrect;
 
     setState(() {
-      isAnswerChecked = true;
-      _answeredQuestionIds.add(questionId.toString());
+      isSubmittingAnswer = true;
     });
 
-    _recordAnswers(isCorrect: isCorrect);
+    try {
+      final storage = const FlutterSecureStorage();
+      final token = await storage.read(key: 'auth_token');
+
+      if (token == null) {
+        throw Exception('Authentication token not found.');
+      }
+
+      final baseUrl = await APIService.getBaseUrl();
+
+      final numericQuestionId = int.tryParse(questionId.toString());
+
+      if (numericQuestionId == null) {
+        throw Exception('Invalid question ID: $questionId');
+      }
+
+      final response = await http.post(
+        Uri.parse(
+          '$baseUrl/quiz-attempts/$attemptUuid/answer',
+        ),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'question_id': numericQuestionId,
+          'selected_option': selectedOptionId,
+        }),
+      );
+
+      final decoded = jsonDecode(response.body);
+
+      if (response.statusCode != 200 || decoded['status'] != true) {
+        throw Exception(
+          decoded['message'] ?? 'Failed to submit answer.',
+        );
+      }
+
+      final data = decoded['data'];
+
+      if (!mounted) return;
+
+      setState(() {
+        _savedAnswers[questionId.toString()] = selectedOptionId!;
+
+        _answerResults[questionId.toString()] = data['is_correct'] == true;
+
+        _answeredQuestionIds.add(questionId.toString());
+
+        correctAnswers = data['correct_answers'] ?? 0;
+        wrongAnswers = data['wrong_answers'] ?? 0;
+        xpPoints = data['xp_points'] ?? 0;
+
+        lastXpEarned =
+            data['already_answered'] == true ? 0 : (data['xp_earned'] ?? 0);
+
+        isAnswerChecked = true;
+        isSubmittingAnswer = false;
+      });
+    } catch (e) {
+      debugPrint('Submit answer error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        isSubmittingAnswer = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('تعذر تسجيل الإجابة: $e'),
+        ),
+      );
+    }
+  }
+
+  Future<void> startQuizAttempt() async {
+    try {
+      final storage = const FlutterSecureStorage();
+      final token = await storage.read(key: 'auth_token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Authentication token not found.');
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/quiz-attempts/start'),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'level_id': widget.levelId,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 201 && responseData['status'] == 'true') {
+        final attemptId = responseData['data']['attempt_id'];
+
+        print('Attempt started: $attemptId');
+      } else {
+        print('Start attempt failed: ${response.body}');
+      }
+    } catch (e) {
+      print('Error starting quiz: $e');
+    }
+  }
+
+  void _goToQuestion(int index) {
+    if (index < 0 || index >= questions.length) return;
+    if (isSubmittingAnswer) return;
+
+    final questionId = questions[index].id.toString();
+    final savedAnswer = _savedAnswers[questionId];
+
+    setState(() {
+      currentIndex = index;
+      selectedOptionId = savedAnswer;
+      isAnswerChecked = _answeredQuestionIds.contains(questionId);
+    });
+
+    debugPrint('========== NAVIGATION ==========');
+    debugPrint('Index: $index');
+    debugPrint('Question ID: $questionId');
+    debugPrint('Selected Option: $selectedOptionId');
+    debugPrint('Checked: $isAnswerChecked');
+    debugPrint('================================');
+  }
+
+  void _selectOption(String optionId) {
+    if (isAnswerChecked || isSubmittingAnswer) return;
+
+    final questionId = currentQuestion.id.toString();
+
+    setState(() {
+      selectedOptionId = optionId;
+      _savedAnswers[questionId] = optionId;
+    });
+
+    debugPrint('========== SELECT OPTION ==========');
+    debugPrint('Question ID: $questionId');
+    debugPrint('Selected Option: $optionId');
+    debugPrint('Saved Answers: $_savedAnswers');
+    debugPrint('=================================');
+  }
+
+  Future<void> fetchAttemptStats() async {
+    if (attemptUuid == null || attemptUuid!.isEmpty) return;
+
+    try {
+      final accessToken = await _storage.read(key: 'auth_token');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/quiz-attempts/$attemptUuid'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+      );
+
+      if (response.statusCode != 200 || !mounted) return;
+
+      final decoded = jsonDecode(response.body);
+      final data = decoded['data'];
+
+      if (data == null) return;
+
+      setState(() {
+        correctAnswers = data['correct_answers'] ?? 0;
+        wrongAnswers = data['wrong_answers'] ?? 0;
+        xpPoints = data['xp_points'] ?? 0;
+      });
+    } catch (e) {
+      debugPrint('Fetch attempt stats error: $e');
+    }
   }
 
   @override
@@ -441,12 +635,22 @@ class _QuizScreenState extends State<QuizScreen> {
                           children: [
                             // Right side: Admin Actions
                             Expanded(
-                              child: QuizStatsHeader(
-                                correctAnswers: correctAnswers,
-                                wrongAnswers: wrongAnswers,
-                                xpPoints: xpPoints,
-                                lastXpEarned: lastXpEarned,
-                              ),
+                              child: Builder(builder: (context) {
+                                debugPrint('''
+========== QUIZ STATS ==========
+Correct Answers: $correctAnswers
+Wrong Answers: $wrongAnswers
+XP Points: $xpPoints
+Last XP Earned: $lastXpEarned
+================================
+''');
+                                return QuizStatsHeader(
+                                  correctAnswers: correctAnswers,
+                                  wrongAnswers: wrongAnswers,
+                                  xpPoints: xpPoints,
+                                  lastXpEarned: lastXpEarned,
+                                );
+                              }),
                             ),
                             if (_isAdmin)
                               Flexible(
@@ -551,7 +755,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                   ? ['A', 'B', 'C', 'D'][idx]
                                   : '${idx + 1}';
                           bool isSelected =
-                              selectedOptionId == option.identifier;
+                              selectedOptionId == option.identifier.toString();
 
                           Color bgColor = AppColors.surface;
                           Color borderColor = AppColors.border;
@@ -579,10 +783,7 @@ class _QuizScreenState extends State<QuizScreen> {
                             padding: const EdgeInsets.only(bottom: 12.0),
                             child: GestureDetector(
                               onTap: () {
-                                if (!isAnswerChecked) {
-                                  setState(() =>
-                                      selectedOptionId = option.identifier);
-                                }
+                                _selectOption(option.identifier.toString());
                               },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -683,11 +884,14 @@ class _QuizScreenState extends State<QuizScreen> {
                 // Bottom Action Buttons
                 Row(
                   children: [
+                    // PREVIOUS
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.surface,
                           foregroundColor: AppColors.textPrimary,
+                          disabledBackgroundColor: AppColors.surface,
+                          disabledForegroundColor: Colors.grey,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -695,18 +899,18 @@ class _QuizScreenState extends State<QuizScreen> {
                             side: const BorderSide(color: AppColors.border),
                           ),
                         ),
-                        onPressed: currentIndex > 0
-                            ? () => setState(() {
-                                  currentIndex--;
-                                  selectedOptionId = null;
-                                  isAnswerChecked = false;
-                                })
+                        onPressed: currentIndex > 0 && !isSubmittingAnswer
+                            ? () => _goToQuestion(currentIndex - 1)
                             : null,
-                        child: const Text('السابق',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'السابق',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
+
                     const SizedBox(width: 12),
+// CHECK ANSWER
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
@@ -723,21 +927,38 @@ class _QuizScreenState extends State<QuizScreen> {
                         ),
                         onPressed: selectedOptionId != null &&
                                 !isAnswerChecked &&
-                                !_answeredQuestionIds
-                                    .contains(currentQuestion.id.toString())
+                                !isSubmittingAnswer
                             ? _checkAnswer
                             : null,
-                        child: const Text('تحقق من الإجابة',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16)),
+                        child: isSubmittingAnswer
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'تحقق من الإجابة',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
+
                     const SizedBox(width: 12),
+
+                    // NEXT
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.surface,
                           foregroundColor: AppColors.textPrimary,
+                          disabledBackgroundColor: AppColors.surface,
+                          disabledForegroundColor: Colors.grey,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -745,15 +966,14 @@ class _QuizScreenState extends State<QuizScreen> {
                             side: const BorderSide(color: AppColors.border),
                           ),
                         ),
-                        onPressed: currentIndex < questions.length - 1
-                            ? () => setState(() {
-                                  currentIndex++;
-                                  selectedOptionId = null;
-                                  isAnswerChecked = false;
-                                })
+                        onPressed: currentIndex < questions.length - 1 &&
+                                !isSubmittingAnswer
+                            ? () => _goToQuestion(currentIndex + 1)
                             : null,
-                        child: const Text('التالي',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'التالي',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                   ],
@@ -773,13 +993,9 @@ class _QuizScreenState extends State<QuizScreen> {
                       final bool isSelected = currentIndex == index;
 
                       return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            currentIndex = index;
-                            selectedOptionId = null;
-                            isAnswerChecked = false;
-                          });
-                        },
+                        onTap: isSubmittingAnswer
+                            ? null
+                            : () => _goToQuestion(index),
                         child: Container(
                           width: 48,
                           height: 48,

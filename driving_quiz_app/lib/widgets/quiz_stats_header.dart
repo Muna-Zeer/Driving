@@ -61,50 +61,60 @@ class QuizStatsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(children: [
-          _buildState(
+        Row(
+          children: [
+            _buildState(
               icon: Icons.check_circle_rounded,
               color: Colors.green,
-              label: 'correct',
-              value: correctAnswers),
-          const SizedBox(width: 10),
-          _buildState(
-            icon: Icons.cancel_rounded,
-            color: Colors.red,
-            label: 'Wrong',
-            value: wrongAnswers,
-          ),
-          const SizedBox(width: 10),
-          _buildState(
+              label: 'Correct',
+              value: correctAnswers,
+            ),
+            const SizedBox(width: 10),
+            _buildState(
+              icon: Icons.cancel_rounded,
+              color: Colors.red,
+              label: 'Wrong',
+              value: wrongAnswers,
+            ),
+            const SizedBox(width: 10),
+            _buildState(
               icon: Icons.bolt_rounded,
               color: Colors.amber,
               label: 'XP points',
-              value: xpPoints),
-          const SizedBox(height: 8),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            transitionBuilder: (child, animation) {
-              return SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, 0.8),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: FadeTransition(opacity: animation, child: child));
-            },
-            child: lastXpEarned > 0
-                ? Text('+${lastXpEarned.toString()} XP',
-                    key: ValueKey(lastXpEarned),
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ))
-                : const SizedBox(
-                    key: ValueKey('no-xp'),
-                    height: 18,
+              value: xpPoints,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 400),
+          transitionBuilder: (child, animation) {
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.8),
+                end: Offset.zero,
+              ).animate(animation),
+              child: FadeTransition(
+                opacity: animation,
+                child: child,
+              ),
+            );
+          },
+          child: lastXpEarned > 0
+              ? Text(
+                  '+${lastXpEarned.toString()} XP',
+                  key: ValueKey(lastXpEarned),
+                  style: const TextStyle(
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
                   ),
-          ),
-        ])
+                )
+              : const SizedBox(
+                  key: ValueKey('no-xp'),
+                  height: 18,
+                ),
+        ),
       ],
     );
   }

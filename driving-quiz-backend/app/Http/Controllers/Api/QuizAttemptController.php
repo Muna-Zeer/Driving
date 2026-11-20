@@ -7,34 +7,52 @@ use App\Models\Option;
 use App\Models\Question;
 use App\Models\QuizAttempt;
 use App\Models\QuizAttemptAnswer;
+use Vinkla\Hashids\Facades\Hashids;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
 
 class QuizAttemptController extends Controller
 {
-    //
-    public function start(Request $request){
-        $validated = $request->validate([
-            'level_id'=>'required|exists:levels,id',
-        ]);
-        $attempt = QuizAttempt::create([
-            'user_id'=>$request->user()->id,
-            'level_id'=>$validated['level_id'],
-            'status'=>'in_progress',
-        ]);
-        return  response()->json([
-            'status'=>'true',
-            'message'=>'Quiz started successfully',
-            'data'=>[
-              'attempt_id' => $attempt->uuid,
-                'correct_answers' => 0,
-                'wrong_answers' => 0,
-                'xp_points' => 0,
-            ]
-        ],201);
-
+     private function decodeId($id)
+    {
+        $decoded = Hashids::decode($id);
+        return !empty($decoded) ? $decoded[0] : null;
     }
+
+    //
+  
+public function start(Request $request)
+{
+    // Decode the hashed/encoded level ID
+    $decodedLevelId = $this->decodeId($request->level_id);
+
+    // Validate the actual database ID
+    $validated = Validator::make([
+        'level_id' => $decodedLevelId,
+    ], [
+        'level_id' => 'required|integer|exists:levels,id',
+    ])->validate();
+
+    $attempt = QuizAttempt::create([
+        'user_id' => $request->user()->id,
+        'level_id' => $validated['level_id'],
+        'status' => 'in_progress',
+    ]);
+
+    return response()->json([
+        'status' => 'true',
+        'message' => 'Quiz started successfully',
+        'data' => [
+            'attempt_id' => $attempt->uuid,
+            'correct_answers' => 0,
+            'wrong_answers' => 0,
+            'xp_points' => 0,
+        ]
+    ], 201);
+}
+
 
     public function submitAnswer(Request $request ,String $uuid){
              $validated = $request->validate([
