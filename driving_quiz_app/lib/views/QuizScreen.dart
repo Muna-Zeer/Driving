@@ -346,6 +346,11 @@ Answer Checked: $isAnswerChecked
 
     final questionId = currentQuestion.id;
 
+    // Validate encoded question ID
+    if (questionId == null || questionId.isEmpty) {
+      throw Exception('Invalid question ID');
+    }
+
     // Prevent duplicate submissions
     if (_answeredQuestionIds.contains(questionId)) {
       setState(() {
@@ -362,21 +367,19 @@ Answer Checked: $isAnswerChecked
       final storage = const FlutterSecureStorage();
       final token = await storage.read(key: 'auth_token');
 
-      if (token == null) {
+      if (token == null || token.isEmpty) {
         throw Exception('Authentication token not found.');
       }
 
       final baseUrl = await APIService.getBaseUrl();
 
-      final numericQuestionId = int.tryParse(questionId.toString());
-
-      if (numericQuestionId == null) {
-        throw Exception('Invalid question ID: $questionId');
-      }
+      // Send the encoded ID as a String.
+      debugPrint('Encoded Question ID: $questionId');
+      debugPrint('Selected Option: $selectedOptionId');
 
       final response = await http.post(
         Uri.parse(
-          '$baseUrl/quiz-attempts/$attemptUuid/answer',
+          '$baseUrl/quiz-attempts/$attemptUuid/submit-answer',
         ),
         headers: {
           'Accept': 'application/json',
@@ -384,10 +387,13 @@ Answer Checked: $isAnswerChecked
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'question_id': numericQuestionId,
+          'question_id': questionId,
           'selected_option': selectedOptionId,
         }),
       );
+
+      debugPrint('Submit Answer Status: ${response.statusCode}');
+      debugPrint('Submit Answer Response: ${response.body}');
 
       final decoded = jsonDecode(response.body);
 
@@ -402,11 +408,11 @@ Answer Checked: $isAnswerChecked
       if (!mounted) return;
 
       setState(() {
-        _savedAnswers[questionId.toString()] = selectedOptionId!;
+        _savedAnswers[questionId] = selectedOptionId!;
 
-        _answerResults[questionId.toString()] = data['is_correct'] == true;
+        _answerResults[questionId] = data['is_correct'] == true;
 
-        _answeredQuestionIds.add(questionId.toString());
+        _answeredQuestionIds.add(questionId);
 
         correctAnswers = data['correct_answers'] ?? 0;
         wrongAnswers = data['wrong_answers'] ?? 0;
@@ -459,9 +465,16 @@ Answer Checked: $isAnswerChecked
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 201 && responseData['status'] == 'true') {
-        final attemptId = responseData['data']['attempt_id'];
+        final String? newAttemptUuid =
+            responseData['data']?['attempt_id']?.toString();
 
-        print('Attempt started: $attemptId');
+        if (newAttemptUuid == null || newAttemptUuid.isEmpty) {
+          throw Exception('Attempt UUID missing from API response.');
+        }
+        setState(() {
+          attemptUuid = newAttemptUuid;
+        });
+        print('Attempt started: $newAttemptUuid');
       } else {
         print('Start attempt failed: ${response.body}');
       }

@@ -69,6 +69,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware(['auth:sanctum'])->group(function(){
     Route::post('quiz-attempts/start',[QuizAttemptController::class, 'start']);
     Route::post('quiz-attempts/{uuid}/submit-answer', [QuizAttemptController::class, 'submitAnswer']);
+    Route::get(
+    'quiz-attempts/{uuid}',
+    [QuizAttemptController::class, 'show']
+);
 });
 Route::get('/media-library', function () {
     return response()->json(MediaLibrary::all(), 200);
