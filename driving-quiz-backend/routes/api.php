@@ -67,12 +67,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // API routs for QuizAttempts
 Route::middleware(['auth:sanctum'])->group(function(){
-    Route::post('quiz-attempts/start',[QuizAttemptController::class, 'start']);
+    Route::post('quiz-attempts/start',[QuizAttemptController::class, 'startQuizAttempt']);
     Route::post('quiz-attempts/{uuid}/submit-answer', [QuizAttemptController::class, 'submitAnswer']);
     Route::get(
     'quiz-attempts/{uuid}',
     [QuizAttemptController::class, 'show']
 );
+Route::get(
+    '/quiz-attempts/{uuid}/progress',
+    [QuizAttemptController::class, 'getProgress']
+)->middleware('auth:sanctum');
+Route::post(
+    '/quiz-attempts/{uuid}/save-answer',
+    [QuizAttemptController::class, 'saveAnswer']
+)->middleware('auth:sanctum');
 });
 Route::get('/media-library', function () {
     return response()->json(MediaLibrary::all(), 200);

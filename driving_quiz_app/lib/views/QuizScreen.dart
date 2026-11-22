@@ -61,17 +61,22 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _initializeQuiz() async {
-    debugPrint('========== INITIALIZING QUIZ ==========');
+    try {
+      // This now resumes an existing attempt when available.
+      await startQuizAttempt();
 
-    await startQuizAttempt();
+      if (!mounted || attemptUuid == null) return;
 
-    debugPrint('Attempt UUID after start: $attemptUuid');
+      // Load the questions.
+      await fetchQuestions();
 
-    await fetchQuestions();
+      if (!mounted) return;
 
-    await _initAdminRole();
-
-    debugPrint('========== QUIZ INITIALIZED ==========');
+      // Restore previously saved answers and statistics.
+      await fetchQuizProgress();
+    } catch (e) {
+      debugPrint('Quiz initialization error: $e');
+    }
   }
 
   Future<void> _initAdminRole() async {
@@ -84,7 +89,7 @@ class _QuizScreenState extends State<QuizScreen> {
   Future<void> fetchQuestions({
     bool showLoading = false,
   }) async {
-    // Prevent overlapping requests.
+    // Prevent multiple requests at the same time.
     if (_isFetching) {
       _refreshRequested = true;
 
@@ -99,136 +104,152 @@ class _QuizScreenState extends State<QuizScreen> {
 
     _isFetching = true;
 
-    bool shouldShowLoading = showLoading;
-
     try {
       do {
         _refreshRequested = false;
 
-        if (shouldShowLoading && mounted) {
+        if (!mounted) {
+          return;
+        }
+
+        if (showLoading) {
           setState(() {
             _isLoading = true;
           });
+
+          showLoading = false;
         }
 
-        shouldShowLoading = false;
+        // Save the currently displayed question ID.
+        String? previousQuestionId;
 
-        if (!mounted) break;
+        if (questions.isNotEmpty &&
+            currentIndex >= 0 &&
+            currentIndex < questions.length) {
+          previousQuestionId = questions[currentIndex].id;
+        }
 
-        // Preserve the currently selected question.
-        final String? previousQuestionId = questions.isNotEmpty &&
-                currentIndex >= 0 &&
-                currentIndex < questions.length
-            ? questions[currentIndex].id
-            : null;
+        // Get authentication token.
+        final token = await _storage.read(key: 'auth_token');
 
-        try {
-          final accessToken = await _storage.read(
-            key: 'auth_token',
+        if (token == null || token.isEmpty) {
+          debugPrint('Authentication token not found.');
+          return;
+        }
+
+        // Request questions from Laravel API.
+        final response = await http.get(
+          Uri.parse(
+            '$baseUrl/levels/${widget.levelId}/questions',
+          ),
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (!mounted) {
+          return;
+        }
+
+        if (response.statusCode != 200) {
+          debugPrint(
+            'Fetch questions failed: ${response.statusCode}',
           );
+          debugPrint(response.body);
+          return;
+        }
 
-          if (accessToken == null || accessToken.isEmpty) {
-            debugPrint('Missing authentication token.');
-            break;
-          }
+        // Decode response.
+        final decoded = jsonDecode(response.body);
 
-          final response = await http.get(
-            Uri.parse(
-              '$baseUrl/levels/${widget.levelId}/questions',
-            ),
-            headers: {
-              'Accept': 'application/json',
-              'Authorization': 'Bearer $accessToken',
-            },
-          );
+        if (decoded is! Map) {
+          debugPrint('Invalid response format.');
+          return;
+        }
 
-          if (!mounted) break;
+        final rawData = decoded['data'];
 
-          if (response.statusCode != 200) {
-            debugPrint(
-              'Question fetch failed: ${response.statusCode}',
+        if (rawData is! List) {
+          debugPrint('No questions data found.');
+          return;
+        }
+
+        // Convert API data into QuestionModel.
+        final List<QuestionModel> refreshedQuestions = [];
+
+        for (final item in rawData) {
+          if (item is Map) {
+            refreshedQuestions.add(
+              QuestionModel.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
             );
-            debugPrint(response.body);
-            break;
           }
+        }
 
-          final decoded = jsonDecode(response.body);
+        if (!mounted) {
+          return;
+        }
 
-          if (decoded is! Map<String, dynamic>) {
-            debugPrint('Invalid API response.');
-            break;
-          }
+        // Update questions and restore the current question.
+        setState(() {
+          questions = refreshedQuestions;
 
-          final rawData = decoded['data'];
+          if (questions.isEmpty) {
+            currentIndex = 0;
+            selectedOptionId = null;
+            isAnswerChecked = false;
+          } else {
+            // Find the previously displayed question.
+            int newIndex = -1;
 
-          if (rawData is! List) {
-            debugPrint('Questions data is not a list.');
-            break;
-          }
+            if (previousQuestionId != null) {
+              newIndex = questions.indexWhere(
+                (question) => question.id == previousQuestionId,
+              );
+            }
 
-          // Convert API response into QuestionModel objects.
-          final List<QuestionModel> refreshedQuestions = rawData.map((item) {
-            return QuestionModel.fromJson(
-              Map<String, dynamic>.from(item as Map),
-            );
-          }).toList();
-
-          if (!mounted) break;
-
-          // Restore question and answer state.
-          setState(() {
-            questions = refreshedQuestions;
-
-            if (questions.isEmpty) {
+            if (newIndex >= 0) {
+              currentIndex = newIndex;
+            } else if (currentIndex >= questions.length) {
+              currentIndex = questions.length - 1;
+            } else if (currentIndex < 0) {
               currentIndex = 0;
-              selectedOptionId = null;
-              isAnswerChecked = false;
-            } else {
-              // Find the previously selected question.
-              final newIndex = previousQuestionId == null
-                  ? -1
-                  : questions.indexWhere(
-                      (q) => q.id == previousQuestionId,
-                    );
+            }
 
-              if (newIndex != -1) {
-                currentIndex = newIndex;
-              } else {
-                currentIndex = currentIndex.clamp(
-                  0,
-                  questions.length - 1,
-                );
-              }
+            // Get current question ID.
+            final questionId = questions[currentIndex].id;
 
-              // Restore the current question's answer.
-              final questionId = questions[currentIndex].id;
-
+            // Restore previously selected answer.
+            if (questionId != null) {
               selectedOptionId = _savedAnswers[questionId];
 
+              // Restore answer checked status.
               isAnswerChecked = _answeredQuestionIds.contains(questionId);
+            } else {
+              selectedOptionId = null;
+              isAnswerChecked = false;
             }
-          });
-          await fetchAttemptStats();
+          }
+        });
 
-          debugPrint('''
-========== FETCH QUESTIONS ==========
-Questions: ${questions.length}
-Current Index: $currentIndex
-Attempt UUID: $attemptUuid
-Current Question: ${questions.isNotEmpty ? questions[currentIndex].id : 'None'}
-Selected Option: $selectedOptionId
-Answer Checked: $isAnswerChecked
-=====================================
-''');
-        } catch (e, stackTrace) {
-          debugPrint('Fetch questions error: $e');
-          debugPrintStack(stackTrace: stackTrace);
+        debugPrint('Questions loaded: ${questions.length}');
+        debugPrint('Current index: $currentIndex');
+        debugPrint('Selected option: $selectedOptionId');
+
+        // Fetch latest attempt statistics.
+        if (attemptUuid != null && attemptUuid!.isNotEmpty) {
+          await fetchAttemptStats();
         }
       } while (_refreshRequested && mounted);
+    } catch (e, stackTrace) {
+      debugPrint('Error fetching questions: $e');
+      debugPrintStack(stackTrace: stackTrace);
     } finally {
       _isFetching = false;
 
-      if (mounted && _isLoading) {
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
@@ -443,13 +464,20 @@ Answer Checked: $isAnswerChecked
 
   Future<void> startQuizAttempt() async {
     try {
-      final storage = const FlutterSecureStorage();
+      debugPrint('========== START / RESUME ATTEMPT ==========');
+
+      // 1. Get authentication token
+      const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'auth_token');
 
       if (token == null || token.isEmpty) {
         throw Exception('Authentication token not found.');
       }
 
+      // 2. Get API base URL
+      final baseUrl = await APIService.getBaseUrl();
+
+      // 3. Send request
       final response = await http.post(
         Uri.parse('$baseUrl/quiz-attempts/start'),
         headers: {
@@ -458,28 +486,97 @@ Answer Checked: $isAnswerChecked
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'level_id': widget.levelId,
+          'level_id': widget.levelId.toString(),
         }),
       );
 
-      final responseData = jsonDecode(response.body);
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
 
-      if (response.statusCode == 201 && responseData['status'] == 'true') {
-        final String? newAttemptUuid =
-            responseData['data']?['attempt_id']?.toString();
+      // 4. Decode JSON safely
+      final dynamic decodedJson = jsonDecode(response.body);
 
-        if (newAttemptUuid == null || newAttemptUuid.isEmpty) {
-          throw Exception('Attempt UUID missing from API response.');
-        }
-        setState(() {
-          attemptUuid = newAttemptUuid;
-        });
-        print('Attempt started: $newAttemptUuid');
-      } else {
-        print('Start attempt failed: ${response.body}');
+      if (decodedJson is! Map<String, dynamic>) {
+        throw Exception('Invalid server response format.');
       }
-    } catch (e) {
-      print('Error starting quiz: $e');
+
+      final Map<String, dynamic> decoded = decodedJson;
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(
+          decoded['message']?.toString() ?? 'Failed to start quiz attempt.',
+        );
+      }
+
+      if (decoded['status'] != true) {
+        throw Exception(
+          decoded['message']?.toString() ?? 'Unable to start quiz attempt.',
+        );
+      }
+
+      // 5. Validate data
+      final dynamic rawData = decoded['data'];
+
+      if (rawData is! Map) {
+        throw Exception('Attempt data is missing or invalid.');
+      }
+
+      final Map<String, dynamic> data = Map<String, dynamic>.from(rawData);
+
+      final dynamic rawAttemptId = data['attempt_id'];
+
+      if (rawAttemptId == null || rawAttemptId.toString().trim().isEmpty) {
+        throw Exception('Attempt UUID was not returned.');
+      }
+
+      final String receivedAttemptUuid = rawAttemptId.toString();
+
+      // 6. Convert statistics safely
+      int parseNumber(dynamic value) {
+        if (value is int) return value;
+        if (value is num) return value.toInt();
+        return int.tryParse(value?.toString() ?? '') ?? 0;
+      }
+
+      final int receivedCorrectAnswers = parseNumber(data['correct_answers']);
+
+      final int receivedWrongAnswers = parseNumber(data['wrong_answers']);
+
+      final int receivedXpPoints = parseNumber(data['xp_points']);
+
+      // 7. Store UUID locally
+      await storage.write(
+        key: 'active_attempt_uuid_${widget.levelId}',
+        value: receivedAttemptUuid,
+      );
+
+      // 8. Update screen state
+      if (!mounted) return;
+
+      setState(() {
+        attemptUuid = receivedAttemptUuid;
+        correctAnswers = receivedCorrectAnswers;
+        wrongAnswers = receivedWrongAnswers;
+        xpPoints = receivedXpPoints;
+      });
+
+      debugPrint('Attempt UUID: $attemptUuid');
+      debugPrint('Correct Answers: $correctAnswers');
+      debugPrint('Wrong Answers: $wrongAnswers');
+      debugPrint('XP Points: $xpPoints');
+
+      debugPrint('============================================');
+    } catch (e, stackTrace) {
+      debugPrint('Start Quiz Attempt Error: $e');
+      debugPrint('Stack Trace: $stackTrace');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to start quiz: $e'),
+        ),
+      );
     }
   }
 
@@ -509,6 +606,8 @@ Answer Checked: $isAnswerChecked
 
     final questionId = currentQuestion.id.toString();
 
+    if (questionId.isEmpty || attemptUuid == null) return;
+
     setState(() {
       selectedOptionId = optionId;
       _savedAnswers[questionId] = optionId;
@@ -519,6 +618,12 @@ Answer Checked: $isAnswerChecked
     debugPrint('Selected Option: $optionId');
     debugPrint('Saved Answers: $_savedAnswers');
     debugPrint('=================================');
+
+    // Save immediately in the database.
+    _saveAnswerToDatabase(
+      questionId: questionId,
+      selectedOption: optionId,
+    );
   }
 
   Future<void> fetchAttemptStats() async {
@@ -526,6 +631,11 @@ Answer Checked: $isAnswerChecked
 
     try {
       final accessToken = await _storage.read(key: 'auth_token');
+
+      if (accessToken == null || accessToken.isEmpty) {
+        debugPrint('Fetch stats: token not found');
+        return;
+      }
 
       final response = await http.get(
         Uri.parse('$baseUrl/quiz-attempts/$attemptUuid'),
@@ -535,20 +645,191 @@ Answer Checked: $isAnswerChecked
         },
       );
 
-      if (response.statusCode != 200 || !mounted) return;
+      debugPrint('Stats response status: ${response.statusCode}');
+      debugPrint('Stats response body: ${response.body}');
+
+      if (response.statusCode != 200) {
+        debugPrint('Failed to fetch attempt statistics');
+        return;
+      }
 
       final decoded = jsonDecode(response.body);
       final data = decoded['data'];
 
-      if (data == null) return;
+      if (data == null || !mounted) return;
+
+      final newCorrect = (data['correct_answers'] as num?)?.toInt() ?? 0;
+      final newWrong = (data['wrong_answers'] as num?)?.toInt() ?? 0;
+      final newXp = (data['xp_points'] as num?)?.toInt() ?? 0;
+
+      if (!mounted) return;
 
       setState(() {
-        correctAnswers = data['correct_answers'] ?? 0;
-        wrongAnswers = data['wrong_answers'] ?? 0;
-        xpPoints = data['xp_points'] ?? 0;
+        correctAnswers = newCorrect;
+        wrongAnswers = newWrong;
+        xpPoints = newXp;
       });
-    } catch (e) {
+
+      debugPrint('Updated stats:');
+      debugPrint('Correct: $correctAnswers');
+      debugPrint('Wrong: $wrongAnswers');
+      debugPrint('XP: $xpPoints');
+    } catch (e, stackTrace) {
       debugPrint('Fetch attempt stats error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  Future<void> fetchQuizProgress() async {
+    if (attemptUuid == null || attemptUuid!.isEmpty) return;
+
+    try {
+      final storage = const FlutterSecureStorage();
+      final token = await storage.read(key: 'auth_token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Authentication token not found.');
+      }
+
+      final baseUrl = await APIService.getBaseUrl();
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/quiz-attempts/$attemptUuid/progress'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('========== PROGRESS RESPONSE ==========');
+      debugPrint('Status: ${response.statusCode}');
+      debugPrint('Body: ${response.body}');
+      debugPrint('=======================================');
+
+      final decoded = jsonDecode(response.body);
+
+      if (response.statusCode != 200 || decoded['status'] != true) {
+        throw Exception(
+          decoded['message'] ?? 'Failed to retrieve quiz progress.',
+        );
+      }
+
+      final data = decoded['data'];
+
+      if (data == null) {
+        throw Exception('Progress data is null.');
+      }
+
+      final List<dynamic> answers = data['answers'] as List<dynamic>? ?? [];
+
+      final Map<String, String> restoredAnswers = {};
+      final Map<String, bool> restoredResults = {};
+      final Set<String> restoredAnsweredIds = {};
+
+      for (final item in answers) {
+        final answer = Map<String, dynamic>.from(item);
+
+        final questionId = answer['question_id']?.toString();
+        final selectedOption = answer['selected_option']?.toString();
+
+        if (questionId == null ||
+            questionId.isEmpty ||
+            selectedOption == null ||
+            selectedOption.isEmpty) {
+          continue;
+        }
+
+        restoredAnswers[questionId] = selectedOption;
+        restoredAnsweredIds.add(questionId);
+
+        final isCorrect = answer['is_correct'];
+
+        if (isCorrect != null) {
+          restoredResults[questionId] =
+              isCorrect == true || isCorrect == 1 || isCorrect == '1';
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        correctAnswers = (data['correct_answers'] as num?)?.toInt() ?? 0;
+
+        wrongAnswers = (data['wrong_answers'] as num?)?.toInt() ?? 0;
+
+        xpPoints = (data['xp_points'] as num?)?.toInt() ?? 0;
+
+        _savedAnswers
+          ..clear()
+          ..addAll(restoredAnswers);
+
+        _answerResults
+          ..clear()
+          ..addAll(restoredResults);
+
+        _answeredQuestionIds
+          ..clear()
+          ..addAll(restoredAnsweredIds);
+      });
+
+      debugPrint('========== RESTORED PROGRESS ==========');
+      debugPrint('Correct: $correctAnswers');
+      debugPrint('Wrong: $wrongAnswers');
+      debugPrint('XP: $xpPoints');
+      debugPrint('Saved answers: $_savedAnswers');
+      debugPrint('Answer results: $_answerResults');
+      debugPrint('Answered IDs: $_answeredQuestionIds');
+      debugPrint('=======================================');
+    } catch (e, stackTrace) {
+      debugPrint('Fetch quiz progress error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  Future<bool> _saveAnswerToDatabase({
+    required String questionId,
+    required String selectedOption,
+  }) async {
+    if (attemptUuid == null || attemptUuid!.isEmpty) {
+      return false;
+    }
+
+    try {
+      final token = await _storage.read(key: 'auth_token');
+
+      if (token == null || token.isEmpty) {
+        return false;
+      }
+
+      final baseUrl = await APIService.getBaseUrl();
+
+      final response = await http.post(
+        Uri.parse(
+          '$baseUrl/quiz-attempts/$attemptUuid/save-answer',
+        ),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'question_id': questionId,
+          'selected_option': selectedOption,
+        }),
+      );
+
+      final decoded = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && decoded['status'] == true) {
+        debugPrint('Answer autosaved successfully: $questionId');
+        return true;
+      }
+
+      debugPrint('Autosave failed: ${response.body}');
+      return false;
+    } catch (e) {
+      debugPrint('Autosave error: $e');
+      return false;
     }
   }
 
