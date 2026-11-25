@@ -85,6 +85,10 @@ Route::post(
     '/quiz-attempts/{uuid}/complete',
     [QuizAttemptController::class, 'completeAttempt']
 );
+Route::get(
+    '/levels/{levelId}/attempts/history',
+    [QuizAttemptController::class, 'getAttemptHistory']
+);
 });
 Route::get('/media-library', function () {
     return response()->json(MediaLibrary::all(), 200);

@@ -53,6 +53,12 @@ class _QuizScreenState extends State<QuizScreen> {
   final Set<String> _answeredQuestions = {};
   final Map<String, String> _savedAnswers = {};
   final Map<String, bool> _answerResults = {};
+
+  int _attemptNumber = 1;
+  int _totalAttempts = 3;
+  int _remainingAttempts = 2;
+
+  bool _isExamCompleted = false;
   @override
   void initState() {
     super.initState();

@@ -354,7 +354,7 @@ class QuizAttemptController extends Controller
         }
 
         // Confirm that the question exists.
-        $question = Question::find($questionId);
+        $question = Question::where('id',$questionId)->where('level_id',$attempt->level_id)->first();
 
         if (!$question) {
             return response()->json([
@@ -510,5 +510,22 @@ class QuizAttemptController extends Controller
                 'completed_at' => $attempt->completed_at,
             ],
         ]);
+    }
+    public function getAttemptHistory($levelId){
+        $attempts = QuizAttempt::where('user_id',auth()->id())
+        ->where('level_id',$levelId)
+        ->with('answers')
+        ->orderBy('attempt_number')
+        ->get();
+        return response()->json([
+            'status'=>true,
+              'data' => [
+            'total_attempts' => $attempts->count(),
+            'remaining_attempts' =>
+                max(0, 3 - $attempts->count()),
+            'attempts' => $attempts,
+        ],
+        ]);
+
     }
 }
