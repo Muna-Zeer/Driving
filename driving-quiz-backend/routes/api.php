@@ -81,6 +81,10 @@ Route::post(
     '/quiz-attempts/{uuid}/save-answer',
     [QuizAttemptController::class, 'saveAnswer']
 )->middleware('auth:sanctum');
+Route::post(
+    '/quiz-attempts/{uuid}/complete',
+    [QuizAttemptController::class, 'completeAttempt']
+);
 });
 Route::get('/media-library', function () {
     return response()->json(MediaLibrary::all(), 200);
